@@ -1,0 +1,128 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Muzflowers — Свежие цветы с доставкой{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        sage: {
+                            50:  '#f5f7f2',
+                            100: '#e8eee0',
+                            200: '#d2ddc4',
+                            300: '#b3c49d',
+                            400: '#8aa374',
+                            500: '#6b8556',
+                            600: '#526941',
+                            700: '#405236',
+                            800: '#35432e',
+                            900: '#2d3928',
+                        },
+                        cream: '#faf9f5',
+                        ink: '#1f2a1c',
+                    },
+                    fontFamily: {
+                        serif: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    letterSpacing: {
+                        'ultra': '0.35em',
+                        'logo': '0.25em',
+                    },
+                    borderRadius: {
+                        '2xl': '1.25rem',
+                        '3xl': '1.75rem',
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-feature-settings: "ss01", "cv01"; }
+        .logo-frame {
+            border: 1px solid rgba(255,255,255,.85);
+            border-radius: 12px;
+            padding: 4px 14px;
+            letter-spacing: 0.25em;
+        }
+        .underline-botanical {
+            background-image: linear-gradient(to right, #8aa374, #8aa374);
+            background-size: 0% 1px;
+            background-repeat: no-repeat;
+            background-position: 0 100%;
+            transition: background-size .4s ease;
+        }
+        .underline-botanical:hover { background-size: 100% 1px; }
+    </style>
+</head>
+<body class="bg-cream text-ink font-sans flex flex-col min-h-screen antialiased">
+
+    <header class="bg-white/80 backdrop-blur-md border-b border-sage-100 sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="{% url 'shop:product_list' %}" class="flex items-center gap-4 group">
+                <div class="h-14 w-14 rounded-full bg-sage-400 flex items-center justify-center shadow-sm group-hover:scale-105 transition duration-300">
+                    <img src="{% static 'images/logo.png' %}" alt="Muzflowers"
+                         class="h-14 w-14 rounded-full object-cover"
+                         onerror="this.style.display='none';this.parentNode.innerHTML='<span class=&quot;text-white font-serif text-2xl&quot;>M</span>'">
+                </div>
+                <div class="hidden sm:block logo-frame bg-sage-400">
+                    <div class="text-white font-serif text-lg tracking-logo leading-none">MUZ</div>
+                    <div class="text-white font-sans text-[0.65rem] tracking-ultra leading-none mt-1">FLOWERS</div>
+                </div>
+            </a>
+            <nav class="flex items-center gap-7 text-sm tracking-wide">
+                <a href="{% url 'shop:product_list' %}" class="underline-botanical hover:text-sage-500 transition">Каталог</a>
+                <a href="{% url 'shop:cart_detail' %}" class="relative underline-botanical hover:text-sage-500 transition">
+                    Корзина
+                    {% if cart|length > 0 %}
+                        <span class="absolute -top-2 -right-4 bg-sage-400 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">{{ cart|length }}</span>
+                    {% endif %}
+                </a>
+                {% if user.is_authenticated %}
+                    <span class="text-sage-700 font-medium">{{ user.username }}</span>
+                    <a href="{% url 'accounts:logout' %}" class="underline-botanical hover:text-sage-500 transition">Выйти</a>
+                {% else %}
+                    <a href="{% url 'accounts:login' %}" class="underline-botanical hover:text-sage-500 transition">Войти</a>
+                    <a href="{% url 'accounts:register' %}"
+                       class="bg-sage-400 text-white px-5 py-2.5 rounded-full hover:bg-sage-500 transition shadow-sm tracking-wide">
+                        Регистрация
+                    </a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    {% if messages %}
+        <div class="container mx-auto px-4 mt-4">
+            {% for message in messages %}
+                <div class="bg-sage-100 border border-sage-200 text-sage-800 p-3 rounded-2xl mb-2 text-sm">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <main class="flex-grow container mx-auto px-4 py-10">
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="bg-sage-800 text-sage-100 py-12 mt-16">
+        <div class="container mx-auto px-4 text-center">
+            <div class="inline-flex items-center gap-3 mb-4">
+                <div class="h-10 w-10 rounded-full bg-sage-600 flex items-center justify-center">
+                    <span class="text-white font-serif text-lg">M</span>
+                </div>
+                <span class="font-serif text-xl tracking-logo">MUZ FLOWERS</span>
+            </div>
+            <p class="text-sm text-sage-300">© {% now "Y" %} Muzflowers. Свежие цветы с любовью.</p>
+            <p class="text-xs mt-2 text-sage-400 tracking-widest uppercase">Доставка по городу ежедневно с 9:00 до 21:00</p>
+        </div>
+    </footer>
+</body>
+</html>

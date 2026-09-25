@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto text-center bg-white p-10 md:p-14 rounded-3xl shadow-sm">
+    <div class="w-20 h-20 mx-auto mb-6 rounded-full bg-sage-400 flex items-center justify-center">
+        <span class="text-white font-serif text-3xl">✓</span>
+    </div>
+    <p class="text-xs tracking-ultra text-sage-400 uppercase mb-3">Заказ принят</p>
+    <h1 class="text-4xl font-serif font-light text-sage-800 mb-5">Спасибо за заказ!</h1>
+    <p class="text-gray-600 mb-3">Номер вашего заказа: <strong class="text-sage-600 font-serif text-lg">№{{ order.id }}</strong></p>
+    <p class="text-gray-500 mb-10 text-sm">Мы отправили подтверждение на <strong class="text-sage-700">{{ order.email }}</strong>. Наш флорист свяжется с вами в ближайшее время.</p>
+
+    <div class="bg-sage-50 p-8 rounded-3xl text-left mb-10 space-y-3">
+        <p class="text-xs tracking-ultra text-sage-400 uppercase mb-4">Детали заказа</p>
+        <p class="text-sage-700"><span class="text-sage-500 text-sm">Дата доставки:</span> {{ order.delivery_date|date:"d.m.Y" }}</p>
+        <p class="text-sage-700"><span class="text-sage-500 text-sm">Адрес:</span> {{ order.address }}</p>
+        <p class="text-sage-700"><span class="text-sage-500 text-sm">Сумма:</span> <strong class="font-serif text-lg">{{ order.get_total_cost }} ₽</strong></p>
+    </div>
+
+    <a href="{% url 'shop:product_list' %}"
+       class="inline-block bg-sage-400 hover:bg-sage-500 text-white py-3.5 px-10 rounded-full font-medium transition tracking-wide shadow-sm">
+        Вернуться в каталог
+    </a>
+</div>
+{% endblock %}

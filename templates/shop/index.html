@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="text-center mb-14">
+    <p class="text-xs tracking-ultra text-sage-500 uppercase mb-4">Muzflowers · Цветочная мастерская</p>
+    <h1 class="text-5xl md:text-6xl font-serif font-light text-sage-800 mb-5 leading-tight">
+        Цветы, которые<br class="hidden md:block"> говорят за вас
+    </h1>
+    <p class="text-gray-600 max-w-2xl mx-auto font-light">
+        Изысканные букеты и композиции от Muzflowers. Свежесть гарантируем.
+    </p>
+</div>
+
+<div class="flex gap-3 mb-10 overflow-x-auto pb-2 justify-center flex-wrap">
+    <a href="{% url 'shop:product_list' %}"
+       class="px-5 py-2.5 rounded-full text-sm tracking-wide transition {% if not category %}bg-sage-400 text-white shadow-sm{% else %}bg-white text-sage-600 border border-sage-200 hover:border-sage-400{% endif %} whitespace-nowrap">
+        Все букеты
+    </a>
+    {% for c in categories %}
+        <a href="{{ c.get_absolute_url }}"
+           class="px-5 py-2.5 rounded-full text-sm tracking-wide transition {% if category.slug == c.slug %}bg-sage-400 text-white shadow-sm{% else %}bg-white text-sage-600 border border-sage-200 hover:border-sage-400{% endif %} whitespace-nowrap">
+            {{ c.name }}
+        </a>
+    {% endfor %}
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+    {% for product in products %}
+        <div class="bg-white rounded-3xl shadow-sm hover:shadow-lg transition-all duration-500 overflow-hidden group flex flex-col">
+            <a href="{{ product.get_absolute_url }}" class="block relative aspect-square overflow-hidden bg-sage-50">
+                {% if product.image %}
+                    <img src="{{ product.image.url }}" alt="{{ product.name }}"
+                         class="object-cover w-full h-full group-hover:scale-105 transition duration-700">
+                {% else %}
+                    <div class="flex items-center justify-center h-full text-sage-300 font-serif text-4xl">M</div>
+                {% endif %}
+                <div class="absolute inset-0 bg-sage-800/0 group-hover:bg-sage-800/5 transition duration-500"></div>
+            </a>
+            <div class="p-6 flex flex-col flex-grow">
+                <h3 class="text-xl font-serif text-sage-800 mb-3 leading-snug">
+                    <a href="{{ product.get_absolute_url }}" class="hover:text-sage-500 transition">{{ product.name }}</a>
+                </h3>
+                <div class="mt-auto flex justify-between items-center">
+                    <span class="text-xl font-serif font-medium text-sage-600">{{ product.price }} ₽</span>
+                    <form action="{% url 'shop:cart_add' product.id %}" method="post">
+                        {% csrf_token %}
+                        <button type="submit"
+                                class="bg-sage-100 hover:bg-sage-400 hover:text-white text-sage-700 px-5 py-2.5 rounded-full text-sm tracking-wide transition">
+                            В корзину
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-span-full text-center py-16 text-sage-400 font-serif text-2xl">
+            Скоро здесь появятся цветы…
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

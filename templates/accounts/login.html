@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-md mx-auto bg-white p-10 rounded-3xl shadow-sm mt-10">
+    <p class="text-xs tracking-ultra text-sage-400 uppercase mb-3 text-center">Muzflowers</p>
+    <h2 class="text-3xl font-serif font-light text-sage-800 mb-8 text-center">Вход</h2>
+    <form method="post" class="space-y-4">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="w-full bg-sage-400 hover:bg-sage-500 text-white py-3.5 rounded-full font-medium transition tracking-wide mt-4">Войти</button>
+    </form>
+    <p class="text-center text-sm mt-6 text-gray-500">
+        Нет аккаунта? <a href="{% url 'accounts:register' %}" class="text-sage-500 hover:text-sage-700 underline">Зарегистрироваться</a>
+    </p>
+</div>
+
+<style>
+    form input {
+        width: 100%;
+        padding: 0.85rem 1rem;
+        border: 1px solid #d2ddc4;
+        border-radius: 1rem;
+        background: #faf9f5;
+        font-family: Inter, sans-serif;
+        font-size: 0.95rem;
+        transition: all .2s ease;
+    }
+    form input:focus { outline: none; border-color: #8aa374; background: #fff; box-shadow: 0 0 0 3px rgba(138,163,116,.15); }
+    form label { display: block; font-size: .7rem; letter-spacing: .2em; text-transform: uppercase; color: #6b8556; margin-bottom: .4rem; }
+    form p { margin-bottom: 1rem; }
+</style>
+{% endblock %}

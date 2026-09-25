@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f6f2; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 12px; overflow: hidden; }
+        .header { background-color: #8aa374; color: white; padding: 30px; text-align: center; }
+        .header h1 { margin: 0; font-family: Georgia, serif; letter-spacing: 2px; }
+        .content { padding: 30px; color: #333; }
+        .table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .table th, .table td { padding: 10px; border-bottom: 1px solid #e5ebdf; text-align: left; }
+        .table th { background: #f4f6f2; color: #526941; }
+        .total { font-weight: bold; font-size: 1.2em; color: #526941; text-align: right; }
+        .info-block { background: #f4f6f2; padding: 15px; border-radius: 8px; margin: 15px 0; }
+        .footer { text-align: center; padding: 20px; color: #888; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header"><h1>MUZ FLOWERS</h1></div>
+        <div class="content">
+            <h2>Спасибо за ваш заказ, {{ order.first_name }}!</h2>
+            <p>Номер вашего заказа: <strong>№{{ order.id }}</strong></p>
+            <div class="info-block">
+                <p><strong>Дата доставки:</strong> {{ order.delivery_date|date:"d.m.Y" }}</p>
+                <p><strong>Адрес:</strong> {{ order.address }}</p>
+                <p><strong>Телефон:</strong> {{ order.phone }}</p>
+                {% if order.comment %}<p><strong>Комментарий:</strong> {{ order.comment }}</p>{% endif %}
+            </div>
+            <h3>Состав заказа:</h3>
+            <table class="table">
+                <thead><tr><th>Товар</th><th>Кол-во</th><th>Цена</th><th>Итого</th></tr></thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr><td>{{ item.product.name }}</td><td>{{ item.quantity }}</td><td>{{ item.price }} ₽</td><td>{{ item.get_cost }} ₽</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <p class="total">Общая стоимость: {{ total }} ₽</p>
+        </div>
+        <div class="footer"><p>© Muzflowers. Свежие цветы с любовью.</p></div>
+    </div>
+</body>
+</html>

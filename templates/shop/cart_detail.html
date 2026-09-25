@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="mb-10">
+    <p class="text-xs tracking-ultra text-sage-400 uppercase mb-3">Muzflowers</p>
+    <h1 class="text-4xl font-serif font-light text-sage-800">Ваша корзина</h1>
+</div>
+
+{% if cart|length > 0 %}
+<div class="bg-white rounded-3xl shadow-sm overflow-x-auto mb-8">
+    <table class="w-full text-left min-w-[600px]">
+        <thead class="bg-sage-50 text-sage-700 text-sm tracking-wide">
+            <tr>
+                <th class="p-5 font-normal">Товар</th>
+                <th class="p-5 font-normal">Кол-во</th>
+                <th class="p-5 font-normal">Цена</th>
+                <th class="p-5 font-normal">Итого</th>
+                <th class="p-5"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in cart %}
+                {% with product=item.product %}
+                <tr class="border-b border-sage-100 last:border-0">
+                    <td class="p-5 flex items-center gap-4">
+                        {% if product.image %}
+                            <img src="{{ product.image.url }}" class="w-16 h-16 object-cover rounded-2xl" alt="">
+                        {% else %}
+                            <div class="w-16 h-16 bg-sage-50 rounded-2xl flex items-center justify-center text-sage-300 font-serif">M</div>
+                        {% endif %}
+                        <a href="{{ product.get_absolute_url }}" class="font-serif text-lg text-sage-800 hover:text-sage-500 transition">{{ product.name }}</a>
+                    </td>
+                    <td class="p-5 text-sage-700">{{ item.quantity }}</td>
+                    <td class="p-5 text-sage-700">{{ item.price }} ₽</td>
+                    <td class="p-5 font-serif text-lg text-sage-600">{{ item.total_price }} ₽</td>
+                    <td class="p-5 text-right">
+                        <a href="{% url 'shop:cart_remove' product.id %}" class="text-red-400 hover:text-red-600 text-xs tracking-widest uppercase">Удалить</a>
+                    </td>
+                </tr>
+                {% endwith %}
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="flex flex-col md:flex-row justify-between items-center bg-sage-50 p-8 rounded-3xl">
+    <div class="mb-4 md:mb-0">
+        <p class="text-xs tracking-ultra text-sage-400 uppercase mb-2">Итого к оплате</p>
+        <div class="text-3xl font-serif text-sage-700">{{ cart.get_total_price }} ₽</div>
+    </div>
+    <a href="{% url 'shop:checkout' %}"
+       class="bg-sage-400 hover:bg-sage-500 text-white py-3.5 px-10 rounded-full font-medium transition tracking-wide w-full md:w-auto text-center shadow-sm">
+        Оформить заказ
+    </a>
+</div>
+{% else %}
+<div class="text-center py-20 bg-white rounded-3xl shadow-sm">
+    <div class="text-6xl mb-6 font-serif text-sage-200">❀</div>
+    <p class="text-xl text-sage-500 mb-6 font-serif">Ваша корзина пуста</p>
+    <a href="{% url 'shop:product_list' %}" class="inline-block bg-sage-400 hover:bg-sage-500 text-white py-3 px-8 rounded-full transition tracking-wide">Перейти в каталог</a>
+</div>
+{% endif %}
+{% endblock %}
