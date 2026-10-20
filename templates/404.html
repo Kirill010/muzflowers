@@ -1,0 +1,5 @@
+{% extends 'base.html' %}
+{% block title %}Страница не найдена — Muzflowers{% endblock %}
+{% block content %}<main class="w auth"><h1 class="st">Такой страницы нет 🥀</h1>
+<p class="sd">Возможно, ссылка устарела. Вернитесь в каталог — там много красивого.</p>
+<a class="btn" href="{% url 'shop:index' %}">На главную</a></main>{% endblock %}

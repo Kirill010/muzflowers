@@ -1,4 +1,3 @@
-document.documentElement.classList.add('js');
 const $=s=>document.querySelector(s),R=n=>n.toLocaleString('ru-RU')+' ₽';
 const P=JSON.parse(document.getElementById('mz-products').textContent),CFG=JSON.parse(document.getElementById('mz-config').textContent);
 const fl=(a,b,k,c)=>{let s='';for(let i=0;i<k;i++)s+=`<ellipse cx="50" cy="26" rx="10" ry="23" fill="${esc(i%2?a:b)}" opacity=".92" transform="rotate(${i*360/k} 50 50)"/>`;return `<svg viewBox="0 0 100 100" ${c?'class="hf"':''} aria-hidden="true">${s}<circle cx="50" cy="50" r="9" fill="#f6c94c"/></svg>`};
@@ -50,10 +49,8 @@ cart={};promo=false;pct=0;code='';save();draw();$('#items').hidden=true;$('#ok')
 $('#ob').onclick=()=>{$('#ok').hidden=true;$('#items').hidden=false;open(0)}}
 catch(err){toast(err.message||'Не удалось отправить заказ. Попробуйте ещё раз')}finally{btn.disabled=false}};
 
-const root=document.documentElement;
-try{const t=localStorage.getItem('mzt');if(t)root.dataset.theme=t}catch(e){}
-$('#th').onclick=()=>{const d=(root.dataset.theme||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light'))==='dark'?'light':'dark';root.dataset.theme=d;try{localStorage.setItem('mzt',d)}catch(e){}};
 
 const io=new IntersectionObserver(es=>es.forEach(x=>{if(x.isIntersecting){x.target.classList.add('in');io.unobserve(x.target)}}),{threshold:.15});
 document.querySelectorAll('.r').forEach(el=>io.observe(el));
+Object.entries({nm:'name',ph:'phone',ad:'address'}).forEach(([k,v])=>{if(CFG.prefill&&CFG.prefill[v])$('#'+k).value=CFG.prefill[v]});
 grid();draw();

@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Личный кабинет — Muzflowers{% endblock %}
+{% block content %}<main class="w auth wide"><h1 class="st">Здравствуйте, {{ user.first_name|default:user.username }}!</h1>
+<form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button class="btn gh sm">Выйти</button></form>
+<h2 style="margin:28px 0 14px">Мои заказы</h2>
+{% for o in orders %}<div class="oc"><div class="ol"><b>Заказ №{{ o.pk }}</b><span>{{ o.get_status_display }}</span></div>
+<p>Доставка: {{ o.delivery_date|date:"d.m.Y" }}, {{ o.delivery_slot }}<br>{{ o.address }}</p>
+<ul>{% for i in o.items.all %}<li>{{ i.name }} × {{ i.qty }}</li>{% endfor %}</ul>
+<b>Итого: {{ o.total }} ₽</b></div>
+{% empty %}<p class="sd">Заказов пока нет. <a href="{% url 'shop:index' %}#catalog">Выбрать букет</a></p>{% endfor %}
+</main>{% endblock %}

@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Category, Order, OrderItem, Product, PromoCode
+from .models import Category, Order, OrderItem, Product, PromoCode, Review
 
 
 @admin.register(Category)
@@ -39,4 +39,15 @@ class OrderAdmin(admin.ModelAdmin):
     search_fields = ('name', 'phone', 'address')
     date_hierarchy = 'created'
     inlines = [OrderItemInline]
-    readonly_fields = ('subtotal', 'discount', 'delivery_cost', 'total', 'promo_code', 'created')
+    readonly_fields = ('user', 'subtotal', 'discount', 'delivery_cost', 'total', 'promo_code', 'created')
+
+
+@admin.register(Review)
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = ('name', 'text', 'is_published', 'created')
+    list_editable = ('is_published',)
+
+
+admin.site.site_header = 'Muzflowers — управление магазином'
+admin.site.site_title = 'Muzflowers'
+admin.site.index_title = 'Букеты, заказы, отзывы'

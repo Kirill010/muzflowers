@@ -3,7 +3,6 @@ import re
 from datetime import date, timedelta
 
 from django.conf import settings
-from django.core.cache import cache
 from django.db import transaction
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -12,29 +11,10 @@ from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 
-from .models import Order, OrderItem, Product, PromoCode
+from .models import Order, OrderItem, Product, PromoCode, Review
+from .throttle import throttled
 
-FREE_FROM = getattr(settings, 'SHOP_FREE_DELIVERY_FROM', 3000)
-DELIVERY = getattr(settings, 'SHOP_DELIVERY_COST', 300)
 SLOTS = ['9:00–12:00', '12:00–15:00', '15:00–18:00', '18:00–21:00']
-
-
-def _client_ip(request):
-    # Заголовок с реальным IP читаем, только если его явно указали в настройках
-    # (его должен выставлять ваш nginx, затирая клиентское значение).
-    header = getattr(settings, 'SHOP_CLIENT_IP_HEADER', None)
-    return (request.META.get(header, '') if header else '') or request.META.get('REMOTE_ADDR', '')
-
-
-def _throttled(request, scope, limit, window):
-    """Не больше `limit` запросов за `window` секунд с одного IP. Нужен общий кэш (Redis)."""
-    key = f'shop:{scope}:{_client_ip(request)}'
-    cache.add(key, 0, window)
-    try:
-        return cache.incr(key) > limit
-    except ValueError:
-        cache.set(key, 1, window)
-        return False
 
 
 @ensure_csrf_cookie
@@ -47,11 +27,24 @@ def index(request):
         }
         for p in Product.objects.filter(is_active=True).select_related('category')
     ]
+    prefill = {}
+    if request.user.is_authenticated:
+        last = request.user.orders.first()
+        prefill = {
+            'name': last.name if last else (request.user.first_name or request.user.username),
+            'phone': last.phone if last else '',
+            'address': last.address if last else '',
+        }
     config = {
-        'free': FREE_FROM, 'delivery': DELIVERY,
-        'promoUrl': reverse('shop:promo'), 'orderUrl': reverse('shop:order'),
+        'free': settings.SHOP_FREE_DELIVERY_FROM, 'delivery': settings.SHOP_DELIVERY_COST,
+        'promoUrl': reverse('shop:promo'), 'orderUrl': reverse('shop:order'), 'prefill': prefill,
     }
-    return render(request, 'shop/index.html', {'products': products, 'config': config})
+    reviews = Review.objects.filter(is_published=True)[:6]
+    return render(request, 'shop/index.html', {'products': products, 'config': config, 'reviews': reviews})
+
+
+def privacy(request):
+    return render(request, 'shop/privacy.html')
 
 
 def _body(request):
@@ -73,7 +66,7 @@ def _error(msg, status=400):
 
 @require_POST
 def promo_check(request):
-    if _throttled(request, 'promo', 15, 600):
+    if throttled(request, 'promo', 15, 600):
         return _error('Слишком много попыток. Попробуйте через несколько минут', 429)
     promo = _find_promo(_body(request).get('code'))
     return JsonResponse({'ok': bool(promo), 'percent': promo.percent if promo else 0})
@@ -81,7 +74,7 @@ def promo_check(request):
 
 @require_POST
 def order_create(request):
-    if _throttled(request, 'order', 10, 3600):
+    if throttled(request, 'order', 10, 3600):
         return _error('Слишком много заказов с одного адреса. Позвоните нам', 429)
     d = _body(request)
     name = str(d.get('name', '')).strip()[:100]
@@ -119,10 +112,11 @@ def order_create(request):
     subtotal = sum(p.price * qty[p.id] for p in products)
     promo = _find_promo(d.get('promo'))
     discount = round(subtotal * promo.percent / 100) if promo else 0
-    delivery = 0 if subtotal - discount >= FREE_FROM else DELIVERY
+    delivery = 0 if subtotal - discount >= settings.SHOP_FREE_DELIVERY_FROM else settings.SHOP_DELIVERY_COST
 
     with transaction.atomic():
         order = Order.objects.create(
+            user=request.user if request.user.is_authenticated else None,
             name=name, phone=phone, address=address, delivery_date=when, delivery_slot=slot,
             card_text=note, promo_code=promo.code if promo else '', subtotal=subtotal,
             discount=discount, delivery_cost=delivery, total=subtotal - discount + delivery,

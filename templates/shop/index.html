@@ -1,18 +1,7 @@
+{% extends 'base.html' %}
 {% load static %}
-<!doctype html>
-<html lang="ru"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Muzflowers — цветочный магазин</title>
-<meta name="description" content="Свежие букеты и композиции с доставкой за 60 минут.">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Playfair+Display:ital,wght@0,600;1,500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{% static 'shop/css/main.css' %}"></head>
-<body>
-<header><div class="w"><a class="lg" href="#top">Muz<i>flowers</i> ✿</a>
-<nav><a href="#catalog">Каталог</a><a href="#why">Преимущества</a><a href="#reviews">Отзывы</a><a href="#contacts">Контакты</a></nav>
-<button class="ib" id="th" aria-label="Сменить тему">◐</button>
-<button class="ib" id="cb" aria-label="Открыть корзину">🛍 <span id="cc">0</span></button></div></header>
-
+{% block cartbtn %}<button class="ib" id="cb" aria-label="Открыть корзину">🛍 <span id="cc">0</span></button>{% endblock %}
+{% block content %}
 <main id="top">
 <div class="hero"><div class="w"><div>
 <span class="tag">🚚 Доставка за 60 минут</span>
@@ -34,19 +23,12 @@
 <div class="f r"><span>📸</span><h3>Фото перед отправкой</h3><p>Покажем готовый букет, прежде чем он отправится к адресату.</p></div>
 <div class="f r"><span>💌</span><h3>Открытка в подарок</h3><p>Напишем ваш текст от руки и не станем раскрывать, от кого цветы.</p></div></div></div></section>
 
-<section id="reviews"><div class="w">
-<h2 class="st r">Отзывы</h2><p class="sd r">Примеры блоков — замените на настоящие отзывы клиентов.</p>
-<div class="fs">
-<div class="rv r"><p>«Букет был ровно такой, как на фото, и приехал вовремя. Мама счастлива!»</p><b>Анна</b></div>
-<div class="rv r"><p>«Пионы простояли почти две недели. Беру только здесь.»</p><b>Дмитрий</b></div>
-<div class="rv r"><p>«Приятно, что прислали фото перед доставкой. Очень внимательный сервис.»</p><b>Мария</b></div></div></div></section>
+{% if reviews %}<section id="reviews"><div class="w">
+<h2 class="st r">Отзывы</h2><p class="sd r">Что говорят наши клиенты.</p>
+<div class="fs">{% for r in reviews %}<div class="rv r"><p>«{{ r.text }}»</p><b>{{ r.name }}</b></div>{% endfor %}</div></div></section>{% endif %}
 </main>
-
-<footer id="contacts"><div class="w">
-<div><b>Muzflowers</b><br>Цветочный магазин<br>© 2026</div>
-<div><b>Контакты</b><br>+7 (000) 000-00-00<br>hello@muzflowers.example</div>
-<div><b>Адрес и часы</b><br>Ваш город, ул. Цветочная, 1<br>Ежедневно, 8:00–22:00</div></div></footer>
-
+{% endblock %}
+{% block drawer %}
 <div class="ov" id="ov"></div>
 <aside class="dr" id="dr" aria-label="Корзина"><div class="dh">Корзина<button class="ib" id="cx" aria-label="Закрыть">✕</button></div>
 <div class="db"><div id="items"></div><div id="sum" hidden></div>
@@ -57,11 +39,13 @@
 <input id="dt" type="date" required aria-label="Дата доставки">
 <select id="tm" aria-label="Время"><option>9:00–12:00</option><option>12:00–15:00</option><option>15:00–18:00</option><option>18:00–21:00</option></select>
 <textarea id="nt" rows="2" placeholder="Текст открытки (по желанию)"></textarea>
-<label class="cs"><input type="checkbox" id="cs" required> Согласен на обработку персональных данных для выполнения заказа</label>
+<label class="cs"><input type="checkbox" id="cs" required> Согласен на обработку <a href="{% url 'shop:privacy' %}" target="_blank" rel="noopener">персональных данных</a> для выполнения заказа</label>
 <button class="btn">Оформить заказ</button></form>
 <div class="ok" id="ok" hidden></div></div></aside>
 <div id="ts" role="status"></div>
-
+{% endblock %}
+{% block scripts %}
 {{ products|json_script:"mz-products" }}
 {{ config|json_script:"mz-config" }}
-<script src="{% static 'shop/js/main.js' %}"></script></body></html>
+<script src="{% static 'shop/js/main.js' %}"></script>
+{% endblock %}

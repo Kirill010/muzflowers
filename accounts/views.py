@@ -1,38 +1,40 @@
-from django.shortcuts import render, redirect
-from django.contrib.auth import login, logout
-from django.contrib import messages
-from django.contrib.auth.forms import AuthenticationForm
-from .forms import UserRegisterForm
+from django.contrib.auth import login
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import LoginView
+from django.http import HttpResponse
+from django.shortcuts import redirect, render
+
+from shop.throttle import throttled
+
+from .forms import RegisterForm
 
 
-def register_view(request):
+class ThrottledLoginView(LoginView):
+    template_name = 'accounts/login.html'
+    redirect_authenticated_user = True
+
+    def post(self, request, *args, **kwargs):
+        if throttled(request, 'login', 10, 600):
+            return HttpResponse('Слишком много попыток входа. Попробуйте через 10 минут.', status=429)
+        return super().post(request, *args, **kwargs)
+
+
+def register(request):
+    if request.user.is_authenticated:
+        return redirect('accounts:profile')
     if request.method == 'POST':
-        form = UserRegisterForm(request.POST)
+        if throttled(request, 'register', 10, 3600):
+            return HttpResponse('Слишком много попыток. Попробуйте позже.', status=429)
+        form = RegisterForm(request.POST)
         if form.is_valid():
-            user = form.save()
-            login(request, user)
-            messages.success(request, f"Добро пожаловать, {user.username}!")
-            return redirect('shop:product_list')
-        else:
-            messages.error(request, "Пожалуйста, исправьте ошибки в форме.")
+            login(request, form.save())
+            return redirect('shop:index')
     else:
-        form = UserRegisterForm()
+        form = RegisterForm()
     return render(request, 'accounts/register.html', {'form': form})
 
 
-def login_view(request):
-    if request.method == 'POST':
-        form = AuthenticationForm(data=request.POST)
-        if form.is_valid():
-            login(request, form.get_user())
-            return redirect('shop:product_list')
-        else:
-            messages.error(request, "Неверный логин или пароль.")
-    else:
-        form = AuthenticationForm()
-    return render(request, 'accounts/login.html', {'form': form})
-
-
-def logout_view(request):
-    logout(request)
-    return redirect('shop:product_list')
+@login_required
+def profile(request):
+    orders = request.user.orders.prefetch_related('items')
+    return render(request, 'accounts/profile.html', {'orders': orders})

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models
 from django.utils import timezone
@@ -72,6 +73,7 @@ class Order(models.Model):
         DONE = 'done', 'Выполнен'
         CANCELED = 'canceled', 'Отменён'
 
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='orders', verbose_name='Пользователь')
     name = models.CharField('Имя', max_length=100)
     phone = models.CharField('Телефон', max_length=30)
     address = models.CharField('Адрес', max_length=255)
@@ -104,3 +106,18 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f'{self.name} × {self.qty}'
+
+
+class Review(models.Model):
+    name = models.CharField('Имя', max_length=60)
+    text = models.TextField('Отзыв', max_length=400)
+    is_published = models.BooleanField('Показывать на сайте', default=True)
+    created = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created']
+        verbose_name = 'Отзыв'
+        verbose_name_plural = 'Отзывы'
+
+    def __str__(self):
+        return f'{self.name}: {self.text[:30]}'

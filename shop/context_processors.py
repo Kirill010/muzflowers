@@ -1,15 +1,8 @@
-from .cart import Cart
-from .models import Category
+from django.conf import settings
 
 
-def cart(request):
-    return {'cart': Cart(request)}
-
-
-def categories(request):
-    return {'global_categories': Category.objects.all()}
-
-
-def wishlist(request):
-    wl = request.session.get('wishlist', [])
-    return {'wishlist_ids': wl, 'wishlist_count': len(wl)}
+def site(request):
+    return {'site': {
+        'phone': settings.SHOP_PHONE, 'email': settings.SHOP_EMAIL,
+        'address': settings.SHOP_ADDRESS, 'hours': settings.SHOP_HOURS,
+    }}
