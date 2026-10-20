@@ -1,61 +1,67 @@
-{% extends 'base.html' %}
+{% load static %}
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Muzflowers — цветочный магазин</title>
+<meta name="description" content="Свежие букеты и композиции с доставкой за 60 минут.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Playfair+Display:ital,wght@0,600;1,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'shop/css/main.css' %}"></head>
+<body>
+<header><div class="w"><a class="lg" href="#top">Muz<i>flowers</i> ✿</a>
+<nav><a href="#catalog">Каталог</a><a href="#why">Преимущества</a><a href="#reviews">Отзывы</a><a href="#contacts">Контакты</a></nav>
+<button class="ib" id="th" aria-label="Сменить тему">◐</button>
+<button class="ib" id="cb" aria-label="Открыть корзину">🛍 <span id="cc">0</span></button></div></header>
 
-{% block content %}
-<div class="text-center mb-14">
-    <p class="text-xs tracking-ultra text-sage-500 uppercase mb-4">Muzflowers · Цветочная мастерская</p>
-    <h1 class="text-5xl md:text-6xl font-serif font-light text-sage-800 mb-5 leading-tight">
-        Цветы, которые<br class="hidden md:block"> говорят за вас
-    </h1>
-    <p class="text-gray-600 max-w-2xl mx-auto font-light">
-        Изысканные букеты и композиции от Muzflowers. Свежесть гарантируем.
-    </p>
-</div>
+<main id="top">
+<div class="hero"><div class="w"><div>
+<span class="tag">🚚 Доставка за 60 минут</span>
+<h1>Цветы, которые говорят <em>за вас</em></h1>
+<p>Свежие букеты, собранные флористами вручную. Фото готового букета перед отправкой и открытка с вашими словами.</p>
+<div class="bs"><a class="btn" href="#catalog">Выбрать букет</a><a class="btn gh" href="#why">Почему мы</a></div></div>
+<div id="hf"></div></div><div id="pts"></div></div>
 
-<div class="flex gap-3 mb-10 overflow-x-auto pb-2 justify-center flex-wrap">
-    <a href="{% url 'shop:product_list' %}"
-       class="px-5 py-2.5 rounded-full text-sm tracking-wide transition {% if not category %}bg-sage-400 text-white shadow-sm{% else %}bg-white text-sage-600 border border-sage-200 hover:border-sage-400{% endif %} whitespace-nowrap">
-        Все букеты
-    </a>
-    {% for c in categories %}
-        <a href="{{ c.get_absolute_url }}"
-           class="px-5 py-2.5 rounded-full text-sm tracking-wide transition {% if category.slug == c.slug %}bg-sage-400 text-white shadow-sm{% else %}bg-white text-sage-600 border border-sage-200 hover:border-sage-400{% endif %} whitespace-nowrap">
-            {{ c.name }}
-        </a>
-    {% endfor %}
-</div>
+<section id="catalog"><div class="w">
+<h2 class="st r">Каталог</h2><p class="sd r">Выберите повод или настроение — остальное мы возьмём на себя.</p>
+<div class="tb r" id="chips"></div>
+<div class="gr" id="gr" aria-live="polite"></div></div></section>
 
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-    {% for product in products %}
-        <div class="bg-white rounded-3xl shadow-sm hover:shadow-lg transition-all duration-500 overflow-hidden group flex flex-col">
-            <a href="{{ product.get_absolute_url }}" class="block relative aspect-square overflow-hidden bg-sage-50">
-                {% if product.image %}
-                    <img src="{{ product.image.url }}" alt="{{ product.name }}"
-                         class="object-cover w-full h-full group-hover:scale-105 transition duration-700">
-                {% else %}
-                    <div class="flex items-center justify-center h-full text-sage-300 font-serif text-4xl">M</div>
-                {% endif %}
-                <div class="absolute inset-0 bg-sage-800/0 group-hover:bg-sage-800/5 transition duration-500"></div>
-            </a>
-            <div class="p-6 flex flex-col flex-grow">
-                <h3 class="text-xl font-serif text-sage-800 mb-3 leading-snug">
-                    <a href="{{ product.get_absolute_url }}" class="hover:text-sage-500 transition">{{ product.name }}</a>
-                </h3>
-                <div class="mt-auto flex justify-between items-center">
-                    <span class="text-xl font-serif font-medium text-sage-600">{{ product.price }} ₽</span>
-                    <form action="{% url 'shop:cart_add' product.id %}" method="post">
-                        {% csrf_token %}
-                        <button type="submit"
-                                class="bg-sage-100 hover:bg-sage-400 hover:text-white text-sage-700 px-5 py-2.5 rounded-full text-sm tracking-wide transition">
-                            В корзину
-                        </button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    {% empty %}
-        <div class="col-span-full text-center py-16 text-sage-400 font-serif text-2xl">
-            Скоро здесь появятся цветы…
-        </div>
-    {% endfor %}
-</div>
-{% endblock %}
+<section id="why" style="background:color-mix(in srgb,var(--acc) 6%,transparent)"><div class="w">
+<h2 class="st r">Почему Muzflowers</h2><p class="sd r">Мелочи, из которых складывается впечатление.</p>
+<div class="fs">
+<div class="f r"><span>🌷</span><h3>Только свежие</h3><p>Поставки каждое утро. Если букет не порадовал — заменим.</p></div>
+<div class="f r"><span>⚡</span><h3>Быстрая доставка</h3><p>От 60 минут по городу, точно ко времени, которое вы выберете.</p></div>
+<div class="f r"><span>📸</span><h3>Фото перед отправкой</h3><p>Покажем готовый букет, прежде чем он отправится к адресату.</p></div>
+<div class="f r"><span>💌</span><h3>Открытка в подарок</h3><p>Напишем ваш текст от руки и не станем раскрывать, от кого цветы.</p></div></div></div></section>
+
+<section id="reviews"><div class="w">
+<h2 class="st r">Отзывы</h2><p class="sd r">Примеры блоков — замените на настоящие отзывы клиентов.</p>
+<div class="fs">
+<div class="rv r"><p>«Букет был ровно такой, как на фото, и приехал вовремя. Мама счастлива!»</p><b>Анна</b></div>
+<div class="rv r"><p>«Пионы простояли почти две недели. Беру только здесь.»</p><b>Дмитрий</b></div>
+<div class="rv r"><p>«Приятно, что прислали фото перед доставкой. Очень внимательный сервис.»</p><b>Мария</b></div></div></div></section>
+</main>
+
+<footer id="contacts"><div class="w">
+<div><b>Muzflowers</b><br>Цветочный магазин<br>© 2026</div>
+<div><b>Контакты</b><br>+7 (000) 000-00-00<br>hello@muzflowers.example</div>
+<div><b>Адрес и часы</b><br>Ваш город, ул. Цветочная, 1<br>Ежедневно, 8:00–22:00</div></div></footer>
+
+<div class="ov" id="ov"></div>
+<aside class="dr" id="dr" aria-label="Корзина"><div class="dh">Корзина<button class="ib" id="cx" aria-label="Закрыть">✕</button></div>
+<div class="db"><div id="items"></div><div id="sum" hidden></div>
+<form id="fm" hidden>
+<input id="nm" placeholder="Ваше имя" required>
+<input id="ph" type="tel" placeholder="Телефон" required minlength="10">
+<input id="ad" placeholder="Адрес доставки" required>
+<input id="dt" type="date" required aria-label="Дата доставки">
+<select id="tm" aria-label="Время"><option>9:00–12:00</option><option>12:00–15:00</option><option>15:00–18:00</option><option>18:00–21:00</option></select>
+<textarea id="nt" rows="2" placeholder="Текст открытки (по желанию)"></textarea>
+<label class="cs"><input type="checkbox" id="cs" required> Согласен на обработку персональных данных для выполнения заказа</label>
+<button class="btn">Оформить заказ</button></form>
+<div class="ok" id="ok" hidden></div></div></aside>
+<div id="ts" role="status"></div>
+
+{{ products|json_script:"mz-products" }}
+{{ config|json_script:"mz-config" }}
+<script src="{% static 'shop/js/main.js' %}"></script></body></html>

@@ -1,18 +1,11 @@
 from django.urls import path
+
 from . import views
 
 app_name = 'shop'
 
 urlpatterns = [
-    path('', views.product_list, name='product_list'),
-    path('catalog/<slug:category_slug>/', views.product_list, name='product_list_by_category'),
-    path('product/<int:id>/<slug:slug>/', views.product_detail, name='product_detail'),
-    path('cart/', views.cart_detail, name='cart_detail'),
-    path('cart/add/<int:product_id>/', views.cart_add, name='cart_add'),
-    path('cart/remove/<int:product_id>/', views.cart_remove, name='cart_remove'),
-    path('checkout/', views.checkout, name='checkout'),
-    path('consultation/', views.consultation_view, name='consultation'),
-    path('quick-pick/', views.quick_pick_view, name='quick_pick'),
-    path('wishlist/', views.wishlist_view, name='wishlist'),
-    path('wishlist/toggle/<int:product_id>/', views.wishlist_toggle, name='wishlist_toggle'),
+    path('', views.index, name='index'),
+    path('api/promo/', views.promo_check, name='promo'),
+    path('api/order/', views.order_create, name='order'),
 ]

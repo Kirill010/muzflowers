@@ -1,198 +1,133 @@
-from django.shortcuts import render, redirect, get_object_or_404
-from django.views.decorators.http import require_POST
+import json
+import re
+from datetime import date, timedelta
+
+from django.conf import settings
 from django.core.cache import cache
-from django.contrib import messages
-from django.db.models import Avg
-from django.core.paginator import Paginator
-from .models import Category, Product, Order, OrderItem, ConsultationRequest
-from .cart import Cart
-from .forms import OrderCreateForm, ConsultationForm
-from .tasks import send_order_email_safe
-from promotions.models import PromoCode
+from django.db import transaction
+from django.http import JsonResponse
+from django.shortcuts import render
+from django.urls import reverse
+from django.utils import timezone
+from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.http import require_POST
+
+from .models import Order, OrderItem, Product, PromoCode
+
+FREE_FROM = getattr(settings, 'SHOP_FREE_DELIVERY_FROM', 3000)
+DELIVERY = getattr(settings, 'SHOP_DELIVERY_COST', 300)
+SLOTS = ['9:00–12:00', '12:00–15:00', '15:00–18:00', '18:00–21:00']
 
 
-def product_list(request, category_slug=None):
-    category = None
-    categories = cache.get('all_categories')
-    if categories is None:
-        categories = list(Category.objects.all())
-        cache.set('all_categories', categories, 3600)
+def _client_ip(request):
+    # Заголовок с реальным IP читаем, только если его явно указали в настройках
+    # (его должен выставлять ваш nginx, затирая клиентское значение).
+    header = getattr(settings, 'SHOP_CLIENT_IP_HEADER', None)
+    return (request.META.get(header, '') if header else '') or request.META.get('REMOTE_ADDR', '')
 
-    if category_slug:
-        category = get_object_or_404(Category, slug=category_slug)
-        cache_key = f'products_category_{category.id}'
-    else:
-        cache_key = 'products_all'
 
-    products = cache.get(cache_key)
-    if products is None:
-        products = Product.objects.filter(available=True)
-        if category:
-            products = products.filter(category=category)
-        products = list(products)
-        cache.set(cache_key, products, 900)
-
-    occasion = request.GET.get('occasion')
-    min_price = request.GET.get('min_price')
-    max_price = request.GET.get('max_price')
-    sort = request.GET.get('sort', 'name')
-
-    if occasion:
-        products = [p for p in products if p.occasion == occasion]
+def _throttled(request, scope, limit, window):
+    """Не больше `limit` запросов за `window` секунд с одного IP. Нужен общий кэш (Redis)."""
+    key = f'shop:{scope}:{_client_ip(request)}'
+    cache.add(key, 0, window)
     try:
-        if min_price:
-            products = [p for p in products if float(p.price) >= float(min_price)]
-        if max_price:
-            products = [p for p in products if float(p.price) <= float(max_price)]
-    except (ValueError, TypeError):
-        pass
-
-    if sort == 'price_asc':
-        products = sorted(products, key=lambda p: float(p.price))
-    elif sort == 'price_desc':
-        products = sorted(products, key=lambda p: float(p.price), reverse=True)
-    elif sort == 'rating':
-        products = sorted(products, key=lambda p: float(p.rating), reverse=True)
-
-    paginator = Paginator(products, 9)
-    page_obj = paginator.get_page(request.GET.get('page'))
-
-    return render(request, 'shop/index.html', {
-        'category': category,
-        'categories': categories,
-        'products': page_obj,
-        'occasion_choices': Product.OCCASION_CHOICES,
-        'current_filters': {
-            'occasion': occasion or '',
-            'min_price': min_price or '',
-            'max_price': max_price or '',
-            'sort': sort,
-        },
-    })
+        return cache.incr(key) > limit
+    except ValueError:
+        cache.set(key, 1, window)
+        return False
 
 
-def product_detail(request, id, slug):
-    product = get_object_or_404(Product, id=id, slug=slug, available=True)
-    reviews = product.reviews.filter(is_approved=True).order_by('-created_at')[:5]
-    avg = reviews.aggregate(r=Avg('rating'))['r'] or 0
+@ensure_csrf_cookie
+def index(request):
+    products = [
+        {
+            'id': p.id, 'n': p.name, 'd': p.description, 'p': p.price, 'c': p.category.name,
+            'a': p.color_a, 'b': p.color_b, 'k': p.petals, 't': p.badge,
+            'img': p.image.url if p.image else '',
+        }
+        for p in Product.objects.filter(is_active=True).select_related('category')
+    ]
+    config = {
+        'free': FREE_FROM, 'delivery': DELIVERY,
+        'promoUrl': reverse('shop:promo'), 'orderUrl': reverse('shop:order'),
+    }
+    return render(request, 'shop/index.html', {'products': products, 'config': config})
 
-    from reviews.forms import ReviewForm
-    return render(request, 'shop/product_detail.html', {
-        'product': product,
-        'reviews': reviews,
-        'avg_rating': round(avg, 1),
-        'review_form': ReviewForm(),
-    })
+
+def _body(request):
+    try:
+        data = json.loads(request.body)
+    except ValueError:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _find_promo(code):
+    promo = PromoCode.objects.filter(code__iexact=str(code).strip()).first() if code else None
+    return promo if promo and promo.is_valid() else None
+
+
+def _error(msg, status=400):
+    return JsonResponse({'ok': False, 'error': msg}, status=status)
 
 
 @require_POST
-def cart_add(request, product_id):
-    cart = Cart(request)
-    product = get_object_or_404(Product, id=product_id)
-    quantity = int(request.POST.get('quantity', 1))
-    cart.add(product=product, quantity=quantity)
-    messages.success(request, f'«{product.name}» добавлен в корзину')
-    return redirect('shop:cart_detail')
+def promo_check(request):
+    if _throttled(request, 'promo', 15, 600):
+        return _error('Слишком много попыток. Попробуйте через несколько минут', 429)
+    promo = _find_promo(_body(request).get('code'))
+    return JsonResponse({'ok': bool(promo), 'percent': promo.percent if promo else 0})
 
 
-def cart_remove(request, product_id):
-    cart = Cart(request)
-    product = get_object_or_404(Product, id=product_id)
-    cart.remove(product)
-    return redirect('shop:cart_detail')
+@require_POST
+def order_create(request):
+    if _throttled(request, 'order', 10, 3600):
+        return _error('Слишком много заказов с одного адреса. Позвоните нам', 429)
+    d = _body(request)
+    name = str(d.get('name', '')).strip()[:100]
+    phone = str(d.get('phone', '')).strip()[:30]
+    address = str(d.get('address', '')).strip()[:255]
+    note = str(d.get('note', '')).strip()[:500]
+    slot = d.get('slot') if d.get('slot') in SLOTS else SLOTS[0]
+    try:
+        when = date.fromisoformat(str(d.get('date', '')))
+    except ValueError:
+        when = None
 
+    if not name or not address or len(re.sub(r'\D', '', phone)) < 10:
+        return _error('Проверьте имя, телефон и адрес')
+    if d.get('consent') is not True:
+        return _error('Нужно согласие на обработку персональных данных')
+    today = timezone.localdate()
+    if not when or not today <= when <= today + timedelta(days=90):
+        return _error('Выберите дату доставки в ближайшие 90 дней')
 
-def cart_detail(request):
-    cart = Cart(request)
-    return render(request, 'shop/cart_detail.html', {'cart': cart})
-
-
-def checkout(request):
-    cart = Cart(request)
-    if request.method == 'POST':
-        form = OrderCreateForm(request.POST)
-        if form.is_valid():
-            order = form.save(commit=False)
-            if request.user.is_authenticated:
-                order.user = request.user
-
-            promo_code = form.cleaned_data.get('promo_code')
-            if promo_code:
-                try:
-                    promo = PromoCode.objects.get(code=promo_code, is_active=True)
-                    if promo.is_valid():
-                        order.promo_code = promo_code
-                        total = sum(item['total_price'] for item in cart)
-                        order.discount_amount = promo.calculate_discount(total)
-                        promo.used_count += 1
-                        promo.save()
-                except PromoCode.DoesNotExist:
-                    pass
-
-            order.save()
-            for item in cart:
-                OrderItem.objects.create(
-                    order=order,
-                    product=item['product'],
-                    price=item['price'],
-                    quantity=item['quantity'],
-                )
-            cart.clear()
-            send_order_email_safe(order.id)
-            return render(request, 'shop/order_created.html', {'order': order})
-    else:
-        form = OrderCreateForm()
-    return render(request, 'shop/checkout.html', {'cart': cart, 'form': form})
-
-
-def consultation_view(request):
-    if request.method == 'POST':
-        form = ConsultationForm(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Спасибо! Флорист свяжется с вами в ближайшее время.')
-            return redirect('shop:product_list')
-    else:
-        form = ConsultationForm()
-    return render(request, 'shop/consultation.html', {'form': form})
-
-
-def quick_pick_view(request):
-    occasion = request.GET.get('occasion')
-    budget = request.GET.get('budget')
-
-    products = Product.objects.filter(available=True)
-    if occasion:
-        products = products.filter(occasion=occasion)
-    if budget:
+    qty = {}
+    items = d.get('items')
+    for it in (items[:30] if isinstance(items, list) else []):
         try:
-            products = products.filter(price__lte=float(budget))
-        except ValueError:
-            pass
-    products = products.order_by('-rating')[:6]
+            pid, n = int(it['id']), int(it['qty'])
+        except (KeyError, TypeError, ValueError):
+            continue
+        if 0 < n <= 50:
+            qty[pid] = qty.get(pid, 0) + n
+    products = list(Product.objects.filter(is_active=True, id__in=qty))
+    if not products:
+        return _error('Корзина пуста или букеты больше недоступны')
 
-    return render(request, 'shop/quick_pick.html', {
-        'products': products,
-        'occasion_choices': Product.OCCASION_CHOICES,
-    })
+    # Цены берутся только из БД — данным от клиента не доверяем.
+    subtotal = sum(p.price * qty[p.id] for p in products)
+    promo = _find_promo(d.get('promo'))
+    discount = round(subtotal * promo.percent / 100) if promo else 0
+    delivery = 0 if subtotal - discount >= FREE_FROM else DELIVERY
 
-
-@require_POST
-def wishlist_toggle(request, product_id):
-    product = get_object_or_404(Product, id=product_id)
-    wl = request.session.get('wishlist', [])
-    if product_id in wl:
-        wl.remove(product_id)
-        messages.info(request, f'«{product.name}» удалён из избранного')
-    else:
-        wl.append(product_id)
-        messages.success(request, f'«{product.name}» добавлен в избранное')
-    request.session['wishlist'] = wl
-    request.session.modified = True
-    return redirect('shop:product_detail', id=product.id, slug=product.slug)
-
-
-def wishlist_view(request):
-    wl_ids = request.session.get('wishlist', [])
-    products = Product.objects.filter(id__in=wl_ids, available=True)
-    return render(request, 'shop/wishlist.html', {'products': products})
+    with transaction.atomic():
+        order = Order.objects.create(
+            name=name, phone=phone, address=address, delivery_date=when, delivery_slot=slot,
+            card_text=note, promo_code=promo.code if promo else '', subtotal=subtotal,
+            discount=discount, delivery_cost=delivery, total=subtotal - discount + delivery,
+        )
+        OrderItem.objects.bulk_create(
+            OrderItem(order=order, product=p, name=p.name, price=p.price, qty=qty[p.id]) for p in products
+        )
+    return JsonResponse({'ok': True, 'number': order.pk})
