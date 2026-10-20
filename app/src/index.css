@@ -1,0 +1,228 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --paper: #f2edda;
+  --paper-deep: #e9e3cb;
+  --ink: #064013;
+  --olive: #555d46;
+  --terra: #d97e4a;
+  --terra-soft: rgba(217, 126, 74, 0.14);
+  --line: rgba(6, 64, 19, 0.18);
+  --line-strong: rgba(6, 64, 19, 0.42);
+  --shadow-warm: 0 24px 60px -20px rgba(6, 64, 19, 0.22);
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    background-color: var(--paper);
+    color: var(--ink);
+    font-family: 'Manrope', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  ::selection {
+    background: var(--ink);
+    color: var(--paper);
+  }
+}
+
+/* ---------- typography ---------- */
+.font-display {
+  font-family: 'Cormorant Garamond', 'Manrope', Georgia, serif;
+}
+.micro-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+
+/* ---------- paper grain ---------- */
+.paper-grain::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background:
+    radial-gradient(60% 50% at 20% 10%, rgba(233, 227, 203, 0.55), transparent 70%),
+    radial-gradient(50% 60% at 82% 72%, rgba(217, 126, 74, 0.05), transparent 70%);
+}
+
+/* ---------- buttons ---------- */
+.btn-major {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  padding: 0.85rem 1.9rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: var(--ink);
+  background: transparent;
+  transition: background 180ms ease, color 180ms ease;
+  cursor: pointer;
+}
+.btn-major:hover {
+  background: var(--ink);
+  color: var(--paper);
+}
+.btn-major .arrow {
+  transition: transform 160ms ease;
+  display: inline-block;
+}
+.btn-major:hover .arrow {
+  transform: translateX(4px);
+}
+
+.btn-terra {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1.5px solid var(--terra);
+  border-radius: 999px;
+  padding: 0.85rem 1.9rem;
+  font-size: 0.82rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 800;
+  color: var(--paper);
+  background: var(--terra);
+  transition: background 180ms ease, color 180ms ease;
+  cursor: pointer;
+}
+.btn-terra:hover {
+  background: transparent;
+  color: var(--terra);
+}
+.btn-terra .arrow {
+  transition: transform 160ms ease;
+  display: inline-block;
+}
+.btn-terra:hover .arrow {
+  transform: translateX(4px);
+}
+
+/* ---------- chips ---------- */
+.chip {
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  padding: 0.45rem 1.1rem;
+  font-size: 0.74rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--ink);
+  transition: all 160ms ease;
+  cursor: pointer;
+  background: transparent;
+  white-space: nowrap;
+}
+.chip:hover {
+  border-color: var(--ink);
+}
+.chip.active {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+
+/* ---------- cards ---------- */
+.product-card {
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-warm);
+}
+
+/* ---------- scroll reveal ---------- */
+.reveal {
+  opacity: 0;
+  transform: translateY(36px);
+  transition: opacity 700ms cubic-bezier(0.22, 1, 0.36, 1), transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ---------- marquee ---------- */
+@keyframes marquee-left {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee-left 36s linear infinite;
+}
+
+/* ---------- cart drawer ---------- */
+@keyframes drawer-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes drawer-out {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.drawer-enter { animation: drawer-in 320ms cubic-bezier(0.22, 1, 0.36, 1) forwards; }
+.drawer-exit { animation: drawer-out 260ms ease-in forwards; }
+.backdrop-enter { animation: fade-in 260ms ease forwards; }
+.backdrop-exit { animation: fade-in 200ms ease reverse forwards; }
+
+/* ---------- inputs ---------- */
+.field {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 0.8rem 1rem;
+  font-size: 0.95rem;
+  color: var(--ink);
+  transition: box-shadow 160ms ease, border-color 160ms ease;
+  outline: none;
+}
+.field::placeholder {
+  color: rgba(6, 64, 19, 0.38);
+}
+.field:focus {
+  border-color: var(--terra);
+  box-shadow: 0 0 0 3px var(--terra-soft);
+}
+
+/* ---------- quantity button ---------- */
+.qty-btn {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  transition: all 150ms ease;
+  line-height: 1;
+}
+.qty-btn:hover {
+  background: var(--ink);
+  color: var(--paper);
+  border-color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1; transform: none; transition: none; }
+  .marquee-track { animation: none; }
+}
