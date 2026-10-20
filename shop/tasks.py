@@ -7,7 +7,6 @@ from .models import Order
 
 
 def _send_order_email(order_id):
-    """Синхронная отправка письма."""
     try:
         order = Order.objects.get(id=order_id)
     except Order.DoesNotExist:
@@ -17,7 +16,7 @@ def _send_order_email(order_id):
     context = {
         'order': order,
         'items': order.items.all(),
-        'total': order.get_total_cost(),
+        'total': order.get_final_cost(),
     }
     html_message = render_to_string('emails/order_confirmation.html', context)
     plain_message = strip_tags(html_message)
@@ -35,17 +34,11 @@ def _send_order_email(order_id):
 
 @shared_task
 def send_order_confirmation_email(order_id):
-    """Celery-задача для отправки письма."""
     return _send_order_email(order_id)
 
 
 def send_order_email_safe(order_id):
-    """
-    Безопасная отправка: пробуем через Celery,
-    при ошибке (Redis/Celery не запущен) — отправляем синхронно.
-    """
     try:
         send_order_confirmation_email.delay(order_id)
     except Exception:
-        # Celery/Redis недоступен — отправляем сразу
         _send_order_email(order_id)

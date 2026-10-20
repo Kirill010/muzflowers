@@ -18,9 +18,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sitemaps',
     'django_celery_beat',
+    'taggit',
     'shop',
     'accounts',
+    'promotions',
+    'reviews',
+    'support',
+    'delivery',
 ]
 
 MIDDLEWARE = [
@@ -48,6 +54,8 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
                 'shop.context_processors.cart',
+                'shop.context_processors.categories',
+                'shop.context_processors.wishlist',
             ],
         },
     },
@@ -55,19 +63,17 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'muzflowers.wsgi.application'
 
-# ---------- DATABASE ----------
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
         'NAME': env('DB_NAME', default='muzflowers_db'),
         'USER': env('DB_USER', default='muzflowers_user'),
-        'PASSWORD': env('DB_PASSWORD', default=''),
+        'PASSWORD': env('DB_PASSWORD', default='muz'),
         'HOST': env('DB_HOST', default='localhost'),
         'PORT': env('DB_PORT', default='5432'),
     }
 }
 
-# ---------- CELERY ----------
 CELERY_BROKER_URL = env('CELERY_BROKER_URL', default='redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = env('CELERY_RESULT_BACKEND', default='redis://localhost:6379/0')
 CELERY_ACCEPT_CONTENT = ['application/json']
@@ -76,9 +82,7 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'Europe/Moscow'
 CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
-# ---------- CACHE ----------
 USE_REDIS = env.bool('USE_REDIS', default=False)
-
 if USE_REDIS:
     CACHES = {
         "default": {
@@ -94,15 +98,15 @@ else:
         }
     }
 
-# ---------- EMAIL ----------
 EMAIL_BACKEND = env('EMAIL_BACKEND',
                     default='django.core.mail.backends.console.EmailBackend')
-EMAIL_HOST = env('EMAIL_HOST', default='smtp.gmail.com')
-EMAIL_PORT = env.int('EMAIL_PORT', default=587)
-EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=True)
+EMAIL_HOST = env('EMAIL_HOST', default='smtp.yandex.ru')
+EMAIL_PORT = env.int('EMAIL_PORT', default=465)
+EMAIL_USE_SSL = env.bool('EMAIL_USE_SSL', default=True)
+EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS', default=False)
 EMAIL_HOST_USER = env('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD', default='')
-DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@muzflowers.com')
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default='noreply@muzflowers.ru')
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -136,9 +140,9 @@ STORAGES = {
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 CART_SESSION_ID = 'cart'
+WISHLIST_SESSION_ID = 'wishlist'
 
-# ---------- SESSION / CSRF для production ----------
 SESSION_COOKIE_SECURE = not DEBUG
 CSRF_COOKIE_SECURE = not DEBUG
-SECURE_SSL_REDIRECT = False  # включи после HTTPS
-SECURE_HSTS_SECONDS = 0      # включи после HTTPS
+SECURE_SSL_REDIRECT = False
+SECURE_HSTS_SECONDS = 0
