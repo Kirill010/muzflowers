@@ -1,25 +1,56 @@
-{% load static %}
-<!doctype html>
-<html lang="ru"><head><meta charset="utf-8">
+{% load static shop_tags %}<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>{% block title %}Muzflowers — цветочный магазин{% endblock %}</title>
-<meta name="description" content="Свежие букеты и композиции с доставкой за 60 минут.">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;800&family=Playfair+Display:ital,wght@0,600;1,500&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="{% static 'shop/css/main.css' %}"><link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💐</text></svg>">
-<script>document.documentElement.classList.add('js')</script>
-</head>
-<body>
-<header><div class="w"><a class="lg" href="{% url 'shop:index' %}">Muz<i>flowers</i> ✿</a>
-<nav><a href="{% url 'shop:index' %}#catalog">Каталог</a><a href="{% url 'shop:index' %}#why">Преимущества</a><a href="{% url 'shop:index' %}#reviews">Отзывы</a><a href="#contacts">Контакты</a></nav>
-<button class="ib" id="th" aria-label="Сменить тему">◐</button>
-{% if user.is_authenticated %}<a class="ib" href="{% url 'accounts:profile' %}">👤 <span class="un">{{ user.first_name|default:user.username }}</span></a>{% else %}<a class="ib" href="{% url 'accounts:login' %}">Войти</a>{% endif %}{% block cartbtn %}{% endblock %}</div></header>
-{% block content %}{% endblock %}
-<footer id="contacts"><div class="w">
-<div><b>Muzflowers</b><br>Цветочный магазин<br>© {% now "Y" %}</div>
-<div><b>Контакты</b><br>{{ site.phone }}<br>{{ site.email }}</div>
-<div><b>Адрес и часы</b><br>{{ site.address }}<br>{{ site.hours }}</div><div><a href="{% url 'shop:privacy' %}">Политика конфиденциальности</a></div></div></footer>
-{% block drawer %}{% endblock %}
+<title>{% block title %}{{ site.shop_name }} — цветочный магазин у Курского вокзала в Москве{% endblock %}</title>
+<meta name="description" content="{% block description %}Букеты из цветов с собственного оптового склада: готовые за 2 минуты у Курского вокзала, доставка по Москве, музыкальная открытка с песней по QR-коду.{% endblock %}">
+<meta name="robots" content="{% block robots %}index, follow{% endblock %}">
+<link rel="canonical" href="{% block canonical %}{{ canonical_url }}{% endblock %}">
+<meta name="theme-color" content="#4a6340">
+<meta name="csrf-token" content="{{ csrf_token }}">
+<meta property="og:site_name" content="{{ site.shop_name }}">
+<meta property="og:type" content="{% block og_type %}website{% endblock %}">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:title" content="{% block og_title %}{{ site.shop_name }} — цветочный магазин у Курского вокзала{% endblock %}">
+<meta property="og:description" content="{% block og_description %}Букеты из цветов с собственного оптового склада. Готовые — за 2 минуты, доставка по Москве, музыкальная открытка по QR-коду.{% endblock %}">
+<meta property="og:url" content="{{ canonical_url }}">
+{% if og_image %}<meta property="og:image" content="{{ og_image }}">
+<meta name="twitter:card" content="summary_large_image">{% endif %}
+<link rel="icon" href="{% static 'shop/img/favicon.svg' %}" type="image/svg+xml">
+<link rel="icon" href="{% static 'shop/img/favicon-32.png' %}" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="{% static 'shop/img/apple-touch-icon.png' %}">
+<link rel="manifest" href="{% url 'shop:manifest' %}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&family=Manrope:wght@400;500;600;700;800&display=swap">
 <script src="{% static 'shop/js/theme.js' %}"></script>
+<link rel="stylesheet" href="{% static 'shop/css/site.css' %}">
+{% block head %}{% endblock %}
+{% for block in jsonld %}<script type="application/ld+json">{{ block|safe }}</script>
+{% endfor %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+{% include 'includes/_sprite.html' %}
+<a class="skip" href="#main">К содержимому</a>
+
+{% if site.orders_paused %}<div class="announce announce--warn" role="status"><div class="wrap">{{ site.pause_message }}</div></div>
+{% elif site.announcement %}<div class="announce" role="status"><div class="wrap">{{ site.announcement }}</div></div>{% endif %}
+
+{% include 'includes/_header.html' %}
+
+<main id="main" tabindex="-1">
+  {% if messages %}<div class="wrap flashes">{% for message in messages %}<p class="flash flash--{{ message.level_tag }}" role="status">{{ message }}</p>{% endfor %}</div>{% endif %}
+  {% block content %}{% endblock %}
+</main>
+
+{% include 'includes/_footer.html' %}
+{% block drawer %}{% include 'includes/_drawer.html' %}{% endblock %}
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+{% if site.metrika_id %}<meta name="metrika-id" content="{{ site.metrika_id }}">
+<script src="{% static 'shop/js/metrika.js' %}" defer></script>{% endif %}
+<script src="{% static 'shop/js/core.js' %}" defer></script>
 {% block scripts %}{% endblock %}
-</body></html>
+</body>
+</html>

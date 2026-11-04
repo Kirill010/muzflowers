@@ -1,14 +1,26 @@
 #!/usr/bin/env bash
+# Запуск сайта MuzFlowers на Mac / Linux:  ./start.sh
 set -e
 cd "$(dirname "$0")"
-[ -d .venv ] || python3 -m venv .venv
-. .venv/bin/activate
-pip install -q -r requirements.txt
+
+PY=python3
+command -v "$PY" >/dev/null 2>&1 || { echo "Не найден Python 3. Установите его: https://www.python.org/downloads/"; exit 1; }
+
+[ -d .venv ] || { echo "[1/4] Готовлю рабочую папку для программ..."; "$PY" -m venv .venv; }
+echo "[2/4] Проверяю нужные программы..."
+.venv/bin/python -m pip install -q --disable-pip-version-check -r requirements.txt
 [ -f .env ] || cp .env.example .env
-python manage.py makemigrations shop --noinput
-python manage.py migrate --noinput
-python manage.py seed_shop
+
+echo "[3/4] Готовлю базу данных..."
+.venv/bin/python manage.py migrate --noinput
+.venv/bin/python manage.py seed_shop
+
 echo
-echo "===== Сайт: http://127.0.0.1:8000     Админка: http://127.0.0.1:8000/admin/ ====="
+echo "==================================================="
+echo " Готово!  Сайт:             http://127.0.0.1:8000"
+echo "          Панель владельца: http://127.0.0.1:8000/admin/"
+echo " При первом входе в панель придумайте логин и пароль."
+echo " Остановить сайт: Ctrl + C"
+echo "==================================================="
 echo
-python manage.py runserver
+exec .venv/bin/python manage.py runserver 127.0.0.1:8000

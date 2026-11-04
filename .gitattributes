@@ -1,0 +1,3 @@
+# Чтобы start.bat всегда запускался на Windows, а start.sh — на Mac и Linux
+*.bat text eol=crlf
+*.sh text eol=lf

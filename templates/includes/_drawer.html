@@ -1,0 +1,13 @@
+{% load shop_tags %}
+<div class="drawer" id="cart-drawer" data-drawer data-fragment-url="{% url 'shop:cart_fragment' %}" hidden>
+  <div class="drawer__shade" data-cart-close></div>
+  <aside class="drawer__panel" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
+    <header class="drawer__head">
+      <h2 class="drawer__title" id="drawer-title">Корзина</h2>
+      <button class="icon-btn" type="button" data-cart-close aria-label="Закрыть корзину">{% icon 'close' %}</button>
+    </header>
+    <div class="drawer__body" data-cart-body>
+      {% include 'includes/_cart_body.html' %}
+    </div>
+  </aside>
+</div>

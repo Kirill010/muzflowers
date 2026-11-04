@@ -1,0 +1,15 @@
+{% extends 'base.html' %}
+{% load shop_tags %}
+{% block title %}Корзина — {{ site.shop_name }}{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+{% block drawer %}{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="wrap wrap--narrow">
+    <h1 class="display display--md">Корзина</h1>
+    <div class="cart-page" data-cart-body>
+      {% include 'includes/_cart_body.html' %}
+    </div>
+  </div>
+</section>
+{% endblock %}

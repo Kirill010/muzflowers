@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% load static shop_tags %}
+{% block title %}Заказ №{{ order.pk }} — {{ site.shop_name }}{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="wrap wrap--narrow">
+    <header class="order-hero">
+      {% if just_created %}
+      <div class="order-hero__icon">{% icon 'check' %}</div>
+      <h1 class="display display--md">Спасибо, {{ order.name }}! Заказ №{{ order.pk }} принят</h1>
+      <p class="lead">Мы позвоним или напишем, чтобы подтвердить детали. Эта страница всегда покажет, как идёт заказ.</p>
+      {% else %}
+      <h1 class="display display--md">Заказ №{{ order.pk }}</h1>
+      <p class="lead">{{ order.when_display|capfirst }} · {{ order.get_receive_method_display }}</p>
+      {% endif %}
+    </header>
+
+    {% if order.status == 'canceled' %}
+    <div class="notice notice--error">{% icon 'info' %} <span>Заказ отменён. Если это неожиданно — позвоните нам: <a href="{{ site.phone_href }}">{{ site.phone }}</a>.</span></div>
+    {% else %}
+    <ol class="timeline" aria-label="Статус заказа">
+      {% for code, label in steps %}
+      <li class="timeline__step{% if order.status == code %} is-current{% endif %}" data-step="{{ code }}">
+        <span class="timeline__dot">{% icon 'check' %}</span><span class="timeline__label">{{ label }}</span>
+      </li>
+      {% endfor %}
+    </ol>
+    {% endif %}
+
+    {% if order.status != 'canceled' %}
+    <div class="panel panel--plain">
+      <h2 class="panel__title">{% icon 'card' %} Оплата</h2>
+      {% if order.is_paid %}
+        <p class="status-ok">{% icon 'check' %} Оплачено. Спасибо!</p>
+      {% elif order.payment_method == 'online' %}
+        <p>Заказ ждёт оплаты картой или через СБП.</p>
+        {% if can_pay %}<a class="btn btn--primary" href="{% url 'shop:order_pay' order.token %}">Оплатить {{ order.total|rub }} {% icon 'arrow' %}</a>{% endif %}
+      {% elif order.payment_method == 'transfer' %}
+        {% if site.payment_details %}
+        <p>Переведите <b>{{ order.total|rub }}</b> по реквизитам и напишите нам в Telegram или на почту — мы отметим оплату.</p>
+        <div class="requisites">{{ site.payment_details|linebreaksbr }}</div>
+        {% else %}
+        <p>Мы свяжемся с вами в ближайшее время и отправим ссылку на оплату — <b>{{ order.total|rub }}</b>.</p>
+        {% endif %}
+      {% else %}
+        <p>Оплата при получении — <b>{{ order.total|rub }}</b>. Можно картой или наличными.</p>
+      {% endif %}
+      {% if order.prepay_required and not order.is_paid %}
+      <p class="notice">{% icon 'info' %} <span>Заказ на другой день — только по предоплате. Пока он не оплачен, мы не начинаем его собирать.</span></p>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <div class="panel panel--plain">
+      <h2 class="panel__title">Детали</h2>
+      <dl class="details">
+        <div><dt>Когда</dt><dd>{{ order.when_display|capfirst }}</dd></div>
+        <div><dt>{% if order.receive_method == 'delivery' %}Куда{% else %}Где забрать{% endif %}</dt><dd>{{ order.place_display }}{% if order.shop and order.shop.landmark %}<br><small>{{ order.shop.landmark }}</small>{% endif %}</dd></div>
+        {% if order.recipient_name %}<div><dt>Получатель</dt><dd>{{ order.recipient_name }}, {{ order.display_recipient_phone }}</dd></div>{% endif %}
+        <div><dt>Заказчик</dt><dd>{{ order.name }}, {{ order.display_phone }}</dd></div>
+        {% if order.card_text %}<div><dt>Открытка</dt><dd>«{{ order.card_text }}»</dd></div>{% endif %}
+        {% if order.comment %}<div><dt>Пожелания</dt><dd>{{ order.comment }}</dd></div>{% endif %}
+      </dl>
+      <ul class="summary__lines">
+        {% for item in order.items.all %}<li><span class="summary__name">{{ item.full_name }} <small>× {{ item.qty }}</small></span><span class="summary__sum">{{ item.line_total|rub }}</span></li>{% endfor %}
+        {% for addon in order.addons.all %}<li class="summary__addon"><span class="summary__name">{{ addon.name }}{% if addon.note %}: {{ addon.note }}{% endif %}</span><span class="summary__sum">{% if addon.price %}{{ addon.price|rub }}{% else %}бесплатно{% endif %}</span></li>{% endfor %}
+      </ul>
+      <dl class="totals">
+        {% if order.discount %}<div class="totals__discount"><dt>Скидка {{ order.promo_code }}</dt><dd>−{{ order.discount|rub }}</dd></div>{% endif %}
+        {% if order.delivery_cost %}<div><dt>Доставка</dt><dd>{{ order.delivery_cost|rub }}</dd></div>{% endif %}
+        <div class="totals__sum"><dt>Итого</dt><dd>{{ order.total|rub }}</dd></div>
+      </dl>
+    </div>
+
+    <div class="panel panel--plain">
+      <h2 class="panel__title">Есть вопросы?</h2>
+      <p>Позвоните <a href="{{ site.phone_href }}">{{ site.phone }}</a>{% if site.telegram_url %} или напишите в <a href="{{ site.telegram_url }}" target="_blank" rel="noopener">Telegram</a>{% endif %}. Назовите номер заказа — №{{ order.pk }}.</p>
+      <p><a class="link-arrow" href="{% url 'shop:care' %}">Как ухаживать за цветами {% icon 'arrow' %}</a></p>
+    </div>
+
+    <p class="center"><a class="btn btn--ghost" href="{% url 'shop:catalog' %}">Вернуться в каталог</a></p>
+  </div>
+</section>
+{% endblock %}

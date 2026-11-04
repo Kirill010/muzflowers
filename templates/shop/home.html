@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+{% load static shop_tags %}
+{% block body_class %}page-home{% endblock %}
+{% block content %}
+
+<section class="hero">
+  <div class="wrap hero__grid">
+    <div class="hero__text">
+      <p class="eyebrow">Цветочный магазин · у Курского вокзала</p>
+      <h1 class="display display--xl">Цветы, которые <em>звучат</em></h1>
+      <p class="lead">Букеты из цветов с собственного оптового склада. Готовые — за 2 минуты, на заказ — за 15, с доставкой по Москве. И открытка, которая играет вашу песню.</p>
+      <div class="hero__cta">
+        <a class="btn btn--primary btn--lg" href="{% url 'shop:catalog' %}">Выбрать букет {% icon 'arrow' %}</a>
+        <a class="btn btn--ghost btn--lg" href="{% url 'shop:music' %}">{% icon 'music' %} Музыкальная открытка</a>
+      </div>
+      <ul class="trust">
+        <li>{% icon 'leaf' %} Цветы с нашего оптового склада</li>
+        <li>{% icon 'clock' %} Соберём за 15 минут</li>
+        <li>{% icon 'music' %} Открытка с песней по QR</li>
+      </ul>
+    </div>
+
+    <div class="hero__art" aria-hidden="true">
+      <div class="hero__disc hero__disc--pink"></div>
+      <div class="hero__disc hero__disc--sage"></div>
+      <img class="hero__bouquet" src="{% url 'shop:art' 'mixed' 17 'fca8c0' 'c2416c' %}" alt="" width="400" height="500" fetchpriority="high">
+      <svg class="hero__ring" viewBox="0 0 200 200">
+        <defs><path id="ring" d="M100,100 m-84,0 a84,84 0 1,1 168,0 a84,84 0 1,1 -168,0"/></defs>
+        <text><textPath href="#ring">Цветы, которые звучат · Muz Flowers · Цветы, которые звучат · Muz Flowers ·</textPath></text>
+      </svg>
+      <span class="petal petal--1"></span><span class="petal petal--2"></span><span class="petal petal--3"></span>
+      <span class="petal petal--4"></span><span class="petal petal--5"></span><span class="petal petal--6"></span>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <p class="open-now" data-open-now data-open="{{ site.open_time|time:'H:i' }}" data-close="{{ site.close_time|time:'H:i' }}">
+      <span class="open-now__dot"></span>
+      <span data-open-now-text>{{ site.hours_display }}</span>
+      {% for shop in shops|slice:":1" %}{% if shop.address %}<span class="open-now__sep">·</span><span>{{ shop.address }}</span>{% endif %}{% endfor %}
+    </p>
+  </div>
+</section>
+
+<div class="marquee" aria-hidden="true">
+  <ul class="marquee__track">
+    <li>Готовые букеты за 2 минуты</li><li>Соберём за 15 минут</li><li>Доставка по Москве</li><li>Музыкальная открытка</li><li>Предзаказ на праздники</li><li>Цветы с оптового склада</li>
+    <li>Готовые букеты за 2 минуты</li><li>Соберём за 15 минут</li><li>Доставка по Москве</li><li>Музыкальная открытка</li><li>Предзаказ на праздники</li><li>Цветы с оптового склада</li>
+  </ul>
+</div>
+
+{% if ready %}
+<section class="section">
+  <div class="wrap">
+    <header class="section__head">
+      <p class="eyebrow">В магазине у Курской</p>
+      <h2 class="display">Готовые букеты <em>за 2 минуты</em></h2>
+      <p class="lead">В магазине их можно взять сразу. Заказали на сайте — заберёте через {{ site.pickup_lead_minutes }} минут. Упаковка уже в цене.</p>
+    </header>
+    <div class="grid grid--4">{% for p in ready %}{% include 'includes/_card.html' %}{% endfor %}</div>
+  </div>
+</section>
+{% endif %}
+
+{% if featured %}
+<section class="section section--tint">
+  <div class="wrap">
+    <header class="section__head section__head--row">
+      <div>
+        <p class="eyebrow">Каталог</p>
+        <h2 class="display">Букеты на любой повод</h2>
+      </div>
+      <a class="link-arrow" href="{% url 'shop:catalog' %}">Весь каталог {% icon 'arrow' %}</a>
+    </header>
+    <nav class="chips" aria-label="Разделы каталога">
+      <a class="chip is-active" href="{% url 'shop:catalog' %}">Все</a>
+      {% for c in categories %}<a class="chip" href="{{ c.get_absolute_url }}">{{ c.name }}</a>{% endfor %}
+    </nav>
+    <div class="grid grid--4">{% for p in featured %}{% include 'includes/_card.html' %}{% endfor %}</div>
+  </div>
+</section>
+{% endif %}
+
+<section class="section section--dark music" id="music" data-music>
+  <div class="wrap music__grid">
+    <div class="music__text">
+      <p class="eyebrow">Музыкальная открытка</p>
+      <h2 class="display">Цветы, которые <em>звучат</em></h2>
+      <p class="lead">К любому букету — открытка с QR-кодом. Получатель наведёт камеру телефона, и зазвучит песня, которую выбрали вы.</p>
+      <ol class="steps steps--inline">
+        <li><b>1</b><span>Выберите песню — в корзине напишите название и исполнителя или вставьте ссылку.</span></li>
+        <li><b>2</b><span>Мы напечатаем открытку с вашим текстом и QR-кодом.</span></li>
+        <li><b>3</b><span>Получатель наведёт камеру — и букет зазвучит.</span></li>
+      </ol>
+      <div class="music__cta">
+        <a class="btn btn--accent btn--lg" href="{% url 'shop:catalog' %}">Выбрать букет {% icon 'arrow' %}</a>
+        {% if music_addon %}<span class="music__price">{{ music_addon.price|rub }} к любому букету</span>{% endif %}
+      </div>
+    </div>
+    <div class="music__demo">
+      <div class="postcard" aria-hidden="true">
+        <div class="postcard__text"><span>Для тебя</span><b>С днём рождения!</b></div>
+        <svg class="postcard__qr" viewBox="0 0 11 11" shape-rendering="crispEdges">
+          <path d="M0 0h3v3H0zM8 0h3v3H8zM0 8h3v3H0z" fill="none" stroke="currentColor" stroke-width="1"/>
+          <path d="M1 1h1v1H1zM9 1h1v1H9zM1 9h1v1H1zM4 0h1v2H4zM6 1h1v1H6zM4 3h2v1H4zM7 3h1v2H7zM9 4h2v1H9zM0 4h2v1H0zM3 5h1v2H3zM5 5h2v1H5zM8 6h1v2H8zM10 7h1v1h-1zM5 7h1v2H5zM7 9h2v1H7zM10 9h1v2h-1zM4 10h2v1H4z" fill="currentColor"/>
+        </svg>
+        <span class="eq"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+      </div>
+      <button class="btn btn--light" type="button" data-music-play>{% icon 'play' %} Услышать, как это бывает</button>
+      <p class="music__hint">Короткая мелодия сыграет прямо в браузере. Это просто пример — у вас будет ваша песня.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <header class="section__head">
+      <p class="eyebrow">Как это работает</p>
+      <h2 class="display">Три шага до <em>букета</em></h2>
+    </header>
+    <ol class="how">
+      <li class="how__item" data-reveal>{% icon 'search' 'how__icon' %}<h3>Выбираете</h3><p>Букет в каталоге или по телефону. Оформить заказ можно за пару минут.</p></li>
+      <li class="how__item" data-reveal>{% icon 'flower' 'how__icon' %}<h3>Мы собираем</h3><p>Флорист соберёт букет за 15 минут и проверит каждый цветок перед выдачей.</p></li>
+      <li class="how__item" data-reveal>{% icon 'truck' 'how__icon' %}<h3>Забираете или ждёте курьера</h3><p>Самовывоз у Курского вокзала или доставка по Москве к удобному времени.</p></li>
+    </ol>
+  </div>
+</section>
+
+<section class="section section--tint">
+  <div class="wrap duo">
+    <article class="offer offer--sage" data-reveal>
+      {% icon 'office' 'offer__icon' %}
+      <h2 class="display display--md">Цветы для офиса</h2>
+      <p>Букет на ресепшен раз в неделю — от 3 000 ₽. Подарки сотрудникам и гостям к праздникам. Счёт для юрлица, оплата раз в месяц.</p>
+      <p class="offer__note">Первая неделя — пробный букет со скидкой 20%.</p>
+      <a class="btn btn--primary" href="{% url 'shop:offices' %}">Оставить заявку {% icon 'arrow' %}</a>
+    </article>
+    <article class="offer offer--pink" data-reveal>
+      {% icon 'repeat' 'offer__icon' %}
+      <h2 class="display display--md">Подписка на цветы</h2>
+      <p>Новый сезонный букет каждую неделю. Например, 4 букета «Классика» в месяц за 6 990 ₽ вместо 7 960 ₽. Забирайте по пути или закажите доставку.</p>
+      <p class="offer__note">Оплата за месяц вперёд, отменить можно в любой момент.</p>
+      <a class="btn btn--accent" href="{% url 'shop:subscription' %}">Узнать подробнее {% icon 'arrow' %}</a>
+    </article>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <header class="section__head section__head--row">
+      <div>
+        <p class="eyebrow">Уход за цветами</p>
+        <h2 class="display">Чтобы букет простоял <em>дольше</em></h2>
+      </div>
+      <a class="link-arrow" href="{% url 'shop:care' %}">Подробнее {% icon 'arrow' %}</a>
+    </header>
+    <ol class="tips">
+      <li data-reveal><b>1</b><p>Подрезайте стебли наискосок на 2–3 см — сразу и потом каждые 2 дня.</p></li>
+      <li data-reveal><b>2</b><p>Уберите листья ниже уровня воды.</p></li>
+      <li data-reveal><b>3</b><p>Меняйте воду на прохладную каждый день.</p></li>
+      <li data-reveal><b>4</b><p>Не ставьте у батареи, на солнце и рядом с фруктами.</p></li>
+    </ol>
+  </div>
+</section>
+
+{% if site.yandex_rating or reviews %}
+<section class="section section--tint">
+  <div class="wrap reviews">
+    {% if site.yandex_rating %}
+    <div class="rating" data-reveal>
+      <p class="rating__score">{{ site.yandex_rating|floatformat:1 }}</p>
+      {% stars site.yandex_rating %}
+      {% if site.yandex_votes %}<p class="rating__votes">{{ site.yandex_votes }} {{ site.yandex_votes|plural:"оценка,оценки,оценок" }} на Яндекс Картах</p>{% endif %}
+      {% if site.yandex_reviews_url %}<a class="btn btn--ghost btn--sm" href="{{ site.yandex_reviews_url }}" target="_blank" rel="noopener">Читать и оставить отзыв</a>{% endif %}
+    </div>
+    {% endif %}
+    {% for r in reviews %}
+    <figure class="review" data-reveal>
+      {% if r.rating %}{% stars r.rating %}{% endif %}
+      <blockquote>{{ r.text }}</blockquote>
+      <figcaption>{{ r.name }} · {{ r.get_source_display }}</figcaption>
+    </figure>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<section class="section" id="contacts">
+  <div class="wrap find">
+    <div class="find__text">
+      <p class="eyebrow">Где нас найти</p>
+      <h2 class="display">Магазин у <em>Курского вокзала</em></h2>
+      {% for shop in shops %}{% if shop.is_pickup %}
+      <p class="find__addr">{% icon 'pin' %} <span>{{ shop.address|default:shop.name }}{% if shop.landmark %}<small>{{ shop.landmark }}</small>{% endif %}</span></p>
+      {% endif %}{% endfor %}
+      <ul class="facts">
+        <li>{% icon 'clock' %} {{ site.hours_display }}</li>
+        <li>{% icon 'phone' %} <a href="{{ site.phone_href }}">{{ site.phone }}</a></li>
+        {% if site.telegram_url %}<li>{% icon 'send' %} <a href="{{ site.telegram_url }}" target="_blank" rel="noopener">t.me/{{ site.telegram }}</a></li>{% endif %}
+      </ul>
+      <div class="buttons">
+        <a class="btn btn--primary" href="{{ site.phone_href }}">{% icon 'phone' %} Позвонить</a>
+        {% if site.yandex_maps_url %}<a class="btn btn--ghost" href="{{ site.yandex_maps_url }}" target="_blank" rel="noopener">{% icon 'pin' %} Маршрут в Яндекс Картах</a>{% endif %}
+      </div>
+    </div>
+    <div class="find__card" aria-hidden="true">
+      <img src="{% static 'shop/img/logo-sage.png' %}" alt="" width="220" height="220" loading="lazy">
+    </div>
+  </div>
+</section>
+
+{% if faq %}
+<section class="section section--tint">
+  <div class="wrap wrap--narrow">
+    <header class="section__head">
+      <p class="eyebrow">Вопросы и ответы</p>
+      <h2 class="display">Что нас <em>спрашивают</em></h2>
+    </header>
+    <div class="faq">
+      {% for f in faq %}
+      <details class="faq__item"><summary>{{ f.question }}</summary><div class="faq__answer">{{ f.answer|linebreaks }}</div></details>
+      {% endfor %}
+    </div>
+    <p class="faq__more"><a class="link-arrow" href="{% url 'shop:faq' %}">Все вопросы {% icon 'arrow' %}</a></p>
+  </div>
+</section>
+{% endif %}
+
+{% endblock %}
+{% block scripts %}<script src="{% static 'shop/js/home.js' %}" defer></script>{% endblock %}

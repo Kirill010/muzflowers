@@ -1,0 +1,71 @@
+{% load static shop_tags %}
+<header class="site-header" data-header>
+  <div class="wrap site-header__bar">
+    <button class="icon-btn burger" type="button" data-menu-open aria-label="Открыть меню" aria-expanded="false" aria-controls="mobile-nav">{% icon 'menu' %}</button>
+
+    <a class="brand" href="{% url 'shop:home' %}" aria-label="{{ site.shop_name }} — на главную">
+      <img class="brand__mark" src="{% static 'shop/img/logo-sage.png' %}" width="46" height="46" alt="">
+      <span class="brand__word">MUZ<span>FLOWERS</span></span>
+    </a>
+
+    <nav class="nav" aria-label="Основное меню">
+      <a class="nav__link" href="{% url 'shop:catalog' %}"{% current 'shop:catalog' 'shop:category' 'shop:product' %}>Каталог</a>
+      <a class="nav__link" href="{% url 'shop:music' %}"{% current 'shop:music' %}>Музыкальная открытка</a>
+      <a class="nav__link" href="{% url 'shop:delivery' %}"{% current 'shop:delivery' %}>Доставка и оплата</a>
+      <a class="nav__link" href="{% url 'shop:offices' %}"{% current 'shop:offices' 'shop:subscription' %}>Офисам</a>
+      <a class="nav__link" href="{% url 'shop:contacts' %}"{% current 'shop:contacts' %}>Контакты</a>
+    </nav>
+
+    <div class="header-actions">
+      <a class="header-phone" href="{{ site.phone_href }}">{% icon 'phone' %}<span>{{ site.phone }}</span></a>
+      <button class="icon-btn" type="button" data-search-open aria-label="Поиск по каталогу">{% icon 'search' %}</button>
+      {% if user.is_authenticated %}
+        <a class="icon-btn hide-xs" href="{% url 'accounts:profile' %}" aria-label="Личный кабинет">{% icon 'user' %}</a>
+      {% else %}
+        <a class="icon-btn hide-xs" href="{% url 'accounts:login' %}" aria-label="Войти">{% icon 'user' %}</a>
+      {% endif %}
+      <button class="icon-btn hide-xs" type="button" data-theme-toggle aria-label="Сменить тему: светлая или тёмная">{% icon 'moon' 'i--moon' %}{% icon 'sun' 'i--sun' %}</button>
+      <a class="icon-btn cart-btn" href="{% url 'shop:cart' %}" data-cart-open aria-label="Корзина" aria-haspopup="dialog">
+        {% icon 'bag' %}<span class="cart-btn__count" data-cart-count data-count="{{ cart_count }}">{{ cart_count }}</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-nav" id="mobile-nav" data-mobile-nav hidden>
+  <div class="mobile-nav__panel">
+    <div class="mobile-nav__head">
+      <span class="brand__word">MUZ<span>FLOWERS</span></span>
+      <button class="icon-btn" type="button" data-menu-close aria-label="Закрыть меню">{% icon 'close' %}</button>
+    </div>
+    <nav aria-label="Меню">
+      <a href="{% url 'shop:catalog' %}">Каталог</a>
+      <a href="{% url 'shop:music' %}">Музыкальная открытка</a>
+      <a href="{% url 'shop:delivery' %}">Доставка и оплата</a>
+      <a href="{% url 'shop:offices' %}">Цветы для офиса</a>
+      <a href="{% url 'shop:subscription' %}">Подписка на цветы</a>
+      <a href="{% url 'shop:care' %}">Уход за цветами</a>
+      <a href="{% url 'shop:contacts' %}">Контакты</a>
+    </nav>
+    <div class="mobile-nav__foot">
+      <a class="btn btn--primary btn--block" href="{{ site.phone_href }}">{% icon 'phone' %} {{ site.phone }}</a>
+      {% if user.is_authenticated %}<a class="btn btn--ghost btn--block" href="{% url 'accounts:profile' %}">{% icon 'user' %} Личный кабинет</a>
+      {% else %}<a class="btn btn--ghost btn--block" href="{% url 'accounts:login' %}">{% icon 'user' %} Войти</a>{% endif %}
+      <button class="btn btn--ghost btn--block" type="button" data-theme-toggle>{% icon 'moon' 'i--moon' %}{% icon 'sun' 'i--sun' %} Светлая / тёмная тема</button>
+    </div>
+  </div>
+  <div class="mobile-nav__shade" data-menu-close></div>
+</div>
+
+<div class="search" id="search" data-search data-url="{% url 'shop:suggest' %}" hidden role="dialog" aria-modal="true" aria-label="Поиск по каталогу">
+  <div class="search__shade" data-search-close></div>
+  <div class="search__panel">
+    <form class="search__form" action="{% url 'shop:catalog' %}" method="get" role="search">
+      {% icon 'search' %}
+      <input class="search__input" type="search" name="q" placeholder="Например: розы, пионы, тюльпаны" autocomplete="off" aria-label="Что ищем?" data-search-input>
+      <button class="icon-btn" type="button" data-search-close aria-label="Закрыть поиск">{% icon 'close' %}</button>
+    </form>
+    <ul class="search__results" data-search-results></ul>
+    <p class="search__hint">Нажмите Enter — покажем всё, что нашли в каталоге.</p>
+  </div>
+</div>

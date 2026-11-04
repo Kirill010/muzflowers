@@ -1,0 +1,43 @@
+{% load static shop_tags %}
+<footer class="site-footer">
+  <div class="wrap site-footer__grid">
+    <div class="site-footer__brand">
+      <a class="brand" href="{% url 'shop:home' %}" aria-label="{{ site.shop_name }} — на главную">
+        <img class="brand__mark" src="{% static 'shop/img/logo-pink.png' %}" width="52" height="52" alt="" loading="lazy">
+        <span class="brand__word">MUZ<span>FLOWERS</span></span>
+      </a>
+      <p>Цветочный магазин у Курского вокзала. Собираем букеты из цветов с собственного оптового склада.</p>
+      {% if site.telegram_url %}<a class="btn btn--light btn--sm" href="{{ site.telegram_url }}" target="_blank" rel="noopener">{% icon 'send' %} Новые букеты и акции в Telegram</a>{% endif %}
+    </div>
+
+    <nav class="site-footer__col" aria-label="Магазин">
+      <h2 class="site-footer__title">Магазин</h2>
+      <a href="{% url 'shop:catalog' %}">Каталог</a>
+      <a href="{% url 'shop:music' %}">Музыкальная открытка</a>
+      <a href="{% url 'shop:offices' %}">Цветы для офиса</a>
+      <a href="{% url 'shop:subscription' %}">Подписка на цветы</a>
+    </nav>
+
+    <nav class="site-footer__col" aria-label="Покупателям">
+      <h2 class="site-footer__title">Покупателям</h2>
+      <a href="{% url 'shop:delivery' %}">Доставка и оплата</a>
+      <a href="{% url 'shop:care' %}">Как ухаживать за цветами</a>
+      <a href="{% url 'shop:faq' %}">Вопросы и ответы</a>
+      <a href="{% url 'shop:offer' %}">Публичная оферта</a>
+      <a href="{% url 'shop:privacy' %}">Политика конфиденциальности</a>
+    </nav>
+
+    <address class="site-footer__col">
+      <h2 class="site-footer__title">Контакты</h2>
+      <a href="{{ site.phone_href }}">{% icon 'phone' %} {{ site.phone }}</a>
+      {% for shop in shops %}<span>{% icon 'pin' %} {{ shop.full_address|default:shop.name }}</span>{% endfor %}
+      <span>{% icon 'clock' %} {{ site.hours_display }}</span>
+      {% if site.email %}<a href="mailto:{{ site.email }}">{% icon 'mail' %} {{ site.email }}</a>{% endif %}
+      {% if site.yandex_maps_url %}<a href="{{ site.yandex_maps_url }}" target="_blank" rel="noopener">{% icon 'star-o' %} Мы на Яндекс Картах</a>{% endif %}
+    </address>
+  </div>
+  <div class="wrap site-footer__bottom">
+    <span>© {% now "Y" %} {{ site.shop_name }}</span>
+    {% if site.legal_name %}<span>{{ site.legal_name }}{% if site.inn %}, ИНН {{ site.inn }}{% endif %}{% if site.ogrnip %}, ОГРНИП {{ site.ogrnip }}{% endif %}</span>{% endif %}
+  </div>
+</footer>

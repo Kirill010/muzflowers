@@ -3,6 +3,9 @@ from django.contrib import admin
 from django.urls import include, path, re_path
 from django.views.static import serve
 
+handler404 = 'shop.views.page_not_found'
+handler500 = 'shop.views.server_error'
+
 urlpatterns = [
     path(settings.ADMIN_URL, admin.site.urls),
     path('accounts/', include('accounts.urls')),

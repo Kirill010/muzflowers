@@ -1,12 +1,46 @@
+from django.contrib.sitemaps.views import sitemap
 from django.urls import path
 
-from . import views
+from . import cart_views, checkout_views, seo, views
 
 app_name = 'shop'
 
 urlpatterns = [
-    path('', views.index, name='index'),
+    path('', views.home, name='home'),
+    path('catalog/', views.catalog, name='catalog'),
+    path('catalog/<slug:slug>/', views.catalog, name='category'),
+    path('product/<slug:slug>/', views.product, name='product'),
+    path('search/suggest/', views.suggest, name='suggest'),
+
+    path('cart/', cart_views.cart_page, name='cart'),
+    path('cart/add/', cart_views.cart_add, name='cart_add'),
+    path('cart/update/', cart_views.cart_update, name='cart_update'),
+    path('cart/remove/', cart_views.cart_remove, name='cart_remove'),
+    path('cart/addon/', cart_views.cart_addon, name='cart_addon'),
+    path('cart/promo/', cart_views.cart_promo, name='cart_promo'),
+    path('cart/fragment/', cart_views.cart_fragment, name='cart_fragment'),
+
+    path('checkout/', checkout_views.checkout, name='checkout'),
+    path('checkout/state/', checkout_views.checkout_state, name='checkout_state'),
+    path('order/<str:token>/', checkout_views.order_status, name='order_status'),
+    path('order/<str:token>/pay/', checkout_views.order_pay, name='order_pay'),
+    path('payments/webhook/<str:provider>/', checkout_views.payment_webhook, name='payment_webhook'),
+
+    path('music/', views.music, name='music'),
+    path('offices/', views.offices, name='offices'),
+    path('subscription/', views.subscription, name='subscription'),
+    path('delivery/', views.delivery, name='delivery'),
+    path('care/', views.care, name='care'),
+    path('about/', views.about, name='about'),
+    path('contacts/', views.contacts, name='contacts'),
+    path('faq/', views.faq, name='faq'),
     path('privacy/', views.privacy, name='privacy'),
-    path('api/promo/', views.promo_check, name='promo'),
-    path('api/order/', views.order_create, name='order'),
+    path('offer/', views.offer, name='offer'),
+
+    path('art/<slug:kind>/<int:count>/<str:a>/<str:b>.svg', views.art, name='art'),
+    path('favicon.ico', views.favicon, name='favicon'),
+    path('robots.txt', seo.robots, name='robots'),
+    path('sitemap.xml', sitemap, {'sitemaps': seo.SITEMAPS}, name='sitemap'),
+    path('manifest.webmanifest', seo.manifest, name='manifest'),
+    path('health/', views.health, name='health'),
 ]

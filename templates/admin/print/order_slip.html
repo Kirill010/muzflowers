@@ -1,0 +1,62 @@
+{% load shop_tags %}<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Бланки заказов — {{ site.shop_name }}</title>
+<style>
+  @page { size: A5 portrait; margin: 8mm; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #e9ece4; font: 14px/1.45 "Segoe UI", Arial, sans-serif; color: #1f2b22; }
+  .bar { position: sticky; top: 0; z-index: 5; display: flex; gap: 14px; align-items: center; padding: 10px 18px; background: #243326; color: #fff; }
+  .bar button { background: #fca8c0; color: #1f2b22; border: 0; padding: 9px 20px; border-radius: 99px; font-weight: 700; cursor: pointer; }
+  .slip { width: 148mm; min-height: 194mm; margin: 14px auto; padding: 9mm; background: #fff; border-radius: 6px; page-break-after: always; display: grid; gap: 9px; align-content: start; }
+  .slip:last-child { page-break-after: auto; }
+  .head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #1f2b22; padding-bottom: 6px; }
+  .head b { font-size: 26px; }
+  .head span { color: #5b695e; font-size: 12px; }
+  .when { background: #fde4ec; border-radius: 10px; padding: 10px 14px; font-size: 20px; font-weight: 800; }
+  .when small { display: block; font-size: 13px; font-weight: 600; color: #5b695e; }
+  .row { display: grid; grid-template-columns: 90px 1fr; gap: 8px; }
+  .row dt { color: #5b695e; font-size: 12px; text-transform: uppercase; letter-spacing: .06em; padding-top: 2px; }
+  .row dd { margin: 0; font-weight: 600; }
+  dl { margin: 0; display: grid; gap: 6px; }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 5px 0; border-bottom: 1px solid #d7ddd2; vertical-align: top; }
+  td:last-child { text-align: right; white-space: nowrap; }
+  .card { border: 2px dashed #9cb484; border-radius: 10px; padding: 10px 14px; font-size: 17px; font-style: italic; }
+  .warn { background: #fff4d6; border-radius: 8px; padding: 6px 12px; font-weight: 700; }
+  .total { display: flex; justify-content: space-between; font-size: 20px; font-weight: 800; }
+  .sign { display: flex; justify-content: space-between; margin-top: 10px; color: #5b695e; font-size: 13px; }
+  @media print { body { background: #fff; } .bar { display: none; } .slip { margin: 0; width: auto; min-height: 0; padding: 0; border-radius: 0; } }
+</style>
+</head>
+<body>
+<div class="bar"><b>Бланков: {{ orders|length }}</b><button type="button" onclick="window.print()">Печать</button><span>Формат A5. В настройках печати выберите «Размер: A5» или «По размеру листа».</span></div>
+{% for o in orders %}
+<section class="slip">
+  <div class="head"><b>Заказ №{{ o.pk }}</b><span>принят {{ o.created|date:"d.m.Y H:i" }}{% if o.source %} · {{ o.source }}{% endif %}</span></div>
+  <div class="when">{{ o.get_receive_method_display }}: {{ o.when_display }}<small>{{ o.date|date:"l, j E" }}</small></div>
+  {% if o.prepay_required and not o.is_paid %}<div class="warn">Предоплата ещё не получена — не собирать, пока не оплачено</div>{% endif %}
+  <dl>
+    <div class="row"><dt>Клиент</dt><dd>{{ o.name }}, {{ o.display_phone }}</dd></div>
+    <div class="row"><dt>{% if o.receive_method == 'delivery' %}Куда{% else %}Где{% endif %}</dt><dd>{{ o.place_display }}</dd></div>
+    {% if o.recipient_name %}<div class="row"><dt>Получатель</dt><dd>{{ o.recipient_name }}, {{ o.display_recipient_phone }}</dd></div>{% endif %}
+    {% if o.surprise %}<div class="row"><dt>Сюрприз</dt><dd>Получателю не звонить и не говорить, от кого</dd></div>{% endif %}
+  </dl>
+  <table>
+    {% for i in o.items.all %}<tr><td>{{ i.full_name }} × {{ i.qty }}</td><td>{{ i.line_total|rub }}</td></tr>{% endfor %}
+    {% for a in o.addons.all %}<tr><td>{{ a.name }}{% if a.note %}: <b>{{ a.note }}</b>{% endif %}</td><td>{% if a.price %}{{ a.price|rub }}{% else %}—{% endif %}</td></tr>{% endfor %}
+    {% if o.discount %}<tr><td>Скидка {{ o.promo_code }}</td><td>−{{ o.discount|rub }}</td></tr>{% endif %}
+    {% if o.delivery_cost %}<tr><td>Доставка</td><td>{{ o.delivery_cost|rub }}</td></tr>{% endif %}
+  </table>
+  {% if o.card_text %}<div class="card">«{{ o.card_text }}»</div>{% endif %}
+  {% if o.comment %}<dl><div class="row"><dt>Пожелания</dt><dd>{{ o.comment }}</dd></div></dl>{% endif %}
+  {% if o.staff_note %}<dl><div class="row"><dt>Заметка</dt><dd>{{ o.staff_note }}</dd></div></dl>{% endif %}
+  <div class="total"><span>Итого</span><span>{{ o.total|rub }} · {{ o.get_payment_status_display }}</span></div>
+  <div class="sign"><span>Собрал: ______________</span><span>Выдал / отдал курьеру: ______________</span></div>
+</section>
+{% empty %}
+<section class="slip"><p>Заказов на выбранный день нет.</p></section>
+{% endfor %}
+</body>
+</html>

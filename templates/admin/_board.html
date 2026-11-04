@@ -1,0 +1,32 @@
+{% for row in rows %}{% with o=row.order step=row.step %}
+<article class="mz-order mz-order--{{ o.status }}">
+  <header>
+    <b class="mz-no">№{{ o.pk }}</b>
+    <span class="mz-time">{{ o.when_display }}</span>
+    <span class="mz-chip">{{ o.get_receive_method_display }}</span>
+    <span class="mz-chip mz-chip--status">{{ o.get_status_display }}</span>
+    {% if o.is_paid %}<span class="mz-chip mz-chip--ok">оплачен</span>
+    {% elif o.prepay_required %}<span class="mz-chip mz-chip--warn">ждём предоплату</span>{% endif %}
+  </header>
+  <p class="mz-who">{{ o.name }}, <a href="tel:{{ o.phone }}">{{ o.display_phone }}</a></p>
+  <p class="mz-place">{{ o.place_display }}{% if o.recipient_name %} · получит {{ o.recipient_name }}, {{ o.display_recipient_phone }}{% endif %}{% if o.surprise %} · 🤫 сюрприз{% endif %}</p>
+  <ul class="mz-items">
+    {% for i in o.items.all %}<li>{{ i.full_name }} × {{ i.qty }}</li>{% endfor %}
+    {% for a in o.addons.all %}<li>{% if 'музык' in a.name|lower %}🎵{% else %}➕{% endif %} {{ a.name }}{% if a.note %}: <b>{{ a.note }}</b>{% endif %}</li>{% endfor %}
+  </ul>
+  {% if o.card_text %}<p class="mz-cardtext">💌 «{{ o.card_text }}»</p>{% endif %}
+  {% if o.comment %}<p class="mz-comment">💬 {{ o.comment }}</p>{% endif %}
+  <footer>
+    <b>{{ o.total }} ₽</b>
+    <span class="mz-actions">
+      {% if step %}<form method="post" action="{% url 'admin:shop_order_status' o.pk %}">{% csrf_token %}<input type="hidden" name="to" value="{{ step.0 }}"><input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="mz-btn mz-btn--main" type="submit">{{ step.1 }}</button></form>{% endif %}
+      {% if not o.is_paid and o.payment_method != 'on_receipt' %}<form method="post" action="{% url 'admin:shop_order_paid' o.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="mz-btn" type="submit">Оплачен</button></form>{% endif %}
+      <a class="mz-btn" href="{% url 'admin:shop_order_change' o.pk %}">Открыть</a>
+      <a class="mz-btn" href="{% url 'admin:shop_order_print' o.pk %}" target="_blank">Бланк</a>
+      {% if o.addons.all %}<a class="mz-btn" href="{% url 'admin:shop_order_card' o.pk %}" target="_blank">Открытка</a>{% endif %}
+    </span>
+  </footer>
+</article>
+{% endwith %}{% empty %}
+<p class="mz-empty">{{ empty_text|default:"Заказов нет" }}</p>
+{% endfor %}

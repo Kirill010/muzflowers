@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load shop_tags %}
+{% block title %}Доставка и оплата — {{ site.shop_name }}{% endblock %}
+{% block description %}Самовывоз у Курского вокзала, доставка по Москве, оплата картой, переводом или при получении. Условия заказа на определённую дату.{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="wrap wrap--narrow prose">
+    <p class="eyebrow">Покупателям</p>
+    <h1 class="display display--lg">Доставка и <em>оплата</em></h1>
+
+    <h2>Самовывоз — бесплатно</h2>
+    {% for shop in shops %}{% if shop.is_pickup %}
+    <p>{% icon 'pin' %} <b>{{ shop.name }}</b> — {{ shop.address }}{% if shop.landmark %}, {{ shop.landmark }}{% endif %}.</p>
+    {% endif %}{% endfor %}
+    <p>Работаем {{ site.hours_display|lower }}. Заказали на сайте — заберёте через {{ site.pickup_lead_minutes }} минут. Готовые букеты в магазине можно взять сразу, за 2 минуты.</p>
+
+    <h2>Доставка по Москве</h2>
+    {% if site.delivery_enabled %}
+    <p>Стоимость — {{ site.delivery_cost|rub }}{% if site.free_delivery_from %}, при заказе от {{ site.free_delivery_from|rub }} — бесплатно{% endif %}. {{ site.delivery_area_text }}</p>
+    <p>Курьер приезжает в выбранное вами время — окно {{ site.delivery_window_hours }} ч. Заказ на сегодня принимаем минимум за {{ site.delivery_lead_minutes }} минут до начала окна. Заказать можно на любой день в течение {{ site.max_days_ahead }} дней вперёд.</p>
+    <p>Хотите сюрприз? Отметьте это в заказе: получателю мы не позвоним и не скажем, от кого цветы.</p>
+    {% else %}
+    <p>Сейчас доставка временно не работает — можно оформить самовывоз.</p>
+    {% endif %}
+
+    <h2>Оплата</h2>
+    <ul>
+      <li><b>Для заказа на сегодня</b> — при получении картой или наличными{% if not site.allow_pay_on_receipt %} (сейчас недоступно){% endif %}.</li>
+      <li><b>Для заказа на другой день</b> — только по предоплате: букет на определённую дату мы собираем после оплаты.</li>
+      <li>Предоплата — онлайн картой или через СБП, если подключено, либо переводом по реквизитам — они появятся на странице заказа.</li>
+    </ul>
+
+    <h2>Праздничные дни</h2>
+    <p>На 14 февраля, 8 Марта и День матери букеты лучше заказывать заранее: в эти дни принимаем предзаказы с предоплатой, чтобы всё было собрано вовремя.</p>
+
+    <h2>Если нужного цветка нет</h2>
+    <p>Заменим равноценным по цвету и размеру и обязательно напишем вам.</p>
+
+    <h2>Если что-то пошло не так</h2>
+    <p>Позвоните или напишите нам сразу, лучше с фото: <a href="{{ site.phone_href }}">{{ site.phone }}</a>{% if site.telegram_url %}, <a href="{{ site.telegram_url }}" target="_blank" rel="noopener">Telegram</a>{% endif %}. Мы разберёмся лично.</p>
+
+    <p><a class="btn btn--primary" href="{% url 'shop:catalog' %}">Выбрать букет {% icon 'arrow' %}</a></p>
+  </div>
+</section>
+{% endblock %}

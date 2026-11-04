@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% load shop_tags %}
+{% block title %}Подписка на цветы — новый букет каждую неделю — {{ site.shop_name }}{% endblock %}
+{% block description %}Подписка на цветы: новый сезонный букет каждую неделю. Забирайте по пути у Курского вокзала или закажите доставку по Москве.{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="wrap duo duo--top">
+    <div class="stack">
+      <p class="eyebrow">Подписка</p>
+      <h1 class="display display--lg">Новый букет <em>каждую неделю</em></h1>
+      <p class="lead">Свежие цветы дома или на работе — без лишних заказов. Мы привозим новый сезонный букет в удобный вам день.</p>
+      <ul class="checks">
+        <li>{% icon 'check' %} Ориентир: 4 букета «Классика» в месяц за 6 990 ₽ вместо 7 960 ₽</li>
+        <li>{% icon 'check' %} Каждую неделю — новый сезонный букет</li>
+        <li>{% icon 'check' %} Забирайте по пути у Курского вокзала или закажите доставку</li>
+        <li>{% icon 'check' %} Оплата за месяц вперёд, отменить можно в любой момент</li>
+      </ul>
+      <p class="muted">Условия уточним по телефону и подберём под вас: размер букета, день недели, адрес.</p>
+    </div>
+    {% include 'includes/_lead_form.html' with submit_label='Хочу подписку' %}
+  </div>
+</section>
+{% endblock %}

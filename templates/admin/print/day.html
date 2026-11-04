@@ -1,0 +1,48 @@
+{% load shop_tags %}<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Заказы на {{ day|date:"j E" }} — {{ site.shop_name }}</title>
+<style>
+  @page { size: A4 landscape; margin: 10mm; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px 22px; font: 13px/1.4 "Segoe UI", Arial, sans-serif; color: #1f2b22; }
+  h1 { margin: 0 0 4px; font-size: 22px; }
+  p { margin: 0 0 12px; color: #5b695e; }
+  button { background: #4a6340; color: #fff; border: 0; padding: 8px 18px; border-radius: 99px; font-weight: 700; cursor: pointer; margin-bottom: 12px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { border: 1px solid #b8c1b0; padding: 6px 8px; text-align: left; vertical-align: top; }
+  th { background: #e4ecd9; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+  td.n { font-weight: 800; white-space: nowrap; }
+  .warn { color: #9a5b00; font-weight: 700; }
+  tfoot td { font-weight: 800; background: #f1f4ea; }
+  @media print { button { display: none; } }
+</style>
+</head>
+<body>
+<button type="button" onclick="window.print()">Печать</button>
+<h1>Заказы на {{ day|date:"l, j E Y" }}</h1>
+<p>{{ orders|length }} шт. · {{ site.shop_name }}</p>
+<table>
+  <thead><tr><th>№</th><th>Время</th><th>Как</th><th>Клиент</th><th>Куда</th><th>Состав</th><th>Открытка / пожелания</th><th>Оплата</th><th>Сумма</th></tr></thead>
+  <tbody>
+    {% for o in orders %}
+    <tr>
+      <td class="n">№{{ o.pk }}</td>
+      <td>{{ o.time_display|default:"—" }}</td>
+      <td>{{ o.get_receive_method_display }}</td>
+      <td>{{ o.name }}<br>{{ o.display_phone }}{% if o.recipient_name %}<br>получит: {{ o.recipient_name }}, {{ o.display_recipient_phone }}{% endif %}</td>
+      <td>{{ o.place_display }}</td>
+      <td>{% for i in o.items.all %}{{ i.full_name }} × {{ i.qty }}<br>{% endfor %}{% for a in o.addons.all %}{{ a.name }}{% if a.note %}: {{ a.note }}{% endif %}<br>{% endfor %}</td>
+      <td>{% if o.card_text %}«{{ o.card_text }}»<br>{% endif %}{{ o.comment }}</td>
+      <td>{{ o.get_payment_status_display }}{% if o.prepay_required and not o.is_paid %}<br><span class="warn">нужна предоплата</span>{% endif %}</td>
+      <td>{{ o.total|rub }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="9">Заказов на этот день нет.</td></tr>
+    {% endfor %}
+  </tbody>
+  <tfoot><tr><td colspan="8">Итого</td><td>{{ total|rub }}</td></tr></tfoot>
+</table>
+</body>
+</html>

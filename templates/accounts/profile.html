@@ -1,11 +1,60 @@
 {% extends 'base.html' %}
-{% block title %}Личный кабинет — Muzflowers{% endblock %}
-{% block content %}<main class="w auth wide"><h1 class="st">Здравствуйте, {{ user.first_name|default:user.username }}!</h1>
-<form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button class="btn gh sm">Выйти</button></form>
-<h2 style="margin:28px 0 14px">Мои заказы</h2>
-{% for o in orders %}<div class="oc"><div class="ol"><b>Заказ №{{ o.pk }}</b><span>{{ o.get_status_display }}</span></div>
-<p>Доставка: {{ o.delivery_date|date:"d.m.Y" }}, {{ o.delivery_slot }}<br>{{ o.address }}</p>
-<ul>{% for i in o.items.all %}<li>{{ i.name }} × {{ i.qty }}</li>{% endfor %}</ul>
-<b>Итого: {{ o.total }} ₽</b></div>
-{% empty %}<p class="sd">Заказов пока нет. <a href="{% url 'shop:index' %}#catalog">Выбрать букет</a></p>{% endfor %}
-</main>{% endblock %}
+{% load shop_tags %}
+{% block title %}Личный кабинет — {{ site.shop_name }}{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="wrap">
+    <header class="section__head section__head--row">
+      <div>
+        <p class="eyebrow">Личный кабинет</p>
+        <h1 class="display display--md">Здравствуйте, {{ user.first_name|default:user.get_username }}!</h1>
+      </div>
+      <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button class="btn btn--ghost btn--sm" type="submit">Выйти</button></form>
+    </header>
+
+    <div class="profile">
+      <div class="profile__orders">
+        <h2 class="display display--sm">Мои заказы</h2>
+        {% for o in orders %}
+        <article class="panel panel--plain order-card">
+          <header class="order-card__head">
+            <div><b>Заказ №{{ o.pk }}</b><span class="muted"> · {{ o.created|date:"j E Y" }}</span></div>
+            <span class="status status--{{ o.status }}">{{ o.get_status_display }}</span>
+          </header>
+          <p>{{ o.when_display|capfirst }} · {{ o.get_receive_method_display }}</p>
+          <ul class="order-card__items">
+            {% for i in o.items.all %}<li>{{ i.full_name }} × {{ i.qty }}</li>{% endfor %}
+            {% for a in o.addons.all %}<li>{{ a.name }}{% if a.note %}: {{ a.note }}{% endif %}</li>{% endfor %}
+          </ul>
+          <footer class="order-card__foot">
+            <b>{{ o.total|rub }}</b>
+            <span class="order-card__actions">
+              <a class="btn btn--ghost btn--sm" href="{{ o.get_absolute_url }}">Открыть</a>
+              <form method="post" action="{% url 'accounts:repeat' o.pk %}">{% csrf_token %}<button class="btn btn--primary btn--sm" type="submit">{% icon 'repeat' %} Повторить</button></form>
+            </span>
+          </footer>
+        </article>
+        {% empty %}
+        <div class="empty">{% icon 'flower' 'empty__icon' %}<h3>Заказов пока нет</h3><p>Выберите первый букет — он появится здесь.</p><a class="btn btn--primary" href="{% url 'shop:catalog' %}">Перейти в каталог</a></div>
+        {% endfor %}
+      </div>
+
+      <aside class="profile__form">
+        <h2 class="display display--sm">Мои данные</h2>
+        <form method="post" class="panel panel--plain" novalidate>
+          {% csrf_token %}
+          {% include 'includes/_field.html' with field=form.name %}
+          {% include 'includes/_field.html' with field=form.email %}
+          {% include 'includes/_field.html' with field=form.phone hide_required=True %}
+          {% include 'includes/_field.html' with field=form.address hide_required=True %}
+          <label class="check"><input type="checkbox" name="marketing_consent"{% if form.marketing_consent.value %} checked{% endif %}> <span>{{ form.marketing_consent.label }}</span></label>
+          <button class="btn btn--primary" type="submit">Сохранить</button>
+        </form>
+        <p><a class="link-btn" href="{% url 'accounts:password_change' %}">Сменить пароль</a></p>
+        {% if user.is_staff %}<p><a class="link-btn" href="{{ admin_url }}">Панель владельца</a></p>{% endif %}
+      </aside>
+    </div>
+  </div>
+</section>
+{% endblock %}

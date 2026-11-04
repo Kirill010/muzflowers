@@ -1,0 +1,29 @@
+{% load shop_tags %}<!doctype html>
+<html lang="ru">
+<body style="margin:0;padding:24px;background:#f3f6ee;font-family:Arial,Helvetica,sans-serif;color:#1f2b22">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden">
+  <tr><td style="background:#9cb484;padding:24px;text-align:center;color:#ffffff;font-family:Georgia,serif;font-size:24px;letter-spacing:4px">MUZ FLOWERS</td></tr>
+  <tr><td style="padding:28px 28px 8px">
+    <h1 style="margin:0 0 8px;font-family:Georgia,serif;font-size:26px">Спасибо, {{ order.name }}!</h1>
+    <p style="margin:0 0 16px;color:#4b5a4e">Ваш заказ <b>№{{ order.pk }}</b> принят.</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#fde4ec;border-radius:12px;margin-bottom:18px">
+      <tr><td style="padding:14px 16px;font-size:14px;line-height:1.6">
+        <b>Когда:</b> {{ order.when_display }}<br>
+        <b>{% if order.receive_method == 'delivery' %}Куда{% else %}Где забрать{% endif %}:</b> {{ order.place_display }}
+      </td></tr>
+    </table>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;border-collapse:collapse">
+      {% for item in items %}<tr><td style="padding:8px 0;border-bottom:1px solid #e5ebdf">{{ item.full_name }} × {{ item.qty }}</td><td align="right" style="padding:8px 0;border-bottom:1px solid #e5ebdf">{{ item.line_total|rub }}</td></tr>{% endfor %}
+      {% for addon in addons %}<tr><td style="padding:8px 0;border-bottom:1px solid #e5ebdf">{{ addon.name }}{% if addon.note %}: {{ addon.note }}{% endif %}</td><td align="right" style="padding:8px 0;border-bottom:1px solid #e5ebdf">{% if addon.price %}{{ addon.price|rub }}{% else %}бесплатно{% endif %}</td></tr>{% endfor %}
+      {% if order.delivery_cost %}<tr><td style="padding:8px 0">Доставка</td><td align="right" style="padding:8px 0">{{ order.delivery_cost|rub }}</td></tr>{% endif %}
+      <tr><td style="padding:12px 0;font-weight:bold;font-size:16px">Итого</td><td align="right" style="padding:12px 0;font-weight:bold;font-size:16px;color:#4a6340">{{ order.total|rub }}</td></tr>
+    </table>
+    {% if order.payment_method == 'transfer' and not order.is_paid %}
+    <p style="font-size:14px;line-height:1.6">{% if site.payment_details %}<b>Оплата переводом:</b><br>{{ site.payment_details|linebreaksbr }}{% else %}Мы свяжемся с вами и отправим ссылку на оплату.{% endif %}</p>
+    {% endif %}
+    {% if url %}<p style="text-align:center;margin:24px 0"><a href="{{ url }}" style="display:inline-block;background:#4a6340;color:#ffffff;text-decoration:none;padding:14px 28px;border-radius:999px;font-weight:bold">Следить за заказом</a></p>{% endif %}
+  </td></tr>
+  <tr><td style="padding:8px 28px 28px;font-size:13px;color:#7a877c;text-align:center">Если нужно что-то изменить — позвоните <a href="{{ site.phone_href }}" style="color:#4a6340">{{ site.phone }}</a><br>{{ site.shop_name }}</td></tr>
+</table>
+</body>
+</html>

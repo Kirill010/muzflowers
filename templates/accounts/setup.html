@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% load shop_tags %}
+{% block title %}Первый запуск — {{ site.shop_name }}{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="wrap">
+    <div class="auth">
+      {% icon 'flower' 'auth__icon' %}
+      <h1 class="display display--md">Добро пожаловать!</h1>
+      <p class="muted">Это первый запуск сайта. Придумайте логин и пароль — с ними вы будете входить в панель владельца: там заказы, цены, букеты и настройки.</p>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {{ form.token }}
+        {% if form.non_field_errors %}<div class="notice notice--error" role="alert">{% icon 'info' %} <div>{% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}</div></div>{% endif %}
+        {% include 'includes/_field.html' with field=form.name %}
+        {% include 'includes/_field.html' with field=form.email %}
+        {% include 'includes/_field.html' with field=form.password1 %}
+        {% include 'includes/_field.html' with field=form.password2 %}
+        <button class="btn btn--primary btn--lg btn--block" type="submit">Создать владельца</button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

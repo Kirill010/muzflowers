@@ -1,0 +1,25 @@
+{% load shop_tags %}
+<article class="card{% if not p.is_orderable %} is-off{% endif %}" data-reveal>
+  <a class="card__media" href="{{ p.get_absolute_url }}" tabindex="-1" aria-hidden="true">
+    {% product_image p 'card' %}
+    {% if p.badge %}<span class="card__badge">{{ p.badge }}</span>{% elif p.discount_percent %}<span class="card__badge card__badge--sale">−{{ p.discount_percent }}%</span>{% endif %}
+    {% if not p.is_orderable %}<span class="card__off">{{ p.unavailable_reason }}</span>{% endif %}
+  </a>
+  <div class="card__body">
+    <h3 class="card__title"><a href="{{ p.get_absolute_url }}">{{ p.name }}</a></h3>
+    {% if p.tagline %}<p class="card__text">{{ p.tagline }}</p>{% endif %}
+    <div class="card__foot">
+      <p class="price">{% if p.has_choice %}<span class="price__from">от</span> {% endif %}<b>{{ p.price_from|rub }}</b>{% if p.old_price %} <s class="price__old">{{ p.old_price|rub }}</s>{% endif %}</p>
+      {% if p.is_orderable %}
+        {% if p.has_choice %}
+        <a class="btn btn--sm btn--ghost" href="{{ p.get_absolute_url }}">Выбрать</a>
+        {% else %}
+        <form method="post" action="{% url 'shop:cart_add' %}" data-cart-form data-add>{% csrf_token %}
+          <input type="hidden" name="product" value="{{ p.pk }}"><input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button class="btn btn--sm btn--primary" type="submit" aria-label="В корзину: {{ p.name }}">{% icon 'bag' %} В корзину</button>
+        </form>
+        {% endif %}
+      {% endif %}
+    </div>
+  </div>
+</article>

@@ -1,71 +1,150 @@
 {% extends 'base.html' %}
-
+{% load static shop_tags %}
+{% block title %}Оформление заказа — {{ site.shop_name }}{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+{% block drawer %}{% endblock %}
 {% block content %}
-<div class="mb-10">
-    <p class="text-xs tracking-ultra text-sage-400 uppercase mb-3">Muzflowers</p>
-    <h1 class="text-4xl font-serif font-light text-sage-800">Оформление заказа</h1>
-</div>
+<section class="section section--tight">
+  <div class="wrap">
+    <nav class="breadcrumbs" aria-label="Навигация"><a href="{% url 'shop:cart' %}">{% icon 'arrow-left' %} Вернуться в корзину</a></nav>
+    <h1 class="display display--md">Оформление заказа</h1>
 
-<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-    <div class="lg:col-span-2">
-        <form method="post" class="bg-white p-8 md:p-10 rounded-3xl shadow-sm space-y-6">
-            {% csrf_token %}
-            {% if form.non_field_errors %}
-                <div class="bg-red-50 text-red-600 p-4 rounded-2xl text-sm">{{ form.non_field_errors }}</div>
+    <form class="checkout" method="post" action="{% url 'shop:checkout' %}" novalidate
+          data-checkout data-state-url="{% url 'shop:checkout_state' %}" data-blocked="{{ blocked_days }}">
+      {% csrf_token %}
+      <input type="hidden" name="promo" value="{{ quote.promo.code|default:'' }}">
+
+      <div class="checkout__main">
+        {% if form.non_field_errors %}<div class="notice notice--error" role="alert">{% icon 'info' %} <div>{% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}</div></div>
+        {% elif form.errors %}<div class="notice notice--error" role="alert" tabindex="-1" data-error-summary>{% icon 'info' %} Проверьте поля, отмеченные красным.</div>{% endif %}
+
+        <fieldset class="panel">
+          <legend class="panel__title"><b>1</b> Кто заказывает</legend>
+          <div class="grid grid--2">
+            {% include 'includes/_field.html' with field=form.name %}
+            {% include 'includes/_field.html' with field=form.phone %}
+          </div>
+          {% include 'includes/_field.html' with field=form.email hide_required=True %}
+        </fieldset>
+
+        <fieldset class="panel">
+          <legend class="panel__title"><b>2</b> Как получите</legend>
+          <div class="segmented" role="radiogroup" aria-label="Как получите">
+            <label class="segmented__opt">
+              <input type="radio" name="receive_method" value="pickup"{% if method == 'pickup' %} checked{% endif %}{% if not shop_count %} disabled{% endif %}>
+              <span>{% icon 'pin' %} <b>Самовывоз</b><small>бесплатно</small></span>
+            </label>
+            <label class="segmented__opt">
+              <input type="radio" name="receive_method" value="delivery"{% if method == 'delivery' %} checked{% endif %}{% if not site.delivery_enabled %} disabled{% endif %}>
+              <span>{% icon 'truck' %} <b>Доставка</b><small>{{ site.delivery_cost|rub }}{% if site.free_delivery_from %}, от {{ site.free_delivery_from|rub }} бесплатно{% endif %}</small></span>
+            </label>
+          </div>
+          {% for e in form.receive_method.errors %}<p class="field__error">{{ e }}</p>{% endfor %}
+
+          <div data-when="pickup"{% if method != 'pickup' %} hidden{% endif %}>
+            {% if form.pickup_shops %}
+              {% if shop_count == 1 %}
+                {% with s=form.pickup_shops.0 %}
+                <input type="hidden" name="shop" value="{{ s.pk }}">
+                <div class="place">{% icon 'pin' %}<div><b>{{ s.name }}</b><p>{{ s.address }}{% if s.landmark %}<br><small>{{ s.landmark }}</small>{% endif %}</p><p><small>{{ s.hours_text|default:site.hours_display }}</small></p></div></div>
+                {% endwith %}
+              {% else %}
+                <div class="choices" role="radiogroup" aria-label="Где забрать">
+                  {% for s in form.pickup_shops %}
+                  <label class="choice"><input type="radio" name="shop" value="{{ s.pk }}"{% if form.shop.value|stringformat:'s' == s.pk|stringformat:'s' %} checked{% elif forloop.first and not form.shop.value %} checked{% endif %}><span><b>{{ s.name }}</b><small>{{ s.full_address }}</small></span></label>
+                  {% endfor %}
+                </div>
+              {% endif %}
+              {% for e in form.shop.errors %}<p class="field__error">{{ e }}</p>{% endfor %}
+            {% else %}
+              <p class="notice">Самовывоз сейчас недоступен — выберите доставку.</p>
             {% endif %}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {% for field in form %}
-                    <div class="{% if field.name == 'address' or field.name == 'comment' %}md:col-span-2{% endif %}">
-                        <label class="block text-xs tracking-widest uppercase text-sage-500 mb-2">{{ field.label }}</label>
-                        {{ field }}
-                        {% if field.errors %}
-                            <p class="text-red-500 text-xs mt-1">{{ field.errors.0 }}</p>
-                        {% endif %}
-                    </div>
-                {% endfor %}
-            </div>
-            <button type="submit"
-                    class="w-full bg-sage-400 hover:bg-sage-500 text-white py-4 rounded-full font-medium transition text-base tracking-wide mt-4 shadow-sm">
-                Подтвердить заказ
-            </button>
-        </form>
-    </div>
+          </div>
 
-    <div class="lg:col-span-1">
-        <div class="bg-sage-50 p-8 rounded-3xl sticky top-28">
-            <p class="text-xs tracking-ultra text-sage-400 uppercase mb-5">Ваш заказ</p>
-            <ul class="space-y-4 mb-6">
-                {% for item in cart %}
-                <li class="flex justify-between text-sm text-sage-700">
-                    <span>{{ item.product.name }} × {{ item.quantity }}</span>
-                    <span class="font-medium">{{ item.total_price }} ₽</span>
-                </li>
-                {% endfor %}
-            </ul>
-            <div class="border-t border-sage-200 pt-5 flex justify-between items-baseline">
-                <span class="text-sage-500 text-sm tracking-widest uppercase">Итого</span>
-                <span class="text-2xl font-serif text-sage-700">{{ cart.get_total_price }} ₽</span>
+          <div data-when="delivery"{% if method != 'delivery' %} hidden{% endif %}>
+            {% include 'includes/_field.html' with field=form.address %}
+            {% include 'includes/_field.html' with field=form.address_details hide_required=True %}
+            <p class="field__hint">{{ site.delivery_area_text }}</p>
+            <label class="check"><input type="checkbox" name="other_recipient" data-toggle="recipient"{% if form.other_recipient.value %} checked{% endif %}> Получатель — другой человек</label>
+            <div class="grid grid--2" data-target="recipient"{% if not form.other_recipient.value %} hidden{% endif %}>
+              {% include 'includes/_field.html' with field=form.recipient_name %}
+              {% include 'includes/_field.html' with field=form.recipient_phone %}
             </div>
+            <label class="check"><input type="checkbox" name="surprise"{% if form.surprise.value %} checked{% endif %}> {{ form.surprise.label }}</label>
+          </div>
+        </fieldset>
+
+        <fieldset class="panel">
+          <legend class="panel__title"><b>3</b> Когда</legend>
+          <div class="grid grid--2">
+            <div class="field{% if form.date.errors %} has-error{% endif %}">
+              <label class="field__label" for="id_date">Дата<span class="req" aria-hidden="true">*</span></label>
+              <input class="input" type="date" id="id_date" name="date" value="{{ day|date:'Y-m-d' }}" min="{{ min_day }}" max="{{ max_day }}" required data-date>
+              {% for e in form.date.errors %}<p class="field__error">{{ e }}</p>{% endfor %}
+            </div>
+            <div class="field{% if form.time_slot.errors %} has-error{% endif %}">
+              <label class="field__label" for="id_time_slot">Время<span class="req" aria-hidden="true">*</span></label>
+              <select class="select" id="id_time_slot" name="time_slot" data-slot required>
+                {% for o in slot_options %}<option value="{{ o.value }}"{% if o.value == slot_value %} selected{% endif %}>{{ o.label }}</option>{% endfor %}
+              </select>
+              {% for e in form.time_slot.errors %}<p class="field__error">{{ e }}</p>{% endfor %}
+            </div>
+          </div>
+          <p class="notice notice--warn" data-day-problem role="alert"{% if not day_problem %} hidden{% endif %}>{% icon 'info' %} <span>{{ day_problem }}</span></p>
+        </fieldset>
+
+        <fieldset class="panel">
+          <legend class="panel__title"><b>4</b> Открытка и пожелания</legend>
+          {% include 'includes/_field.html' with field=form.card_text hide_required=True %}
+          {% for addon, check, note in form.addon_rows %}
+          <div class="addon{% if check.value %} is-on{% endif %}" data-addon>
+            <label class="addon__btn">
+              <input class="sr-only" type="checkbox" name="{{ check.html_name }}" data-addon-id="{{ addon.pk }}"{% if check.value %} checked{% endif %}>
+              <span class="addon__icon">{% if addon.is_music %}{% icon 'music' %}{% else %}{% icon 'gift' %}{% endif %}</span>
+              <span class="addon__text"><b>{{ addon.name }}</b>{% if addon.description %}<small>{{ addon.description }}</small>{% endif %}</span>
+              <span class="addon__price">{% if addon.price %}+{{ addon.price|rub }}{% else %}бесплатно{% endif %}</span>
+              <span class="switch" aria-hidden="true"></span>
+            </label>
+            {% if addon.note_label %}
+            <div class="addon__note" data-addon-note{% if not check.value %} hidden{% endif %}>
+              <label class="sr-only" for="{{ note.id_for_label }}">{{ addon.note_label }}</label>
+              {{ note|inp }}
+              {% for e in note.errors %}<p class="field__error" id="{{ note.id_for_label }}-err">{{ e }}</p>{% endfor %}
+            </div>
+            {% endif %}
+          </div>
+          {% endfor %}
+          {% include 'includes/_field.html' with field=form.comment hide_required=True %}
+        </fieldset>
+
+        <fieldset class="panel">
+          <legend class="panel__title"><b>5</b> Оплата</legend>
+          <div class="choices" data-payments role="radiogroup" aria-label="Способ оплаты">
+            {% for o in payments %}
+            <label class="choice"><input type="radio" name="payment_method" value="{{ o.value }}"{% if selected_payment == o.value %} checked{% elif not selected_payment and o.default %} checked{% endif %}><span><b>{{ o.label }}</b>{% if o.hint %}<small>{{ o.hint }}</small>{% endif %}</span></label>
+            {% endfor %}
+          </div>
+          {% for e in form.payment_method.errors %}<p class="field__error">{{ e }}</p>{% endfor %}
+          <p class="notice" data-prepay-note{% if not prepay %} hidden{% endif %}>{% icon 'info' %} <span>Букет на другой день — только с предоплатой. Пока заказ не оплачен, мы не начинаем его собирать.</span></p>
+        </fieldset>
+
+        <div class="consents">
+          <label class="check{% if form.consent_pd.errors %} has-error{% endif %}"><input type="checkbox" name="consent_pd"{% if form.consent_pd.value %} checked{% endif %} required> <span>Согласен на <a href="{% url 'shop:privacy' %}" target="_blank" rel="noopener">обработку персональных данных</a></span></label>
+          {% for e in form.consent_pd.errors %}<p class="field__error">{{ e }}</p>{% endfor %}
+          <label class="check{% if form.consent_offer.errors %} has-error{% endif %}"><input type="checkbox" name="consent_offer"{% if form.consent_offer.value %} checked{% endif %} required> <span>Принимаю условия <a href="{% url 'shop:offer' %}" target="_blank" rel="noopener">публичной оферты</a></span></label>
+          {% for e in form.consent_offer.errors %}<p class="field__error">{{ e }}</p>{% endfor %}
+          <label class="check"><input type="checkbox" name="marketing_consent"{% if form.marketing_consent.value %} checked{% endif %}> <span>Хочу получать новости и акции (необязательно)</span></label>
+          <div class="hp" aria-hidden="true"><label>Сайт <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
         </div>
-    </div>
-</div>
+      </div>
 
-<style>
-    form input[type="text"], form input[type="email"], form input[type="date"], form textarea {
-        width: 100%;
-        padding: 0.85rem 1rem;
-        border: 1px solid #d2ddc4;
-        border-radius: 1rem;
-        background: #faf9f5;
-        font-family: Inter, sans-serif;
-        font-size: 0.95rem;
-        transition: all .2s ease;
-    }
-    form input:focus, form textarea:focus {
-        outline: none;
-        border-color: #8aa374;
-        background: #fff;
-        box-shadow: 0 0 0 3px rgba(138,163,116,.15);
-    }
-</style>
+      <aside class="checkout__side">
+        <div class="summary" data-summary>{% include 'shop/_checkout_summary.html' %}</div>
+        <button class="btn btn--primary btn--lg btn--block" type="submit" data-submit>Подтвердить заказ <span data-total-btn>{{ quote.total|rub }}</span></button>
+        <p class="summary__note">{% icon 'lock' %} Данные нужны только для выполнения заказа.</p>
+      </aside>
+    </form>
+  </div>
+</section>
 {% endblock %}
+{% block scripts %}<script src="{% static 'shop/js/checkout.js' %}" defer></script>{% endblock %}

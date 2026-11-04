@@ -1,9 +1,23 @@
 {% extends 'base.html' %}
-{% block title %}Вход — Muzflowers{% endblock %}
-{% block content %}<main class="w auth"><h1 class="st">Вход</h1>
-<form method="post">{% csrf_token %}
-{{ form.non_field_errors }}
-{% for f in form %}<label>{{ f.label }}{{ f }}{% if f.help_text %}<small>{{ f.help_text|safe }}</small>{% endif %}{{ f.errors }}</label>
-{% endfor %}<input type="hidden" name="next" value="{{ next }}">
-<button class="btn">Войти</button></form>
-<p class="sd">Ещё нет аккаунта? <a href="{% url 'accounts:register' %}">Зарегистрируйтесь</a></p></main>{% endblock %}
+{% load shop_tags %}
+{% block title %}Вход — {{ site.shop_name }}{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="wrap">
+    <div class="auth">
+      <h1 class="display display--md">Вход</h1>
+      <p class="muted">С аккаунтом заказы сохраняются, а форма заказа заполняется сама.</p>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="notice notice--error" role="alert">{% icon 'info' %} <div>{% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}</div></div>{% endif %}
+        {% include 'includes/_field.html' with field=form.username hide_required=True %}
+        {% include 'includes/_field.html' with field=form.password hide_required=True %}
+        <input type="hidden" name="next" value="{{ next }}">
+        <button class="btn btn--primary btn--lg btn--block" type="submit">Войти</button>
+      </form>
+      <p class="auth__links"><a href="{% url 'accounts:password_reset' %}">Забыли пароль?</a><span>·</span><a href="{% url 'accounts:register' %}{% if next %}?next={{ next|urlencode }}{% endif %}">Создать аккаунт</a></p>
+    </div>
+  </div>
+</section>
+{% endblock %}

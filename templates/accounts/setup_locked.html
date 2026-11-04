@@ -1,0 +1,11 @@
+{% extends 'base.html' %}
+{% block title %}Первый запуск — {{ site.shop_name }}{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="wrap wrap--narrow center">
+    <h1 class="display display--md">Эту страницу видно только владельцу</h1>
+    <p class="lead">Откройте её на компьютере, где запущен сайт, или добавьте в адрес секретный код: <code>/accounts/setup/?token=ваш-код</code>. Код задаётся в файле настроек (.env) как DJANGO_SETUP_TOKEN.</p>
+  </div>
+</section>
+{% endblock %}

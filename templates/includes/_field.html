@@ -1,0 +1,6 @@
+{% load shop_tags %}<div class="field{% if field.errors %} has-error{% endif %}">
+  <label class="field__label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required and not hide_required %}<span class="req" aria-hidden="true">*</span>{% endif %}</label>
+  {{ field|inp }}
+  {% if field.help_text %}<p class="field__hint">{{ field.help_text }}</p>{% endif %}
+  {% for e in field.errors %}<p class="field__error" id="{{ field.id_for_label }}-err">{{ e }}</p>{% endfor %}
+</div>

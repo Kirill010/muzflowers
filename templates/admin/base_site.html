@@ -1,0 +1,8 @@
+{% extends "admin/base.html" %}
+{% load static %}
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title|default:"MuzFlowers" }}{% endblock %}
+{% block extrastyle %}{{ block.super }}<link rel="stylesheet" href="{% static 'shop/css/admin.css' %}">
+<link rel="icon" href="{% static 'shop/img/favicon.svg' %}" type="image/svg+xml">{% endblock %}
+{% block branding %}
+<h1 id="site-name"><a href="{% url 'admin:index' %}"><img class="mz-logo" src="{% static 'shop/img/logo-sage.png' %}" alt="" width="34" height="34"> {{ site_header|default:"MuzFlowers" }}</a></h1>
+{% endblock %}

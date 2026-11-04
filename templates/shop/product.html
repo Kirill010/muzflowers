@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% load static shop_tags %}
+{% block title %}{{ p.name }} — купить букет в Москве — {{ site.shop_name }}{% endblock %}
+{% block description %}{{ p.tagline|default:p.name }}. {{ p.price_from|rub }}. Самовывоз у Курского вокзала и доставка по Москве.{% endblock %}
+{% block og_type %}product{% endblock %}
+{% block og_title %}{{ p.name }} — {{ site.shop_name }}{% endblock %}
+{% block og_description %}{{ p.tagline|default:p.name }}. {{ p.price_from|rub }}.{% endblock %}
+{% block content %}
+{% with gallery=p.gallery %}
+<section class="section section--tight">
+  <div class="wrap">
+    <nav class="breadcrumbs" aria-label="Хлебные крошки">
+      <a href="{% url 'shop:home' %}">Главная</a><a href="{% url 'shop:catalog' %}">Каталог</a>
+      <a href="{{ p.category.get_absolute_url }}">{{ p.category.name }}</a><span aria-current="page">{{ p.name }}</span>
+    </nav>
+
+    <div class="pdp">
+      <div class="gallery" data-gallery>
+        <div class="gallery__main">
+          {% if gallery %}
+            {% for file, alt in gallery %}<div class="gallery__slide{% if forloop.first %} is-active{% endif %}" data-slide>{% photo file alt 'main' forloop.first %}</div>{% endfor %}
+          {% else %}
+            <div class="gallery__slide is-active" data-slide>{% product_image p 'main' True %}</div>
+          {% endif %}
+          {% if p.badge %}<span class="card__badge">{{ p.badge }}</span>{% endif %}
+        </div>
+        {% if gallery|length > 1 %}
+        <ul class="gallery__thumbs">
+          {% for file, alt in gallery %}<li><button class="gallery__thumb{% if forloop.first %} is-active{% endif %}" type="button" data-thumb="{{ forloop.counter0 }}" aria-label="Показать фото {{ forloop.counter }}">{% photo file alt 'thumb' %}</button></li>{% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+
+      <div class="pdp__buy">
+        <p class="eyebrow">{{ p.category.name }}</p>
+        <h1 class="display display--md">{{ p.name }}</h1>
+        {% if p.tagline %}<p class="lead">{{ p.tagline }}</p>{% endif %}
+
+        <form method="post" action="{% url 'shop:cart_add' %}" data-cart-form data-add data-pdp>
+          {% csrf_token %}
+          <input type="hidden" name="product" value="{{ p.pk }}">
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+
+          {% if variants %}
+          <fieldset class="variants">
+            <legend class="field__label">Размер</legend>
+            {% for v in variants %}
+            <label class="variant"><input type="radio" name="variant" value="{{ v.pk }}" data-price="{{ v.price }}"{% if forloop.first %} checked{% endif %}><span><b>{{ v.name }}</b><small>{{ v.price|rub }}</small></span></label>
+            {% endfor %}
+          </fieldset>
+          {% endif %}
+
+          <p class="pdp__price price"><b data-pdp-price>{{ p.price_from|rub }}</b>{% if p.old_price %}<s class="price__old">{{ p.old_price|rub }}</s>{% endif %}</p>
+
+          {% if p.is_orderable %}
+            {% if music_addon %}
+            <label class="addon-check">
+              <input type="checkbox" name="addon" value="{{ music_addon.pk }}">
+              <span class="addon-check__box" aria-hidden="true">{% icon 'check' %}</span>
+              <span class="addon-check__text"><b>{% icon 'music' %} {{ music_addon.name }}</b><small>{% if music_addon.price %}+{{ music_addon.price|rub }}{% else %}бесплатно{% endif %} · песня играет по QR-коду</small></span>
+            </label>
+            {% endif %}
+            <div class="pdp__row">
+              <div class="qty">
+                <label class="sr-only" for="pdp-qty">Количество</label>
+                <button class="qty__btn" type="button" data-qty-minus aria-label="Меньше">{% icon 'minus' %}</button>
+                <input class="qty__input" id="pdp-qty" type="number" name="qty" value="1" min="1" max="50" inputmode="numeric">
+                <button class="qty__btn" type="button" data-qty-plus aria-label="Больше">{% icon 'plus' %}</button>
+              </div>
+              <button class="btn btn--primary btn--lg pdp__add" type="submit">{% icon 'bag' %} В корзину</button>
+            </div>
+          {% else %}
+            <p class="notice">{{ p.unavailable_reason }}</p>
+            <a class="btn btn--ghost" href="{% url 'shop:catalog' %}">Посмотреть другие букеты</a>
+          {% endif %}
+        </form>
+
+        <ul class="pdp__facts">
+          <li>{% icon 'clock' %} Самовывоз у Курского вокзала — через {{ site.pickup_lead_minutes }} минут после заказа</li>
+          <li>{% icon 'truck' %} Доставка по Москве — {{ site.delivery_cost|rub }}{% if site.free_delivery_from %}, от {{ site.free_delivery_from|rub }} бесплатно{% endif %}</li>
+          <li>{% icon 'gift' %} Открытка с вашим текстом — бесплатно</li>
+        </ul>
+
+        <div class="faq faq--flat">
+          {% if p.description or p.tagline %}
+          <details class="faq__item" open><summary>О букете</summary><div class="faq__answer">
+            {% if p.tagline %}<p><b>Состав:</b> {{ p.tagline }}.</p>{% endif %}{{ p.description|linebreaks }}
+          </div></details>
+          {% endif %}
+          <details class="faq__item"><summary>Как ухаживать</summary><div class="faq__answer">
+            <p>Подрезайте стебли наискосок на 2–3 см — сразу и потом каждые 2 дня. Уберите листья ниже уровня воды, меняйте воду на прохладную каждый день. Не ставьте букет у батареи, на солнце и рядом с фруктами. <a href="{% url 'shop:care' %}">Подробнее</a></p>
+          </div></details>
+          <details class="faq__item"><summary>Самовывоз и доставка</summary><div class="faq__answer">
+            <p>Самовывоз — бесплатно. {{ site.delivery_area_text }} <a href="{% url 'shop:delivery' %}">Условия доставки и оплаты</a></p>
+          </div></details>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endwith %}
+
+{% if related %}
+<section class="section section--tint">
+  <div class="wrap">
+    <header class="section__head"><h2 class="display">Вам <em>может понравиться</em></h2></header>
+    <div class="grid grid--4">{% for p in related %}{% include 'includes/_card.html' %}{% endfor %}</div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script src="{% static 'shop/js/product.js' %}" defer></script>{% endblock %}

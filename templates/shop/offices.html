@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load shop_tags %}
+{% block title %}Цветы для офиса с доставкой — {{ site.shop_name }}{% endblock %}
+{% block description %}Букет на ресепшен раз в неделю, подарки сотрудникам к праздникам, счёт для юрлица и оплата раз в месяц. Цветочный магазин у Курского вокзала, Москва.{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="wrap duo duo--top">
+    <div class="stack">
+      <p class="eyebrow">Компаниям</p>
+      <h1 class="display display--lg">Цветы для <em>офиса</em></h1>
+      <p class="lead">Живые цветы на ресепшен, в переговорной или на столе у коллеги — без хлопот: привезём или вы заберёте по пути.</p>
+      <ul class="checks">
+        <li>{% icon 'check' %} Букет на ресепшен раз в неделю — от 3 000 ₽</li>
+        <li>{% icon 'check' %} Подарки сотрудникам и гостям к праздникам — соберём к нужному дню</li>
+        <li>{% icon 'check' %} Счёт для юрлица, оплата раз в месяц</li>
+        <li>{% icon 'check' %} Первая неделя — пробный букет со скидкой 20%</li>
+        <li>{% icon 'check' %} Цветы с нашего оптового склада</li>
+      </ul>
+      <p class="muted">Или позвоните: <a href="{{ site.phone_href }}">{{ site.phone }}</a></p>
+    </div>
+    {% include 'includes/_lead_form.html' with submit_label='Оставить заявку' %}
+  </div>
+</section>
+{% endblock %}

@@ -1,5 +1,14 @@
 {% extends 'base.html' %}
-{% block title %}Страница не найдена — Muzflowers{% endblock %}
-{% block content %}<main class="w auth"><h1 class="st">Такой страницы нет 🥀</h1>
-<p class="sd">Возможно, ссылка устарела. Вернитесь в каталог — там много красивого.</p>
-<a class="btn" href="{% url 'shop:index' %}">На главную</a></main>{% endblock %}
+{% load shop_tags %}
+{% block title %}Страница не найдена — {{ site.shop_name }}{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="wrap wrap--narrow center">
+    {% icon 'flower' 'empty__icon' %}
+    <h1 class="display display--lg">Такой страницы <em>нет</em></h1>
+    <p class="lead">Возможно, ссылка устарела или букет уже раскупили. Вернитесь в каталог — там много красивого.</p>
+    <p><a class="btn btn--primary" href="{% url 'shop:catalog' %}">Перейти в каталог</a> <a class="btn btn--ghost" href="{% url 'shop:home' %}">На главную</a></p>
+  </div>
+</section>
+{% endblock %}

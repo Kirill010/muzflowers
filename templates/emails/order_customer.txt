@@ -1,0 +1,23 @@
+{% load shop_tags %}{% autoescape off %}Здравствуйте, {{ order.name }}!
+
+Ваш заказ №{{ order.pk }} принят. Спасибо, что выбрали {{ site.shop_name }}.
+
+Когда: {{ order.when_display }}
+{% if order.receive_method == 'delivery' %}Куда{% else %}Где забрать{% endif %}: {{ order.place_display }}
+
+Состав заказа:
+{% for item in items %}- {{ item.full_name }} × {{ item.qty }} — {{ item.line_total|rub }}
+{% endfor %}{% for addon in addons %}- {{ addon.name }}{% if addon.note %}: {{ addon.note }}{% endif %}{% if addon.price %} — {{ addon.price|rub }}{% endif %}
+{% endfor %}{% if order.delivery_cost %}Доставка: {{ order.delivery_cost|rub }}
+{% endif %}Итого: {{ order.total|rub }}
+
+{% if order.payment_method == 'transfer' and not order.is_paid %}{% if site.payment_details %}Оплата переводом:
+{{ site.payment_details }}
+
+{% else %}Мы свяжемся с вами и отправим ссылку на оплату.
+
+{% endif %}{% endif %}{% if url %}Следить за заказом: {{ url }}
+
+{% endif %}Если нужно что-то изменить — позвоните: {{ site.phone }}
+{{ site.shop_name }}
+{% endautoescape %}

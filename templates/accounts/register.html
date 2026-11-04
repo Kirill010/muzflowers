@@ -1,8 +1,29 @@
 {% extends 'base.html' %}
-{% block title %}Регистрация — Muzflowers{% endblock %}
-{% block content %}<main class="w auth"><h1 class="st">Регистрация</h1>
-<form method="post">{% csrf_token %}
-{{ form.non_field_errors }}
-{% for f in form %}<label>{{ f.label }}{{ f }}{% if f.help_text %}<small>{{ f.help_text|safe }}</small>{% endif %}{{ f.errors }}</label>
-{% endfor %}<button class="btn">Создать аккаунт</button></form>
-<p class="sd">Уже есть аккаунт? <a href="{% url 'accounts:login' %}">Войти</a></p></main>{% endblock %}
+{% load shop_tags %}
+{% block title %}Регистрация — {{ site.shop_name }}{% endblock %}
+{% block robots %}noindex, nofollow{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="wrap">
+    <div class="auth">
+      <h1 class="display display--md">Создать аккаунт</h1>
+      <p class="muted">Покупать можно и без аккаунта. Он нужен, чтобы видеть историю заказов и повторять их в одно касание.</p>
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="notice notice--error" role="alert">{% icon 'info' %} <div>{% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}</div></div>{% endif %}
+        {% include 'includes/_field.html' with field=form.name %}
+        {% include 'includes/_field.html' with field=form.email %}
+        {% include 'includes/_field.html' with field=form.phone hide_required=True %}
+        {% include 'includes/_field.html' with field=form.password1 %}
+        {% include 'includes/_field.html' with field=form.password2 %}
+        <label class="check{% if form.consent.errors %} has-error{% endif %}"><input type="checkbox" name="consent" required{% if form.consent.value %} checked{% endif %}> <span>Согласен на <a href="{% url 'shop:privacy' %}" target="_blank" rel="noopener">обработку персональных данных</a></span></label>
+        {% for e in form.consent.errors %}<p class="field__error">{{ e }}</p>{% endfor %}
+        <div class="hp" aria-hidden="true"><label>Сайт <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+        <input type="hidden" name="next" value="{{ next }}">
+        <button class="btn btn--primary btn--lg btn--block" type="submit">Зарегистрироваться</button>
+      </form>
+      <p class="auth__links">Уже есть аккаунт? <a href="{% url 'accounts:login' %}">Войти</a></p>
+    </div>
+  </div>
+</section>
+{% endblock %}

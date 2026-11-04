@@ -1,0 +1,78 @@
+{% extends "admin/index.html" %}
+{% load i18n shop_tags %}
+{% block coltype %}{% endblock %}
+{% block sidebar %}{% endblock %}
+{% block content %}
+<div class="mz-dash">
+
+  <section class="mz-attention">
+    <a class="mz-tile{% if new_orders %} is-hot{% endif %}" href="{% url 'admin:shop_order_changelist' %}?status=new"><b>{{ new_orders|length }}</b><span>новых заказов</span></a>
+    <a class="mz-tile{% if waiting_pay %} is-warn{% endif %}" href="{% url 'admin:shop_order_changelist' %}?payment_status=pending"><b>{{ waiting_pay|length }}</b><span>ждут предоплату</span></a>
+    <a class="mz-tile{% if new_leads %} is-hot{% endif %}" href="{% url 'admin:shop_lead_changelist' %}?status=new"><b>{{ new_leads }}</b><span>новых заявок</span></a>
+    <a class="mz-tile{% if off_products %} is-warn{% endif %}" href="{% url 'admin:shop_product_changelist' %}?in_stock__exact=0"><b>{{ off_products }}</b><span>букетов «нет сегодня»</span></a>
+    <a class="mz-tile{% if todo_count %} is-warn{% endif %}" href="#checklist"><b>{{ todo_count }}</b><span>дел в списке «заполнить»</span></a>
+  </section>
+
+  <div class="mz-cols">
+    <section class="mz-card">
+      <h2>Сегодня, {{ today|date:"j E" }}</h2>
+      {% include "admin/_board.html" with rows=board_today empty_text="На сегодня заказов нет" %}
+    </section>
+    <section class="mz-card">
+      <h2>Завтра, {{ tomorrow|date:"j E" }}</h2>
+      {% include "admin/_board.html" with rows=board_tomorrow empty_text="На завтра заказов нет" %}
+      <p class="mz-print"><a class="mz-btn" href="{% url 'admin:shop_order_print_many' %}?date={{ tomorrow|date:'Y-m-d' }}" target="_blank">Печать бланков на завтра</a>
+        <a class="mz-btn" href="{% url 'admin:shop_order_day' %}?date={{ tomorrow|date:'Y-m-d' }}" target="_blank">Список на завтра</a></p>
+    </section>
+  </div>
+
+  {% if new_rows %}
+  <section class="mz-card">
+    <h2>Новые заказы на другие даты — нужно подтвердить</h2>
+    <div class="mz-cols mz-cols--tight">{% include "admin/_board.html" with rows=new_rows %}</div>
+  </section>
+  {% endif %}
+
+  {% if board_later %}
+  <section class="mz-card">
+    <h2>Дальше — ближайшие 2 недели</h2>
+    <div class="mz-cols mz-cols--tight">{% include "admin/_board.html" with rows=board_later %}</div>
+  </section>
+  {% endif %}
+
+  <div class="mz-cols">
+    <section class="mz-card" id="checklist">
+      <h2>Что осталось заполнить</h2>
+      <ul class="mz-check">
+        {% for item in checklist %}
+        <li class="{% if item.ok %}is-ok{% else %}is-todo{% endif %}">
+          <span class="mz-mark">{% if item.ok %}✓{% else %}!{% endif %}</span>
+          <div><b>{% if item.url %}<a href="{{ item.url }}">{{ item.title }}</a>{% else %}{{ item.title }}{% endif %}</b>{% if not item.ok %}<small>{{ item.hint }}</small>{% endif %}</div>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+    <section class="mz-card">
+      <h2>Цифры</h2>
+      <dl class="mz-stats">
+        <div><dt>За 7 дней</dt><dd>{{ week.n }} {{ week.n|plural:"заказ,заказа,заказов" }} · {{ week.total|default:0|rub }}</dd></div>
+        <div><dt>С начала {{ month_name|date:"E" }}</dt><dd>{{ month.n }} {{ month.n|plural:"заказ,заказа,заказов" }} · {{ month.total|default:0|rub }}</dd></div>
+        {% if month.n %}<div><dt>Средний чек</dt><dd>{% widthratio month.total month.n 1 as avg %}{{ avg|rub }}</dd></div>{% endif %}
+      </dl>
+      {% if sources %}
+      <h3>Откуда заказы (в этом месяце)</h3>
+      <ul class="mz-sources">{% for s in sources %}<li><span>{{ s.label }}</span><b>{{ s.n }}</b></li>{% endfor %}</ul>
+      {% endif %}
+      <p class="mz-print">
+        <a class="mz-btn mz-btn--main" href="{% url 'admin:shop_product_add' %}">Добавить букет</a>
+        <a class="mz-btn" href="{% url 'admin:shop_order_changelist' %}">Все заказы</a>
+        <a class="mz-btn" href="{% url 'admin:shop_sitesettings_changelist' %}">Настройки сайта</a>
+        <a class="mz-btn" href="{% url 'admin:shop_promocode_changelist' %}">Промокоды</a>
+      </p>
+    </section>
+  </div>
+
+</div>
+<h2 class="mz-all">Все разделы</h2>
+{{ block.super }}
+{% endblock %}

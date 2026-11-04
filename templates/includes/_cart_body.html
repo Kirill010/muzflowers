@@ -1,0 +1,106 @@
+{% load shop_tags %}
+{% if cart_quote and cart_quote.lines %}
+<div class="cart">
+  {% if cart_quote.free_from %}
+  <div class="freebar{% if not cart_quote.free_left %} is-done{% endif %}">
+    <p>{% if cart_quote.free_left %}{% icon 'truck' %} До бесплатной доставки — <b>{{ cart_quote.free_left|rub }}</b>{% else %}{% icon 'check' %} Доставка бесплатная{% endif %}</p>
+    <progress max="100" value="{{ cart_quote.free_progress }}" aria-hidden="true"></progress>
+  </div>
+  {% endif %}
+
+  <ul class="cart-lines">
+    {% for line in cart_quote.lines %}
+    <li class="cart-line{% if line.problem %} is-problem{% endif %}">
+      <a class="cart-line__img" href="{{ line.product.get_absolute_url }}" tabindex="-1" aria-hidden="true">{% product_image line.product 'cart' %}</a>
+      <div class="cart-line__main">
+        <a class="cart-line__name" href="{{ line.product.get_absolute_url }}">{{ line.product.name }}</a>
+        {% if line.variant_name %}<span class="cart-line__variant">{{ line.variant_name }}</span>{% endif %}
+        {% if line.problem %}<p class="cart-line__warn">{{ line.problem }}</p>{% endif %}
+        <div class="cart-line__ctrl">
+          <div class="stepper" role="group" aria-label="Количество: {{ line.product.name }}">
+            <form method="post" action="{% url 'shop:cart_update' %}" data-cart-form>{% csrf_token %}
+              <input type="hidden" name="key" value="{{ line.key }}"><input type="hidden" name="qty" value="{{ line.qty|add:'-1' }}">
+              <button class="stepper__btn" type="submit" aria-label="Меньше">{% icon 'minus' %}</button>
+            </form>
+            <span class="stepper__qty">{{ line.qty }}</span>
+            <form method="post" action="{% url 'shop:cart_update' %}" data-cart-form>{% csrf_token %}
+              <input type="hidden" name="key" value="{{ line.key }}"><input type="hidden" name="qty" value="{{ line.qty|add:'1' }}">
+              <button class="stepper__btn" type="submit" aria-label="Больше">{% icon 'plus' %}</button>
+            </form>
+          </div>
+          <form method="post" action="{% url 'shop:cart_remove' %}" data-cart-form>{% csrf_token %}
+            <input type="hidden" name="key" value="{{ line.key }}"><button class="link-btn" type="submit">Убрать</button>
+          </form>
+        </div>
+      </div>
+      <div class="cart-line__sum">{{ line.total|rub }}{% if line.qty > 1 %}<small>{{ line.unit_price|rub }} × {{ line.qty }}</small>{% endif %}</div>
+    </li>
+    {% endfor %}
+  </ul>
+
+  {% if cart_addons %}
+  <section class="cart-section" aria-label="Добавить к заказу">
+    <h3 class="cart-section__title">Добавить к заказу</h3>
+    {% for a in cart_addons %}
+    <div class="addon{% if a.on %} is-on{% endif %}">
+      <form class="addon__toggle" method="post" action="{% url 'shop:cart_addon' %}" data-cart-form>{% csrf_token %}
+        <input type="hidden" name="addon" value="{{ a.addon.pk }}"><input type="hidden" name="on" value="{% if a.on %}0{% else %}1{% endif %}">
+        <button class="addon__btn" type="submit" role="switch" aria-checked="{% if a.on %}true{% else %}false{% endif %}">
+          <span class="addon__icon">{% if a.addon.is_music %}{% icon 'music' %}{% else %}{% icon 'gift' %}{% endif %}</span>
+          <span class="addon__text"><b>{{ a.addon.name }}</b>{% if a.addon.description %}<small>{{ a.addon.description }}</small>{% endif %}</span>
+          <span class="addon__price">{% if a.addon.price %}+{{ a.addon.price|rub }}{% else %}бесплатно{% endif %}</span>
+          <span class="switch" aria-hidden="true"></span>
+        </button>
+      </form>
+      {% if a.on and a.addon.note_label %}
+      <form class="addon__note" method="post" action="{% url 'shop:cart_addon' %}" data-cart-form data-autosubmit>{% csrf_token %}
+        <input type="hidden" name="addon" value="{{ a.addon.pk }}"><input type="hidden" name="on" value="1">
+        <label class="sr-only" for="note-{{ a.addon.pk }}">{{ a.addon.note_label }}</label>
+        <input class="input" id="note-{{ a.addon.pk }}" name="note" value="{{ a.note }}" maxlength="200" placeholder="{{ a.addon.note_label }}"{% if a.addon.note_required %} required{% endif %}>
+      </form>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </section>
+  {% endif %}
+
+  <section class="cart-section" aria-label="Промокод">
+    {% if cart_quote.promo %}
+    <div class="promo is-applied">
+      <span>{% icon 'check' %} Промокод <b>{{ cart_quote.promo.code }}</b> применён</span>
+      <form method="post" action="{% url 'shop:cart_promo' %}" data-cart-form>{% csrf_token %}<input type="hidden" name="code" value=""><button class="link-btn" type="submit">Убрать</button></form>
+    </div>
+    {% else %}
+    <form class="promo" method="post" action="{% url 'shop:cart_promo' %}" data-cart-form>{% csrf_token %}
+      <label class="sr-only" for="promo-code">Промокод</label>
+      <input class="input" id="promo-code" name="code" placeholder="Есть промокод?" autocomplete="off" maxlength="30" value="{{ cart_promo }}">
+      <button class="btn btn--ghost btn--sm" type="submit">Применить</button>
+    </form>
+    {% if cart_quote.promo_error %}<p class="field__error">{{ cart_quote.promo_error }}</p>{% endif %}
+    {% endif %}
+  </section>
+
+  <dl class="totals">
+    <div><dt>Букеты</dt><dd>{{ cart_quote.subtotal|rub }}</dd></div>
+    {% if cart_quote.discount %}<div class="totals__discount"><dt>Скидка</dt><dd>−{{ cart_quote.discount|rub }}</dd></div>{% endif %}
+    {% if cart_quote.addons_total %}<div><dt>Дополнения</dt><dd>{{ cart_quote.addons_total|rub }}</dd></div>{% endif %}
+    <div><dt>Доставка</dt><dd>считаем при оформлении</dd></div>
+    <div class="totals__sum"><dt>Итого</dt><dd>{{ cart_quote.total|rub }}</dd></div>
+  </dl>
+
+  {% if cart_quote.problems %}
+  <ul class="problems">{% for problem in cart_quote.problems %}<li>{{ problem }}</li>{% endfor %}</ul>
+  <span class="btn btn--primary btn--lg btn--block is-disabled" aria-disabled="true">Оформить заказ</span>
+  {% else %}
+  <a class="btn btn--primary btn--lg btn--block" href="{% url 'shop:checkout' %}">Оформить заказ {% icon 'arrow' %}</a>
+  {% endif %}
+  <p class="cart__note">Самовывоз — бесплатно. Доставка по Москве — {{ site.delivery_cost|rub }}{% if site.free_delivery_from %}, от {{ site.free_delivery_from|rub }} бесплатно{% endif %}.</p>
+</div>
+{% else %}
+<div class="cart-empty">
+  <div class="cart-empty__art">{% icon 'flower' %}</div>
+  <h3>В корзине пока пусто</h3>
+  <p>Выберите букет в каталоге — он появится здесь.</p>
+  <a class="btn btn--primary" href="{% url 'shop:catalog' %}">Перейти в каталог</a>
+</div>
+{% endif %}

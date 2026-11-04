@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load static shop_tags %}
+{% block title %}Музыкальная открытка — цветы, которые звучат — {{ site.shop_name }}{% endblock %}
+{% block description %}К любому букету — открытка с QR-кодом: получатель наведёт камеру, и зазвучит песня, которую выбрали вы. {{ site.shop_name }}, Курский вокзал, Москва.{% endblock %}
+{% block content %}
+<section class="section section--dark music" data-music>
+  <div class="wrap music__grid">
+    <div class="music__text">
+      <p class="eyebrow">Музыкальная открытка</p>
+      <h1 class="display display--lg">Цветы, которые <em>звучат</em></h1>
+      <p class="lead">Обычная открытка говорит словами. Наша ещё и играет: на ней QR-код, а за ним — песня, которую вы выбрали. Получатель наводит камеру телефона, и букет зазвучит.</p>
+      <div class="music__cta">
+        <a class="btn btn--accent btn--lg" href="{% url 'shop:catalog' %}">Выбрать букет {% icon 'arrow' %}</a>
+        {% if addon %}<span class="music__price">{{ addon.price|rub }} к любому букету</span>{% endif %}
+      </div>
+    </div>
+    <div class="music__demo">
+      <div class="postcard" aria-hidden="true">
+        <div class="postcard__text"><span>Для тебя</span><b>С днём рождения!</b></div>
+        <svg class="postcard__qr" viewBox="0 0 11 11" shape-rendering="crispEdges">
+          <path d="M0 0h3v3H0zM8 0h3v3H8zM0 8h3v3H0z" fill="none" stroke="currentColor" stroke-width="1"/>
+          <path d="M1 1h1v1H1zM9 1h1v1H9zM1 9h1v1H1zM4 0h1v2H4zM6 1h1v1H6zM4 3h2v1H4zM7 3h1v2H7zM9 4h2v1H9zM0 4h2v1H0zM3 5h1v2H3zM5 5h2v1H5zM8 6h1v2H8zM10 7h1v1h-1zM5 7h1v2H5zM7 9h2v1H7zM10 9h1v2h-1zM4 10h2v1H4z" fill="currentColor"/>
+        </svg>
+        <span class="eq"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+      </div>
+      <button class="btn btn--light" type="button" data-music-play>{% icon 'play' %} Услышать, как это бывает</button>
+      <p class="music__hint">Короткая мелодия сыграет прямо в браузере. Это пример — у вас будет ваша песня.</p>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <header class="section__head"><p class="eyebrow">Как это работает</p><h2 class="display">Три шага — и <em>букет заиграет</em></h2></header>
+    <ol class="how">
+      <li class="how__item" data-reveal>{% icon 'music' 'how__icon' %}<h3>Выберите песню</h3><p>Добавьте открытку к букету и напишите название и исполнителя. Если есть ссылка на трек — вставьте её: так точнее.</p></li>
+      <li class="how__item" data-reveal>{% icon 'gift' 'how__icon' %}<h3>Мы напечатаем открытку</h3><p>На открытке — ваш текст и QR-код. Флорист положит её в букет.</p></li>
+      <li class="how__item" data-reveal>{% icon 'sparkle' 'how__icon' %}<h3>Получатель удивится</h3><p>Наводит камеру телефона на QR-код — и звучит ваша песня.</p></li>
+    </ol>
+  </div>
+</section>
+
+{% if products %}
+<section class="section section--tint">
+  <div class="wrap">
+    <header class="section__head"><h2 class="display">Готовые букеты <em>для такой открытки</em></h2><p class="lead">Любой букет можно дополнить музыкальной открыткой — выберите и отметьте её в корзине.</p></header>
+    <div class="grid grid--4">{% for p in products %}{% include 'includes/_card.html' %}{% endfor %}</div>
+  </div>
+</section>
+{% endif %}
+
+<section class="section">
+  <div class="wrap wrap--narrow">
+    <header class="section__head"><h2 class="display">Частые <em>вопросы</em></h2></header>
+    <div class="faq">
+      <details class="faq__item"><summary>Нужен ли получателю интернет?</summary><div class="faq__answer"><p>Да: песня открывается по ссылке из QR-кода, поэтому телефону нужен интернет.</p></div></details>
+      <details class="faq__item"><summary>Какую песню можно выбрать?</summary><div class="faq__answer"><p>Назовите исполнителя и название или пришлите ссылку на трек. Если с песней возникнут сложности, мы позвоним и подскажем.</p></div></details>
+      <details class="faq__item"><summary>Можно ли добавить к открытке свой текст?</summary><div class="faq__answer"><p>Да. Текст открытки пишется в форме заказа, он будет на самой открытке рядом с QR-кодом.</p></div></details>
+      <details class="faq__item"><summary>Как добавить её к заказу?</summary><div class="faq__answer"><p>Отметьте «{% if addon %}{{ addon.name }}{% else %}Музыкальная открытка{% endif %}» на странице букета, в корзине или при оформлении и напишите, какая песня нужна.</p></div></details>
+    </div>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{% static 'shop/js/home.js' %}" defer></script>{% endblock %}
