@@ -51,6 +51,7 @@ SITE_URL = os.environ.get('SITE_URL', '').rstrip('/')
 
 # Папка с данными (база и фото). По умолчанию — рядом с проектом; на хостинге/в Docker — отдельный том.
 DATA_DIR = Path(os.environ.get('DJANGO_DATA_DIR') or BASE_DIR)
+DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 INSTALLED_APPS = [
     'muzflowers.apps.MuzAdminConfig',  # обычная админка Django + «панель владельца» на главной

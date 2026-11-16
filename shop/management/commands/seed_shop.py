@@ -87,12 +87,12 @@ class Command(BaseCommand):
             self.stdout.write(self.style.SUCCESS(f'Букеты: добавлено {len(PRODUCTS)} (цены — из вашего списка, меняйте в панели)'))
 
         if not Addon.objects.exists():
-            Addon.objects.create(name='Музыкальная открытка', price=290, is_music=True, note_required=True, order=1,
+            Addon.objects.create(name='Музыкальная открытка', price=300, is_music=True, note_required=True, order=1,
                                  description='Открытка с QR-кодом: получатель наведёт камеру — и зазвучит ваша песня',
                                  note_label='Какая песня? Название и исполнитель или ссылка')
             Addon.objects.create(name='Упаковка «В дорогу»', price=0, order=2,
                                  description='Колба с водой у стеблей и плотная упаковка — букет доедет свежим 6–12 часов')
-            self.stdout.write('Дополнения: музыкальная открытка (290 ₽), упаковка «В дорогу» (бесплатно)')
+            self.stdout.write('Дополнения: музыкальная открытка (300 ₽), упаковка «В дорогу» (бесплатно)')
 
         if not FAQ.objects.exists():
             FAQ.objects.bulk_create(FAQ(question=q, answer=a, order=i) for i, (q, a) in enumerate(FAQS, 1))

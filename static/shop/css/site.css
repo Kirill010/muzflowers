@@ -347,7 +347,6 @@ mark { background: var(--warn-bg); color: var(--warn-text); padding: .1em .4em; 
 .card__body { display: flex; flex-direction: column; gap: .35rem; padding: 1rem 1.1rem 1.15rem; flex: 1; }
 .card__title { font-family: var(--font-display); font-size: 1.45rem; font-weight: 700; line-height: 1.1; }
 .card__title a { text-decoration: none; }
-.card__title a::after { content: ''; position: absolute; inset: 0; }
 .card__text { color: var(--muted); font-size: .9rem; line-height: 1.45; }
 .card__foot { display: flex; align-items: center; justify-content: space-between; gap: .6rem; margin-top: auto; padding-top: .7rem; flex-wrap: wrap; }
 .card__foot form, .card__foot .btn { position: relative; z-index: 2; }

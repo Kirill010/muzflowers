@@ -147,7 +147,7 @@ class PricingTests(ShopTestCase):
 
     def test_addons_are_added_once(self):
         q = build_quote(self.lines((self.rose, 1)), [(self.music, 'Песня')], method='pickup')
-        self.assertEqual((q.addons_total, q.total), (290, 2280))
+        self.assertEqual((q.addons_total, q.total), (300, 2290))
 
     def test_unknown_promo_reports_error(self):
         q = build_quote(self.lines((self.rose, 1)), [], 'NOPE', method='pickup')
@@ -214,7 +214,7 @@ class CartTests(ShopTestCase):
     def test_addon_toggle_and_note(self):
         self.add_to_cart()
         r = self.client.post(reverse('shop:cart_addon'), {'addon': self.music.pk, 'on': '1', 'note': 'Земфира'}, headers={'X-Requested-With': 'fetch'})
-        self.assertEqual(r.json()['total'], 2280)
+        self.assertEqual(r.json()['total'], 2290)
         self.assertEqual(self.client.session['mz_cart']['addons'], {str(self.music.pk): 'Земфира'})
         r = self.client.post(reverse('shop:cart_addon'), {'addon': self.music.pk, 'on': '0'}, headers={'X-Requested-With': 'fetch'})
         self.assertEqual(r.json()['total'], 1990)

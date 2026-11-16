@@ -32,7 +32,7 @@ class ShopTestCase(TestCase):
         self.cat = Category.objects.create(name='Розы')
         self.rose = Product.objects.create(category=self.cat, name='Классика', price=1990, tagline='7 роз, зелень', is_ready=True, popularity=10)
         self.big = Product.objects.create(category=self.cat, name='25 роз', price=5990, popularity=5)
-        self.music = Addon.objects.create(name='Музыкальная открытка', price=290, is_music=True,
+        self.music = Addon.objects.create(name='Музыкальная открытка', price=300, is_music=True,
                                           note_label='Какая песня?', note_required=True)
 
     # --- удобные помощники ---

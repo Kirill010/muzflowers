@@ -15,15 +15,15 @@ YOO = dict(PAYMENT_PROVIDER='yookassa', PAYMENT_YOOKASSA_SHOP_ID='123', PAYMENT_
 
 class PaymentTestCase(ShopTestCase):
     def make_order(self, **extra):
-        # 3 × 1990 + 5990 = 11960 за букеты, −500 скидка, +290 открытка, +300 доставка = 12050
-        data = dict(name='Анна', phone='+79175494941', date=TOMORROW, time_from=None, subtotal=11960, discount=500, addons_total=290,
-                    delivery_cost=300, total=12050, payment_method=Order.Pay.ONLINE, payment_status=Order.PayStatus.PENDING,
+        # 3 × 1990 + 5990 = 11960 за букеты, −500 скидка, +300 открытка, +300 доставка = 12060
+        data = dict(name='Анна', phone='+79175494941', date=TOMORROW, time_from=None, subtotal=11960, discount=500, addons_total=300,
+                    delivery_cost=300, total=12060, payment_method=Order.Pay.ONLINE, payment_status=Order.PayStatus.PENDING,
                     prepay_required=True, receive_method=Order.Method.DELIVERY, email='anna@example.com')
         data.update(extra)
         order = Order.objects.create(**data)
         OrderItem.objects.create(order=order, product=self.rose, name='Классика', price=1990, qty=3)
         OrderItem.objects.create(order=order, product=self.big, name='25 роз', price=5990, qty=1)
-        OrderAddon.objects.create(order=order, name='Музыкальная открытка', price=290, note='Песня')
+        OrderAddon.objects.create(order=order, name='Музыкальная открытка', price=300, note='Песня')
         return order
 
 
@@ -52,7 +52,7 @@ class TBankTests(PaymentTestCase):
         self.assertEqual(http.call_count, 1)
         endpoint, body = http.call_args.args
         self.assertEqual(endpoint, 'https://securepay.tinkoff.ru/v2/Init')
-        self.assertEqual((body['Amount'], body['TerminalKey']), (12050 * 100, 'TERM'))
+        self.assertEqual((body['Amount'], body['TerminalKey']), (12060 * 100, 'TERM'))
         self.assertEqual(body['Token'], payments._tbank_token(body))
         self.assertEqual(sum(i['Amount'] for i in body['Receipt']['Items']), body['Amount'])
         self.assertEqual(body['Receipt']['Email'], 'anna@example.com')
@@ -168,17 +168,17 @@ class YooKassaTests(PaymentTestCase):
         self.assertEqual(url, 'https://yoo.example/pay-1')
         endpoint, body = http.call_args.args
         self.assertEqual(endpoint, 'https://api.yookassa.ru/v3/payments')
-        self.assertEqual(body['amount'], {'value': '12050.00', 'currency': 'RUB'})
+        self.assertEqual(body['amount'], {'value': '12060.00', 'currency': 'RUB'})
         self.assertEqual(body['confirmation'], {'type': 'redirect', 'return_url': 'https://muz.example/order/x/'})
         self.assertEqual(body['receipt']['customer'], {'email': 'anna@example.com'})
-        self.assertEqual(sum(float(i['amount']['value']) * float(i['quantity']) for i in body['receipt']['items']), 12050.0)
+        self.assertEqual(sum(float(i['amount']['value']) * float(i['quantity']) for i in body['receipt']['items']), 12060.0)
         self.assertEqual(len(http.call_args.kwargs['headers']['Idempotence-Key']), 32)
         self.assertEqual(http.call_args.kwargs['auth'], ('123', 'key'))
 
     @override_settings(**YOO)
     def test_webhook_is_verified_with_the_bank(self):
         order = self.make_order(pay_provider='yookassa', pay_external_id='pay-1', pay_url='https://yoo.example/pay-1')
-        status = {'id': 'pay-1', 'status': 'succeeded', 'paid': True, 'amount': {'value': '12050.00', 'currency': 'RUB'},
+        status = {'id': 'pay-1', 'status': 'succeeded', 'paid': True, 'amount': {'value': '12060.00', 'currency': 'RUB'},
                   'metadata': {'order_id': str(order.pk)}}
         body = json.dumps({'type': 'notification', 'event': 'payment.succeeded', 'object': {'id': 'pay-1'}})
         with mock.patch('shop.payments._http', return_value=status) as http:
@@ -192,7 +192,7 @@ class YooKassaTests(PaymentTestCase):
     def test_forged_webhook_does_not_pay(self):
         order = self.make_order(pay_provider='yookassa', pay_external_id='pay-1')
         body = json.dumps({'type': 'notification', 'event': 'payment.succeeded', 'object': {'id': 'pay-1'}})
-        pending = {'id': 'pay-1', 'status': 'pending', 'paid': False, 'amount': {'value': '12050.00'}, 'metadata': {'order_id': str(order.pk)}}
+        pending = {'id': 'pay-1', 'status': 'pending', 'paid': False, 'amount': {'value': '12060.00'}, 'metadata': {'order_id': str(order.pk)}}
         with mock.patch('shop.payments._http', return_value=pending):
             Client().post(reverse('shop:payment_webhook', args=['yookassa']), body, content_type='application/json')
         order.refresh_from_db()

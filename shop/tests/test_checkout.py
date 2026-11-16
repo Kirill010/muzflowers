@@ -63,8 +63,8 @@ class CheckoutTests(ShopTestCase):
         key = f'addon_{self.music.pk}'
         self.place_order(**{key: 'on', f'{key}_note': 'Земфира — Хочешь?'})
         order = Order.objects.get()
-        self.assertEqual(order.addons_total, 290)
-        self.assertEqual(order.total, 2280)
+        self.assertEqual(order.addons_total, 300)
+        self.assertEqual(order.total, 2290)
         self.assertEqual(OrderAddon.objects.get().note, 'Земфира — Хочешь?')
 
     def test_variant_price_and_name_are_stored(self):
@@ -174,7 +174,7 @@ class CheckoutTests(ShopTestCase):
         self.assertEqual(data['slots'][0], {'value': '08:00-10:00', 'label': '08:00–10:00'})
         self.assertTrue(data['prepay'])
         self.assertEqual([p['value'] for p in data['payments']], ['transfer'])
-        self.assertEqual(data['total'], 1990 + 290 + 300)
+        self.assertEqual(data['total'], 1990 + 300 + 300)
         self.assertIn('Доставка', data['summary'])
 
     def test_state_endpoint_reports_closed_day(self):

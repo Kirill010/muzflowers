@@ -25,10 +25,10 @@ class AdminTestCase(ShopTestCase):
         super().setUp()
         self.owner = User.objects.create_superuser('owner@example.com', 'owner@example.com', 'Strong-pass-123')
         self.client.force_login(self.owner)
-        self.order = Order.objects.create(name='Анна', phone='+79175494941', date=TODAY, asap=True, subtotal=1990, total=2280, addons_total=290,
+        self.order = Order.objects.create(name='Анна', phone='+79175494941', date=TODAY, asap=True, subtotal=1990, total=2290, addons_total=300,
                                           receive_method='pickup', shop=self.shop, card_text='Люблю', comment='Позвоните')
         OrderItem.objects.create(order=self.order, product=self.rose, name='Классика', price=1990, qty=1)
-        OrderAddon.objects.create(order=self.order, addon=self.music, name='Музыкальная открытка', price=290, note='Земфира — Хочешь?')
+        OrderAddon.objects.create(order=self.order, addon=self.music, name='Музыкальная открытка', price=300, note='Земфира — Хочешь?')
 
 
 class DashboardTests(AdminTestCase):
