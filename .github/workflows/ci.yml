@@ -73,3 +73,45 @@ jobs:
         run: |
           python manage.py migrate --noinput
           python manage.py test
+
+  docker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Проверка Compose
+        env:
+          POSTGRES_PASSWORD: ci-only
+        run: |
+          printf 'DJANGO_SECRET_KEY=ci-only\nDJANGO_DEBUG=0\n' > .env.production
+          docker compose --env-file .env.production config --quiet
+          rm .env.production
+      - name: Сборка Docker-образа
+        run: docker build -t muzflowers-ci .
+      - name: Запуск и проверка здоровья контейнера
+        run: |
+          docker run -d --name muzflowers-ci \
+            -e DJANGO_SECRET_KEY=ci-only-key-with-enough-length-0123456789-abcdefghij \
+            -e DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1 \
+            -e DJANGO_SSL=0 \
+            -e SITE_URL=http://localhost \
+            -p 127.0.0.1:8000:8000 \
+            muzflowers-ci
+          status=starting
+          for i in $(seq 1 30); do
+            status=$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' muzflowers-ci)
+            if [ "$status" = healthy ]; then break; fi
+            if [ "$status" = unhealthy ] || [ "$status" = dead ] || [ "$status" = exited ]; then
+              docker logs muzflowers-ci
+              exit 1
+            fi
+            sleep 2
+          done
+          if [ "$status" != healthy ]; then
+            docker logs muzflowers-ci
+            exit 1
+          fi
+          curl --fail --silent http://127.0.0.1:8000/health/
+      - name: Очистка контейнера
+        if: always()
+        run: docker rm -fv muzflowers-ci || true

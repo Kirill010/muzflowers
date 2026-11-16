@@ -24,6 +24,6 @@ EXPOSE 8000
 USER app
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
-    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/', timeout=3)" || exit 1
+    CMD python docker_healthcheck.py
 
 CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py seed_shop && gunicorn muzflowers.wsgi:application --bind 0.0.0.0:8000 --workers 3 --access-logfile -"]
