@@ -4,7 +4,10 @@
 venv
 .tmp
 .env
+.env.*
 db.sqlite3
+*.db
+*.log
 media
 staticfiles
 docs

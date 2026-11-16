@@ -4,6 +4,9 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   tests:
     runs-on: ubuntu-latest
@@ -21,7 +24,7 @@ jobs:
         run: |
           python manage.py check
           python manage.py makemigrations --check --dry-run
-      - name: Тесты
+      - name: Тесты на SQLite
         run: python manage.py test
       - name: Проверка боевых настроек
         env:
@@ -29,3 +32,44 @@ jobs:
           DJANGO_SECRET_KEY: ${{ github.sha }}-ci-only-key-with-enough-length-0123456789-abcdefghij
           DJANGO_ALLOWED_HOSTS: example.com
         run: python manage.py check --deploy --fail-level WARNING
+
+  postgres:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: muzflowers
+          POSTGRES_USER: muzflowers
+          POSTGRES_PASSWORD: ci-only
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U muzflowers -d muzflowers"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 12
+    env:
+      DJANGO_DB_URL: postgresql://muzflowers:ci-only@127.0.0.1:5432/muzflowers
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Проверка общего кэша Redis
+        env:
+          DJANGO_REDIS_URL: redis://127.0.0.1:6379/1
+        run: python manage.py shell -c "from django.core.cache import cache; cache.set('ci-check', 'ok', 30); assert cache.get('ci-check') == 'ok'"
+      - name: Миграции и весь набор тестов на PostgreSQL
+        run: |
+          python manage.py migrate --noinput
+          python manage.py test

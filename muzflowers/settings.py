@@ -202,8 +202,8 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 5_000_000
 SESSION_COOKIE_AGE = 60 * 60 * 24 * 30
 CSRF_COOKIE_HTTPONLY = True  # токен для JS берём из <meta name="csrf-token">, а не из cookie
 
-# Общий кэш для лимитов между несколькими процессами сервера (нужен пакет redis). Название нарочно длинное:
-# в старых файлах .env бывает REDIS_URL от прошлых версий, его сайт не читает. Без пакета redis работает кэш в памяти.
+# Общий кэш для лимитов между несколькими процессами сервера. Название нарочно длинное:
+# в старых файлах .env бывает REDIS_URL от прошлых версий, его сайт не читает. Без DJANGO_REDIS_URL — кэш в памяти процесса.
 _redis_url = os.environ.get('DJANGO_REDIS_URL', '').strip()
 if _redis_url:
     try:

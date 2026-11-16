@@ -1,0 +1,46 @@
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-muzflowers}
+      POSTGRES_USER: ${POSTGRES_USER:-muzflowers}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Задайте POSTGRES_PASSWORD в .env.production}
+    volumes:
+      - muz-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  web:
+    build: .
+    restart: unless-stopped
+    env_file: .env.production
+    environment:
+      DJANGO_DB_URL: postgresql://${POSTGRES_USER:-muzflowers}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-muzflowers}
+      DJANGO_REDIS_URL: redis://redis:6379/1
+      DJANGO_DATA_DIR: /data
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - muz-data:/data
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  muz-data:
+  muz-postgres:
