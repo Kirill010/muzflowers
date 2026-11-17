@@ -56,6 +56,15 @@ class PageTests(ShopTestCase):
         self.assertContains(r, '+7 (917) 549-49-41')
         self.assertContains(r, 'Земляной Вал')
 
+    def test_quick_pick_and_artwork_labels(self):
+        r = self.client.get(reverse('shop:home'))
+        self.assertContains(r, 'Букет под повод и бюджет')
+        self.assertContains(r, 'name="occasion"')
+        self.assertContains(r, 'name="budget"')
+        self.assertContains(r, 'Иллюстрация, не фото букета')
+        self.assertContains(self.client.get(self.rose.get_absolute_url()), 'Иллюстрация, не фото готового букета')
+        self.assertContains(self.client.get(reverse('shop:catalog')), 'Самовывоз — бесплатно')
+
     def test_product_page_has_offer_and_breadcrumbs(self):
         r = self.client.get(self.rose.get_absolute_url())
         kinds = [json.loads(b)['@type'] for b in r.context['jsonld']]
@@ -118,6 +127,24 @@ class CatalogTests(ShopTestCase):
         self.assertEqual(self.names(min=2000, max=3000), ['Хризантемы'])
         self.assertEqual(self.names(sort='price_asc'), ['Классика', 'Хризантемы', '25 роз'])
         self.assertEqual(self.names(sort='price_desc'), ['25 роз', 'Хризантемы', 'Классика'])
+
+    def test_occasion_filter(self):
+        self.rose.occasion = 'birthday'
+        self.rose.save()
+        self.big.occasion = 'celebration'
+        self.big.save()
+        self.assertEqual(self.names(occasion='birthday'), ['Классика'])
+        self.assertEqual(self.names(occasion='birthday', ready='1'), ['Классика'])
+        self.assertEqual(self.names(occasion='love'), [])
+        self.assertEqual(self.names(occasion='unknown'), ['Классика', '25 роз', 'Хризантемы'])
+
+    def test_budget_shortcuts_use_server_side_ranges(self):
+        self.assertEqual(self.names(budget='small'), ['Классика', 'Хризантемы'])
+        self.assertEqual(self.names(budget='large'), ['25 роз'])
+        self.assertEqual(self.names(budget='unknown'), ['Классика', '25 роз', 'Хризантемы'])
+        r = self.client.get(reverse('shop:catalog'), {'budget': 'medium', 'sort': 'price_asc'})
+        self.assertEqual((r.context['price_min'], r.context['price_max']), ('2500', '5000'))
+        self.assertEqual(r.context['qs'], 'sort=price_asc&min=2500&max=5000')
 
     def test_ready_only(self):
         self.assertEqual(self.names(ready='1'), ['Классика'])

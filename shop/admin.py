@@ -68,7 +68,7 @@ class ProductAdmin(admin.ModelAdmin):
     save_on_top = True
     actions = ['set_in_stock', 'set_out_of_stock', 'show', 'hide', 'duplicate']
     fieldsets = (
-        (None, {'fields': ('name', 'category', 'price', 'old_price', 'tagline', 'description')}),
+        (None, {'fields': ('name', 'category', 'price', 'old_price', 'tagline', 'description', 'occasion')}),
         ('Фото', {'fields': ('image', 'badge'), 'description': 'Загрузите фото букета. Пока фото нет — сайт нарисует букет сам.'}),
         ('Наличие и показ', {'fields': ('is_active', 'in_stock', 'is_ready', ('season_from', 'season_to'), 'popularity')}),
         ('Рисунок (пока нет фото)', {'classes': ('collapse',), 'fields': ('art_kind', 'art_count', 'color_a', 'color_b')}),

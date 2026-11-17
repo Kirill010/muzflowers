@@ -42,6 +42,13 @@ PRODUCTS = [
      'Большой авторский букет: флорист подберёт цветы и оформление под повод.', None, None),
 ]
 
+PRODUCT_OCCASIONS = {
+    'Мини': 'just_because', 'Классика': 'birthday', '15 роз': 'love', '25 роз': 'love',
+    '51 роза': 'celebration', 'Хризантемы': 'thanks', 'Альстромерии': 'just_because',
+    'Облако гортензий': 'love', 'Тюльпаны': 'just_because',
+    'Большой авторский': 'birthday', 'Премиум': 'celebration',
+}
+
 FAQS = [
     ('Как быстро соберёте букет?',
      'Готовые букеты в магазине у Курской можно взять сразу — за 2 минуты. Если заказали на сайте, обычно собираем за 15–20 минут. Точное время выберите при оформлении.'),
@@ -83,7 +90,7 @@ class Command(BaseCommand):
             for cat, name, tagline, price, kind, count, a, b, badge, ready, pop, text, s_from, s_to in PRODUCTS:
                 Product.objects.create(category=cats[cat], name=name, tagline=tagline, price=price, art_kind=kind, art_count=count,
                                        color_a=a, color_b=b, badge=badge, is_ready=ready, popularity=pop, description=text,
-                                       season_from=s_from, season_to=s_to)
+                                       occasion=PRODUCT_OCCASIONS[name], season_from=s_from, season_to=s_to)
             self.stdout.write(self.style.SUCCESS(f'Букеты: добавлено {len(PRODUCTS)} (цены — из вашего списка, меняйте в панели)'))
 
         if not Addon.objects.exists():

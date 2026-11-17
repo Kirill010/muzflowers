@@ -189,12 +189,18 @@ class Product(models.Model):
         ('rose', 'Розы'), ('chrysanthemum', 'Хризантемы'), ('alstroemeria', 'Альстромерии'),
         ('hydrangea', 'Гортензии'), ('tulip', 'Тюльпаны'), ('mixed', 'Авторский микс'),
     ]
+    OCCASIONS = [
+        ('birthday', 'День рождения'), ('love', 'Любимой'), ('thanks', 'Сказать спасибо'),
+        ('celebration', 'Большое событие'), ('just_because', 'Просто порадовать'),
+    ]
 
     category = models.ForeignKey(Category, on_delete=models.PROTECT, related_name='products', verbose_name='Раздел')
     name = models.CharField('Название', max_length=120)
     slug = models.SlugField('Адрес страницы', unique=True, blank=True, max_length=100)
     tagline = models.CharField('Коротко: что в букете', max_length=140, blank=True, help_text='Например: «7 роз, зелень, упаковка»')
     description = models.TextField('Описание', blank=True)
+    occasion = models.CharField('Повод для подбора', max_length=20, choices=OCCASIONS, blank=True,
+                                help_text='Выберите основной повод: букет попадёт в быстрый подбор на главной и в фильтр каталога')
     price = models.PositiveIntegerField('Цена, ₽', validators=[MinValueValidator(1)])
     old_price = models.PositiveIntegerField('Старая цена, ₽', null=True, blank=True,
                                             help_text='Только для акции: покажем зачёркнутой. Обычно пусто')

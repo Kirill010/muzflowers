@@ -20,7 +20,7 @@
           {% if gallery %}
             {% for file, alt in gallery %}<div class="gallery__slide{% if forloop.first %} is-active{% endif %}" data-slide>{% photo file alt 'main' forloop.first %}</div>{% endfor %}
           {% else %}
-            <div class="gallery__slide is-active" data-slide>{% product_image p 'main' True %}</div>
+            <div class="gallery__slide is-active" data-slide>{% product_image p 'main' True %}<span class="gallery__illustration-note">Иллюстрация, не фото готового букета</span></div>
           {% endif %}
           {% if p.badge %}<span class="card__badge">{{ p.badge }}</span>{% endif %}
         </div>

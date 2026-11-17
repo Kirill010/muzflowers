@@ -42,6 +42,33 @@
   </div>
 </section>
 
+<section class="quick-pick" aria-labelledby="quick-pick-title">
+  <div class="wrap quick-pick__inner">
+    <div class="quick-pick__head">
+      <p class="eyebrow">Ничего лишнего</p>
+      <h2 class="display display--sm" id="quick-pick-title">Букет под повод и бюджет</h2>
+    </div>
+    <form class="quick-pick__form" action="{% url 'shop:catalog' %}" method="get">
+      <label class="field">
+        <span class="field__label">Какой повод?</span>
+        <select class="select" name="occasion">
+          <option value="">Любой повод</option>
+          {% for value, title in occasions %}<option value="{{ value }}">{{ title }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="field">
+        <span class="field__label">На какую сумму?</span>
+        <select class="select" name="budget">
+          <option value="">Любой бюджет</option>
+          {% for value, title, min_price, max_price in budgets %}<option value="{{ value }}">{{ title }}</option>{% endfor %}
+        </select>
+      </label>
+      <button class="btn btn--primary" type="submit">Показать букеты {% icon 'arrow' %}</button>
+    </form>
+    <p class="quick-pick__note">Упаковка уже в цене. Дату и удобный интервал выберите при оформлении.</p>
+  </div>
+</section>
+
 <div class="marquee" aria-hidden="true">
   <ul class="marquee__track">
     <li>Готовые букеты за 2 минуты</li><li>Соберём за 15 минут</li><li>Доставка по Москве</li><li>Музыкальная открытка</li><li>Предзаказ на праздники</li><li>Цветы с оптового склада</li>

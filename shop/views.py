@@ -23,6 +23,12 @@ from .utils import plural_ru
 
 PAGE_SIZE = 24
 SORTS = {'pop': 'Сначала популярные', 'price_asc': 'Сначала дешевле', 'price_desc': 'Сначала дороже', 'new': 'Сначала новые'}
+OCCASION_FILTERS = dict(Product.OCCASIONS)
+BUDGETS = {
+    'small': ('До 2 500 ₽', '', '2500'),
+    'medium': ('2 500–5 000 ₽', '2500', '5000'),
+    'large': ('Более 5 000 ₽', '5001', ''),
+}
 
 
 def catalog_qs():
@@ -51,6 +57,8 @@ def home(request):
     context = {
         'ready': ready,
         'featured': products[:8],
+        'occasions': OCCASION_FILTERS.items(),
+        'budgets': [(key, *values) for key, values in BUDGETS.items()],
         'categories': Category.objects.filter(is_active=True),
         'reviews': Review.objects.filter(is_published=True)[:6],
         'faq': FAQ.objects.filter(is_active=True)[:6],
@@ -68,12 +76,16 @@ def _apply_filters(request, items):
     if q:
         needle = q.casefold()
         items = [p for p in items if needle in f'{p.name} {p.tagline} {p.description} {p.category.name}'.casefold()]
+    if params.get('occasion') in OCCASION_FILTERS:
+        items = [p for p in items if p.occasion == params['occasion']]
     if params.get('ready') == '1':
         items = [p for p in items if p.is_ready]
-    for key, op in (('min', lambda p, v: p.price_from >= v), ('max', lambda p, v: p.price_from <= v)):
-        if params.get(key, '').isdigit():
-            value = int(params[key])
-            items = [p for p in items if op(p, value)]
+    budget = BUDGETS.get(params.get('budget'))
+    min_price, max_price = budget[1:] if budget else (params.get('min', ''), params.get('max', ''))
+    if min_price.isdigit():
+        items = [p for p in items if p.price_from >= int(min_price)]
+    if max_price.isdigit():
+        items = [p for p in items if p.price_from <= int(max_price)]
     if sort == 'price_asc':
         items = sorted(items, key=lambda p: p.price_from)
     elif sort == 'price_desc':
@@ -88,16 +100,22 @@ def catalog(request, slug=None):
     everything = list(catalog_qs())
     scope = [p for p in everything if category is None or p.category_id == category.id]
     items, q, sort = _apply_filters(request, scope)
+    budget = BUDGETS.get(request.GET.get('budget'))
+    price_min, price_max = budget[1:] if budget else (request.GET.get('min', ''), request.GET.get('max', ''))
+    occasion = request.GET.get('occasion') if request.GET.get('occasion') in OCCASION_FILTERS else ''
 
     page = Paginator(items, PAGE_SIZE).get_page(request.GET.get('page'))
-    keep = {k: v for k, v in request.GET.items() if k != 'page' and v}
+    keep = {k: v for k, v in request.GET.items() if k != 'page' and not (budget and k in ('budget', 'min', 'max')) and v}
+    if budget:
+        keep.update({key: value for key, value in (('min', price_min), ('max', price_max)) if value})
     prices = [p.price_from for p in scope] or [0]
     context = {
         'category': category, 'page': page, 'products': page.object_list, 'total': len(items),
         'categories': Category.objects.filter(is_active=True), 'q': q, 'sort': sort, 'sorts': SORTS.items(),
-        'ready_only': request.GET.get('ready') == '1', 'price_min': request.GET.get('min', ''), 'price_max': request.GET.get('max', ''),
+        'occasion': occasion, 'occasions': OCCASION_FILTERS.items(),
+        'ready_only': request.GET.get('ready') == '1', 'price_min': price_min, 'price_max': price_max,
         'price_floor': min(prices), 'price_ceil': max(prices),
-        'qs': urlencode(keep), 'filtered': bool(q or request.GET.get('ready') or request.GET.get('min') or request.GET.get('max')),
+        'qs': urlencode(keep), 'filtered': bool(q or occasion or budget or request.GET.get('ready') or price_min or price_max),
         'og_image': og_image(request),
     }
     origin = origin_of(request)

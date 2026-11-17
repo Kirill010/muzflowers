@@ -259,7 +259,8 @@ class LegalAcceptanceTests(ShopTestCase):
         self.add_to_cart()
         self.place_order(marketing_consent='on')
         event = LegalAcceptance.objects.get(kind='marketing')
-        self.assertEqual((event.action, event.reference), ('accepted', 'order:2'))
+        order = Order.objects.order_by('-pk').first()
+        self.assertEqual((event.action, event.reference), ('accepted', f'order:{order.pk}'))
 
     def test_lead_records_personal_data_acceptance(self):
         self.client.post(reverse('shop:offices'), {'name': 'Ольга', 'phone': '8 900 111-22-33', 'consent': 'on'})

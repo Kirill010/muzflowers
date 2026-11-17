@@ -20,6 +20,8 @@
       {% for c in categories %}<a class="chip{% if category and category.pk == c.pk %} is-active{% endif %}" href="{{ c.get_absolute_url }}">{{ c.name }}</a>{% endfor %}
     </nav>
 
+    <details class="filter-panel" open data-filter-panel>
+      <summary class="filter-panel__toggle">Фильтры{% if filtered %}<small>применены</small>{% endif %}</summary>
     <form class="filters" method="get" action="{% if category %}{{ category.get_absolute_url }}{% else %}{% url 'shop:catalog' %}{% endif %}" data-filters>
       <label class="field field--search">
         <span class="sr-only">Поиск по каталогу</span>
@@ -35,13 +37,18 @@
         <input class="input input--sm" type="number" inputmode="numeric" name="max" value="{{ price_max }}" min="0" step="100" placeholder="{{ price_ceil }}">
       </label>
       <label class="field">
+        <span class="field__label">Повод</span>
+        <select class="select" name="occasion"><option value="">Любой повод</option>{% for key, title in occasions %}<option value="{{ key }}"{% if key == occasion %} selected{% endif %}>{{ title }}</option>{% endfor %}</select>
+      </label>
+      <label class="field">
         <span class="field__label">Порядок</span>
         <select class="select" name="sort">{% for key, title in sorts %}<option value="{{ key }}"{% if key == sort %} selected{% endif %}>{{ title }}</option>{% endfor %}</select>
       </label>
       <label class="check check--pill"><input type="checkbox" name="ready" value="1"{% if ready_only %} checked{% endif %}> Готовые за 2 минуты</label>
       <button class="btn btn--primary btn--sm" type="submit">Показать</button>
       {% if filtered %}<a class="link-btn" href="{{ request.path }}">Сбросить</a>{% endif %}
-    </form>
+      </form>
+    </details>
 
     <div class="results" data-results aria-live="polite">
       {% include 'shop/_catalog_results.html' %}

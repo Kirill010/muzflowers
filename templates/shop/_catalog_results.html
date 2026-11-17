@@ -1,5 +1,8 @@
 {% load shop_tags %}
-<p class="results__count">{{ total }} {{ total|plural:"букет,букета,букетов" }}</p>
+<div class="results__bar">
+  <p class="results__count">{{ total }} {{ total|plural:"букет,букета,букетов" }}</p>
+  <p class="results__delivery">Самовывоз — бесплатно · Доставка по Москве — {{ site.delivery_cost|rub }}{% if site.free_delivery_from %}, от {{ site.free_delivery_from|rub }} бесплатно{% endif %}</p>
+</div>
 {% if products %}
 <div class="grid grid--4">{% for p in products %}{% include 'includes/_card.html' %}{% endfor %}</div>
 {% if page.has_other_pages %}

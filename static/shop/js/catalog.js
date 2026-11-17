@@ -5,6 +5,9 @@
   var results = document.querySelector('[data-results]');
   if (!form || !results || !window.fetch || !window.URLSearchParams) return;
 
+  var panel = document.querySelector('[data-filter-panel]');
+  if (panel && window.matchMedia('(max-width:560px)').matches) panel.open = false;
+
   var timer = 0, controller = null;
 
   function url() {
