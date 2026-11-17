@@ -2,6 +2,7 @@ from django.conf import settings
 from django.utils.functional import SimpleLazyObject
 
 from .cart import Cart
+from .legal import DOCUMENT_DATE, DOCUMENT_VERSION
 from .models import Addon, Shop, SiteSettings
 
 
@@ -21,4 +22,6 @@ def site(request):
         'site_origin': origin,
         'canonical_url': origin + request.path,
         'admin_url': '/' + settings.ADMIN_URL,
+        'legal_version': DOCUMENT_VERSION,
+        'legal_date': DOCUMENT_DATE,
     }

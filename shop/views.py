@@ -14,6 +14,7 @@ from django.views.decorators.http import require_GET
 
 from . import art as artlib
 from . import notifications, seo
+from .legal import record_acceptance
 from .forms import LeadForm
 from .models import FAQ, Addon, Category, Lead, Product, Review, Shop, SiteSettings
 from .thumbs import thumb_url
@@ -188,6 +189,22 @@ def offer(request):
     return _page(request, 'shop/offer.html')
 
 
+def legal(request):
+    return _page(request, 'shop/legal.html')
+
+
+def consent(request):
+    return _page(request, 'shop/consent.html')
+
+
+def marketing_consent(request):
+    return _page(request, 'shop/marketing_consent.html')
+
+
+def cookies(request):
+    return _page(request, 'shop/cookies.html')
+
+
 def _lead_page(request, kind, template):
     form = LeadForm(request.POST or None, kind=kind)
     if request.method == 'POST':
@@ -198,6 +215,7 @@ def _lead_page(request, kind, template):
             with transaction.atomic():
                 lead = Lead.objects.create(kind=kind, name=d['name'], company=d.get('company', ''), phone=d['phone'], email=d.get('email', ''),
                                            message=d.get('message', ''), source=request.session.get('mz_src', '')[:40])
+                record_acceptance(request, 'personal', reference=f'lead:{lead.pk}', contact=lead.email or lead.phone)
                 transaction.on_commit(lambda: notifications.dispatch_lead(lead.pk))
             messages.success(request, 'Спасибо! Мы получили заявку и позвоним вам в ближайшее время.')
             return redirect(request.path)

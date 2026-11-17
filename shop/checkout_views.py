@@ -85,7 +85,7 @@ def checkout(request):
             final = build_quote(lines, data['addons'], data.get('promo') or cart.promo, method=data['receive_method'], site=site)
             try:
                 order = create_order(quote=final, data=data, source=request.session.get('mz_src', ''),
-                                     user=request.user if request.user.is_authenticated else None, origin=origin_of(request))
+                                     user=request.user if request.user.is_authenticated else None, origin=origin_of(request), request=request)
             except OrderError as exc:
                 form.add_error(None, str(exc))
             else:

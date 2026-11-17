@@ -36,6 +36,10 @@ urlpatterns = [
     path('faq/', views.faq, name='faq'),
     path('privacy/', views.privacy, name='privacy'),
     path('offer/', views.offer, name='offer'),
+    path('legal/', views.legal, name='legal'),
+    path('consent/', views.consent, name='consent'),
+    path('marketing-consent/', views.marketing_consent, name='marketing_consent'),
+    path('cookies/', views.cookies, name='cookies'),
 
     path('art/<slug:kind>/<int:count>/<str:a>/<str:b>.svg', views.art, name='art'),
     path('favicon.ico', views.favicon, name='favicon'),

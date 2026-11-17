@@ -5,7 +5,7 @@ from django.core import mail
 from django.test import override_settings
 from django.urls import reverse
 
-from shop.models import Order, OrderItem, Variant
+from shop.models import LegalAcceptance, Order, OrderItem, Variant
 from shop.tests.helpers import TODAY, ShopTestCase
 
 from .models import Profile
@@ -226,3 +226,21 @@ class OwnerSetupTests(AccountTestCase):
     def test_remote_address_is_not_trusted(self):
         r = self.client.get(reverse('accounts:setup'), REMOTE_ADDR='203.0.113.7')
         self.assertEqual(r.status_code, 403)
+
+
+class LegalAccountTests(AccountTestCase):
+    def test_registration_records_personal_data_acceptance(self):
+        self.register()
+        user = User.objects.get()
+        event = LegalAcceptance.objects.get(kind='personal')
+        self.assertEqual((event.user, event.reference, event.contact), (user, f'account:{user.pk}', user.email))
+
+    def test_profile_records_marketing_acceptance_and_withdrawal(self):
+        user = self.make_user()
+        self.client.force_login(user)
+        data = {'name': 'Анна', 'email': user.email, 'phone': user.profile.phone, 'address': '', 'marketing_consent': 'on'}
+        self.client.post(reverse('accounts:profile'), data)
+        data['marketing_consent'] = ''
+        self.client.post(reverse('accounts:profile'), data)
+        events = LegalAcceptance.objects.filter(kind='marketing', user=user)
+        self.assertEqual([e.action for e in events], ['withdrawn', 'accepted'])

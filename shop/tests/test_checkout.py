@@ -7,7 +7,8 @@ from django.test import override_settings
 from django.urls import reverse
 
 from shop import notifications
-from shop.models import Order, OrderAddon, PromoCode, SpecialDay, Variant
+from shop.legal import DOCUMENT_VERSION
+from shop.models import Lead, LegalAcceptance, Order, OrderAddon, PromoCode, SpecialDay, Variant
 
 from .helpers import TODAY, TOMORROW, ShopTestCase
 
@@ -239,3 +240,29 @@ class CheckoutTests(ShopTestCase):
         text = notifications.staff_text(Order.objects.get())
         self.assertIn('🎵 Музыкальная открытка: Земфира', text)
         self.assertIn('нужна предоплата', text)
+
+
+class LegalAcceptanceTests(ShopTestCase):
+    def test_order_records_offer_and_personal_data_with_version(self):
+        self.add_to_cart()
+        self.place_order()
+        order = Order.objects.get()
+        events = LegalAcceptance.objects.all()
+        self.assertEqual({e.kind for e in events}, {'offer', 'personal'})
+        self.assertTrue(all(e.version == DOCUMENT_VERSION and e.reference == f'order:{order.pk}' for e in events))
+        self.assertTrue(all(e.contact == order.phone and e.ip_address for e in events))
+
+    def test_marketing_is_separate_and_optional(self):
+        self.add_to_cart()
+        self.place_order()
+        self.assertFalse(LegalAcceptance.objects.filter(kind='marketing').exists())
+        self.add_to_cart()
+        self.place_order(marketing_consent='on')
+        event = LegalAcceptance.objects.get(kind='marketing')
+        self.assertEqual((event.action, event.reference), ('accepted', 'order:2'))
+
+    def test_lead_records_personal_data_acceptance(self):
+        self.client.post(reverse('shop:offices'), {'name': 'Ольга', 'phone': '8 900 111-22-33', 'consent': 'on'})
+        lead = Lead.objects.get()
+        event = LegalAcceptance.objects.get(kind='personal')
+        self.assertEqual((event.reference, event.contact), (f'lead:{lead.pk}', lead.phone))

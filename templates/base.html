@@ -49,7 +49,8 @@
 <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
 
 {% if site.metrika_id %}<meta name="metrika-id" content="{{ site.metrika_id }}">
-<script src="{% static 'shop/js/metrika.js' %}" defer></script>{% endif %}
+{% include 'includes/_cookie_consent.html' %}
+<script src="{% static 'shop/js/cookie_consent.js' %}?v=1" defer></script>{% endif %}
 <script src="{% static 'shop/js/core.js' %}" defer></script>
 {% block scripts %}{% endblock %}
 </body>

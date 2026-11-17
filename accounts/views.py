@@ -12,10 +12,12 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from shop.cart import Cart
+from shop.legal import record_acceptance
 from shop.models import Order
 from shop.throttle import throttled
 
 from .forms import LoginForm, ProfileForm, RegisterForm, SetupForm, StyledPasswordResetForm
+from .models import profile_of
 
 BACKEND = 'accounts.backends.EmailOrPhoneBackend'
 
@@ -60,6 +62,7 @@ def register(request):
             form.add_error(None, 'Слишком много попыток. Попробуйте позже.')
         elif form.is_valid():
             user = form.save()
+            record_acceptance(request, 'personal', reference=f'account:{user.pk}', contact=user.email, user=user)
             login(request, user, backend=BACKEND)
             # заказ, оформленный в этом браузере до регистрации, привязываем к новому аккаунту
             Order.objects.filter(token=request.session.get('mz_last_order', ''), user__isnull=True).update(user=user)
@@ -72,7 +75,12 @@ def register(request):
 def profile(request):
     form = ProfileForm(request.POST or None, user=request.user)
     if request.method == 'POST' and form.is_valid():
+        was_marketing = profile_of(request.user).marketing_consent
         form.save()
+        is_marketing = form.cleaned_data['marketing_consent']
+        if was_marketing != is_marketing:
+            record_acceptance(request, 'marketing', reference=f'account:{request.user.pk}', contact=request.user.email,
+                              user=request.user, action='accepted' if is_marketing else 'withdrawn')
         messages.success(request, 'Данные сохранены.')
         return redirect('accounts:profile')
     orders = request.user.orders.select_related('shop').prefetch_related('items', 'addons')

@@ -6,6 +6,7 @@ from django.db.models import F, Q
 from django.utils import timezone
 
 from . import notifications, payments, slots
+from .legal import record_acceptance
 from .models import Order, OrderAddon, OrderItem, PromoCode, SiteSettings
 
 log = logging.getLogger('shop')
@@ -42,7 +43,7 @@ def payment_options(prepay_required, site=None):
 
 
 @transaction.atomic
-def create_order(*, quote, data, user=None, source='', origin=''):
+def create_order(*, quote, data, user=None, source='', origin='', request=None):
     """Создаёт заказ из рассчитанной корзины (`quote`) и проверенных данных формы (`data`)."""
     site = SiteSettings.load()
     if site.orders_paused:
@@ -90,6 +91,12 @@ def create_order(*, quote, data, user=None, source='', origin=''):
     OrderAddon.objects.bulk_create(
         OrderAddon(order=order, addon=addon, name=addon.name, price=addon.price, note=note[:200])
         for addon, note in quote.addon_rows)
+    if request is not None:
+        contact = order.email or order.phone
+        record_acceptance(request, 'offer', reference=f'order:{order.pk}', contact=contact, user=user)
+        record_acceptance(request, 'personal', reference=f'order:{order.pk}', contact=contact, user=user)
+        if order.marketing_consent:
+            record_acceptance(request, 'marketing', reference=f'order:{order.pk}', contact=contact, user=user)
 
     transaction.on_commit(lambda: notifications.dispatch(order.pk, origin))
     log.info('Новый заказ №%s на %s рублей', order.pk, order.total)

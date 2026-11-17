@@ -8,7 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html, format_html_join
 
-from .models import (FAQ, Addon, Category, Lead, Order, OrderAddon, OrderItem, Product, ProductImage, PromoCode, Review, Shop,
+from .models import (FAQ, Addon, Category, Lead, LegalAcceptance, Order, OrderAddon, OrderItem, Product, ProductImage, PromoCode, Review, Shop,
                      SiteSettings, SpecialDay, Variant)
 from .utils import rub
 
@@ -365,3 +365,20 @@ class OrderAdmin(admin.ModelAdmin):
                 o.get_payment_status_display(), o.source,
             ])
         return response
+
+
+@admin.register(LegalAcceptance)
+class LegalAcceptanceAdmin(admin.ModelAdmin):
+    list_display = ('created', 'kind', 'action', 'version', 'reference', 'contact', 'user', 'ip_address')
+    list_filter = ('kind', 'action', 'version')
+    search_fields = ('reference', 'contact', 'user__email', 'ip_address')
+    date_hierarchy = 'created'
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

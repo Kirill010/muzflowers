@@ -129,11 +129,11 @@
         </fieldset>
 
         <div class="consents">
-          <label class="check{% if form.consent_pd.errors %} has-error{% endif %}"><input type="checkbox" name="consent_pd"{% if form.consent_pd.value %} checked{% endif %} required> <span>Согласен на <a href="{% url 'shop:privacy' %}" target="_blank" rel="noopener">обработку персональных данных</a></span></label>
+          <label class="check{% if form.consent_pd.errors %} has-error{% endif %}"><input type="checkbox" name="consent_pd"{% if form.consent_pd.value %} checked{% endif %} required> <span>Согласен на <a href="{% url 'shop:consent' %}" target="_blank" rel="noopener">обработку персональных данных</a> по условиям отдельного согласия</span></label>
           {% for e in form.consent_pd.errors %}<p class="field__error">{{ e }}</p>{% endfor %}
           <label class="check{% if form.consent_offer.errors %} has-error{% endif %}"><input type="checkbox" name="consent_offer"{% if form.consent_offer.value %} checked{% endif %} required> <span>Принимаю условия <a href="{% url 'shop:offer' %}" target="_blank" rel="noopener">публичной оферты</a></span></label>
           {% for e in form.consent_offer.errors %}<p class="field__error">{{ e }}</p>{% endfor %}
-          <label class="check"><input type="checkbox" name="marketing_consent"{% if form.marketing_consent.value %} checked{% endif %}> <span>Хочу получать новости и акции (необязательно)</span></label>
+          <label class="check"><input type="checkbox" name="marketing_consent"{% if form.marketing_consent.value %} checked{% endif %}> <span>Хочу получать <a href="{% url 'shop:marketing_consent' %}" target="_blank" rel="noopener">новости и акции</a> (необязательно)</span></label>
           <div class="hp" aria-hidden="true"><label>Сайт <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
         </div>
       </div>

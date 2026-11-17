@@ -15,7 +15,8 @@ class PageTests(ShopTestCase):
         FAQ.objects.create(question='Как быстро?', answer='За 15 минут', order=1)
 
     def test_all_public_pages_open(self):
-        names = ['home', 'catalog', 'music', 'offices', 'subscription', 'delivery', 'care', 'about', 'contacts', 'faq', 'privacy', 'offer', 'cart']
+        names = ['home', 'catalog', 'music', 'offices', 'subscription', 'delivery', 'care', 'about', 'contacts', 'faq', 'privacy', 'offer',
+                 'legal', 'consent', 'marketing_consent', 'cookies', 'cart']
         for name in names:
             with self.subTest(page=name):
                 self.assertEqual(self.client.get(reverse(f'shop:{name}')).status_code, 200)
@@ -78,11 +79,22 @@ class PageTests(ShopTestCase):
         self.assertContains(self.client.get(reverse('shop:home')), 'Не принимаем заказы')
 
     def test_legal_pages_show_requisites_when_filled(self):
-        self.assertContains(self.client.get(reverse('shop:offer')), 'Реквизиты продавца будут указаны здесь')
+        self.assertContains(self.client.get(reverse('shop:offer')), 'Перед публикацией заполните реквизиты продавца')
         self.update_site(legal_name='ИП Иванов И. И.', inn='7700000000')
         r = self.client.get(reverse('shop:offer'))
         self.assertContains(r, 'ИП Иванов И. И.')
-        self.assertNotContains(r, 'Реквизиты продавца будут указаны здесь')
+        self.assertNotContains(r, 'Перед публикацией заполните реквизиты продавца')
+
+    def test_legal_documents_are_muzflowers_specific(self):
+        for name in ('offer', 'privacy', 'consent', 'marketing_consent', 'cookies', 'legal'):
+            with self.subTest(page=name):
+                r = self.client.get(reverse(f'shop:{name}'))
+                expected = 'Редакция комплекта 1.0' if name == 'legal' else 'Редакция 1.0'
+                self.assertContains(r, expected)
+                self.assertNotContains(r, 'RestHelper')
+                self.assertNotContains(r, 'iiko')
+        self.assertContains(self.client.get(reverse('shop:privacy')), 'Трансграничная передача')
+        self.assertContains(self.client.get(reverse('shop:privacy')), 'ИИ и обезличенная аналитика')
 
 
 class CatalogTests(ShopTestCase):
@@ -185,10 +197,17 @@ class SeoAndArtTests(ShopTestCase):
         self.assertEqual(r['X-Frame-Options'], 'DENY')
 
     def test_metrika_is_opt_in(self):
-        self.assertNotContains(self.client.get(reverse('shop:home')), 'metrika')
+        r = self.client.get(reverse('shop:home'))
+        self.assertNotContains(r, 'name="metrika-id"')
+        self.assertNotContains(r, 'cookie_consent.js')
         self.update_site(metrika_id='12345678')
         r = self.client.get(reverse('shop:home'))
         self.assertContains(r, 'name="metrika-id" content="12345678"')
+        self.assertContains(r, 'data-cookie-consent')
+        self.assertContains(r, 'cookie_consent.js')
+        self.assertNotContains(r, 'src="/static/shop/js/metrika.js"')
+        self.assertContains(r, 'Только необходимые')
+        self.assertContains(r, 'Разрешить аналитику')
         self.assertIn('mc.yandex.ru', r['Content-Security-Policy'])
 
     def test_pages_do_not_use_inline_scripts_or_styles(self):

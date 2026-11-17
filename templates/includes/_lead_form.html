@@ -9,7 +9,7 @@
   {% if form.kind == 'office' %}{% include 'includes/_field.html' with field=form.company hide_required=True %}{% endif %}
   {% include 'includes/_field.html' with field=form.email hide_required=True %}
   {% include 'includes/_field.html' with field=form.message hide_required=True %}
-  <label class="check{% if form.consent.errors %} has-error{% endif %}"><input type="checkbox" name="consent" required{% if form.consent.value %} checked{% endif %}> <span>Согласен на <a href="{% url 'shop:privacy' %}" target="_blank" rel="noopener">обработку персональных данных</a></span></label>
+  <label class="check{% if form.consent.errors %} has-error{% endif %}"><input type="checkbox" name="consent" required{% if form.consent.value %} checked{% endif %}> <span>Согласен на <a href="{% url 'shop:consent' %}" target="_blank" rel="noopener">обработку персональных данных</a> по условиям отдельного согласия</span></label>
   {% for e in form.consent.errors %}<p class="field__error">{{ e }}</p>{% endfor %}
   <div class="hp" aria-hidden="true"><label>Сайт <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
   <button class="btn btn--primary btn--lg" type="submit">{{ submit_label|default:"Отправить заявку" }}</button>

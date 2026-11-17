@@ -686,6 +686,37 @@ class Lead(models.Model):
         return format_phone(self.phone)
 
 
+class LegalAcceptance(models.Model):
+    """Кто, когда и какую редакцию документа принял; записи не редактируются через панель."""
+    class Kind(models.TextChoices):
+        OFFER = 'offer', 'Публичная оферта'
+        PERSONAL = 'personal', 'Согласие на обработку ПДн'
+        MARKETING = 'marketing', 'Согласие на рекламные сообщения'
+
+    class Action(models.TextChoices):
+        ACCEPTED = 'accepted', 'Принято'
+        WITHDRAWN = 'withdrawn', 'Отозвано'
+
+    kind = models.CharField('Документ', max_length=12, choices=Kind.choices)
+    action = models.CharField('Действие', max_length=10, choices=Action.choices, default=Action.ACCEPTED)
+    version = models.CharField('Редакция', max_length=12)
+    reference = models.CharField('Заказ / заявка / аккаунт', max_length=80, blank=True)
+    contact = models.CharField('Контакт для связи с субъектом', max_length=254, blank=True)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='legal_acceptances')
+    ip_address = models.CharField('IP при выборе', max_length=64, blank=True)
+    user_agent = models.CharField('Браузер при выборе', max_length=300, blank=True)
+    created = models.DateTimeField('Дата и время', auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created']
+        verbose_name = 'Акцепт / согласие'
+        verbose_name_plural = 'Журнал акцептов и согласий'
+        indexes = [models.Index(fields=['kind', 'created']), models.Index(fields=['reference'])]
+
+    def __str__(self):
+        return f'{self.get_kind_display()} · {self.get_action_display()} · {self.created:%d.%m.%Y %H:%M}'
+
+
 class FAQ(models.Model):
     question = models.CharField('Вопрос', max_length=160)
     answer = models.TextField('Ответ')

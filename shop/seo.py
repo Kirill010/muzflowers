@@ -11,7 +11,8 @@ from .models import Category, Product, Shop, SiteSettings
 from .thumbs import thumb_url
 
 PUBLIC_PAGES = ['shop:home', 'shop:catalog', 'shop:music', 'shop:delivery', 'shop:care', 'shop:offices',
-                'shop:subscription', 'shop:about', 'shop:contacts', 'shop:faq', 'shop:privacy', 'shop:offer']
+                'shop:subscription', 'shop:about', 'shop:contacts', 'shop:faq', 'shop:privacy', 'shop:offer',
+                'shop:legal', 'shop:consent', 'shop:marketing_consent', 'shop:cookies']
 
 
 class PagesSitemap(Sitemap):

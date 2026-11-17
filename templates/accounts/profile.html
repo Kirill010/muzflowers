@@ -48,7 +48,7 @@
           {% include 'includes/_field.html' with field=form.email %}
           {% include 'includes/_field.html' with field=form.phone hide_required=True %}
           {% include 'includes/_field.html' with field=form.address hide_required=True %}
-          <label class="check"><input type="checkbox" name="marketing_consent"{% if form.marketing_consent.value %} checked{% endif %}> <span>{{ form.marketing_consent.label }}</span></label>
+          <label class="check"><input type="checkbox" name="marketing_consent"{% if form.marketing_consent.value %} checked{% endif %}> <span>Хочу получать <a href="{% url 'shop:marketing_consent' %}" target="_blank" rel="noopener">новости и акции</a> (необязательно)</span></label>
           <button class="btn btn--primary" type="submit">Сохранить</button>
         </form>
         <p><a class="link-btn" href="{% url 'accounts:password_change' %}">Сменить пароль</a></p>
