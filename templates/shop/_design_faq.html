@@ -1,0 +1,18 @@
+{% load static shop_tags %}
+<section class="design-panel design-faq" aria-labelledby="design-faq-title">
+  <img class="design-faq__flower" src="{% static 'shop/img/design-gerbera.webp' %}" alt="" width="526" height="778" loading="lazy">
+  <div class="design-panel__body">
+    {% if faq_full %}<h1 class="display design-title" id="design-faq-title">Вопрос — ответ</h1>
+    {% else %}<h2 class="display design-title" id="design-faq-title">Вопрос — ответ</h2>{% endif %}
+    <div class="faq">
+      {% for f in items %}
+      <details class="faq__item">
+        <summary>{{ f.question }}</summary>
+        <div class="faq__answer">{{ f.answer|linebreaks }}</div>
+      </details>
+      {% endfor %}
+    </div>
+    <p class="design-faq__gift">{% icon 'leaf' %} Витамины для срезанных цветов в подарок</p>
+    {% if not faq_full %}<a class="link-arrow" href="{% url 'shop:faq' %}">Все вопросы {% icon 'arrow' %}</a>{% endif %}
+  </div>
+</section>

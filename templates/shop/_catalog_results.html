@@ -1,7 +1,8 @@
 {% load shop_tags %}
 <div class="results__bar">
+  {% if sale_only %}<h2 class="display display--sm">Акции</h2>{% endif %}
   <p class="results__count">{{ total }} {{ total|plural:"букет,букета,букетов" }}</p>
-  <p class="results__delivery">Самовывоз — бесплатно · Доставка по Москве — {{ site.delivery_cost|rub }}{% if site.free_delivery_from %}, от {{ site.free_delivery_from|rub }} бесплатно{% endif %}</p>
+  <p class="results__delivery">Самовывоз — бесплатно{% if site.delivery_enabled %} · Доставка по Москве — {{ site.delivery_cost|rub }}{% if site.free_delivery_from %}, от {{ site.free_delivery_from|rub }} бесплатно{% endif %}{% endif %}</p>
 </div>
 {% if products %}
 <div class="grid grid--4">{% for p in products %}{% include 'includes/_card.html' %}{% endfor %}</div>
@@ -15,8 +16,8 @@
 {% else %}
 <div class="empty">
   {% icon 'flower' 'empty__icon' %}
-  <h2>Ничего не нашли</h2>
-  <p>Попробуйте другой запрос или сбросьте фильтры.</p>
+  <h2>{% if sale_only %}Нет букетов со скидкой по этим условиям{% else %}Ничего не нашли{% endif %}</h2>
+  <p>Измените условия поиска или посмотрите весь каталог.</p>
   <a class="btn btn--ghost" href="{{ request.path }}">Сбросить фильтры</a>
 </div>
 {% endif %}

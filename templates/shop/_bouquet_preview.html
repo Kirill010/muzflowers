@@ -1,0 +1,7 @@
+{% load static %}
+<div class="bouquet-preview" data-bouquet-preview>
+  {% include 'shop/_bouquet_stage.html' with read_only=True %}
+  {{ builder_config|json_script:'bouquet-config' }}
+  {{ layout|json_script:'bouquet-layout' }}
+</div>
+<script src="{% static 'shop/js/builder.js' %}" defer></script>

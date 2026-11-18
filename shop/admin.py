@@ -4,10 +4,13 @@ from datetime import timedelta
 from django.contrib import admin, messages
 from django.http import HttpResponse
 from django.shortcuts import redirect
+from django.template.loader import render_to_string
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html, format_html_join
+from django.utils.safestring import mark_safe
 
+from . import bouquet
 from .models import (FAQ, Addon, Category, Lead, LegalAcceptance, Order, OrderAddon, OrderItem, Product, ProductImage, PromoCode, Review, Shop,
                      SiteSettings, SpecialDay, Variant)
 from .utils import rub
@@ -165,6 +168,25 @@ class LeadAdmin(admin.ModelAdmin):
     readonly_fields = ('kind', 'name', 'company', 'phone', 'email', 'message', 'source', 'created')
     fields = ('status', 'staff_note', 'kind', 'name', 'company', 'phone', 'email', 'message', 'source', 'created')
     actions = ['mark_work', 'mark_done']
+
+    class Media:
+        css = {'all': ('shop/css/builder.css',)}
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj and obj.layout:
+            return (*self.readonly_fields, 'bouquet_preview')
+        return self.readonly_fields
+
+    def get_fields(self, request, obj=None):
+        if obj and obj.layout:
+            return (*self.fields, 'bouquet_preview')
+        return self.fields
+
+    @admin.display(description='Эскиз композиции')
+    def bouquet_preview(self, obj):
+        return mark_safe(render_to_string('shop/_bouquet_preview.html', {
+            'builder_config': bouquet.builder_config(), 'layout': obj.layout,
+        }))
 
     @admin.display(description='Телефон')
     def display_phone(self, obj):

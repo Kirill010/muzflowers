@@ -10,7 +10,7 @@ from django.views.decorators.cache import cache_page
 from .models import Category, Product, Shop, SiteSettings
 from .thumbs import thumb_url
 
-PUBLIC_PAGES = ['shop:home', 'shop:catalog', 'shop:music', 'shop:delivery', 'shop:care', 'shop:offices',
+PUBLIC_PAGES = ['shop:home', 'shop:catalog', 'shop:bouquet_builder', 'shop:music', 'shop:delivery', 'shop:care', 'shop:offices',
                 'shop:subscription', 'shop:about', 'shop:contacts', 'shop:faq', 'shop:privacy', 'shop:offer',
                 'shop:legal', 'shop:consent', 'shop:marketing_consent', 'shop:cookies']
 

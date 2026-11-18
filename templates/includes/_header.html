@@ -9,11 +9,13 @@
     </a>
 
     <nav class="nav" aria-label="Основное меню">
-      <a class="nav__link" href="{% url 'shop:catalog' %}"{% current 'shop:catalog' 'shop:category' 'shop:product' %}>Каталог</a>
-      <a class="nav__link" href="{% url 'shop:music' %}"{% current 'shop:music' %}>Музыкальная открытка</a>
+      <a class="nav__link" href="{% url 'shop:about' %}"{% current 'shop:about' %}>О нас</a>
+      <a class="nav__link" href="{% url 'shop:catalog' %}"{% current 'shop:catalog' 'shop:category' 'shop:product' %}>Букеты</a>
+      <a class="nav__link" href="{% url 'shop:bouquet_builder' %}"{% current 'shop:bouquet_builder' %}>Собери сам</a>
+      <a class="nav__link" href="{% url 'shop:catalog' %}?sale=1#catalog-results">Акции</a>
       <a class="nav__link" href="{% url 'shop:delivery' %}"{% current 'shop:delivery' %}>Доставка и оплата</a>
-      <a class="nav__link" href="{% url 'shop:offices' %}"{% current 'shop:offices' 'shop:subscription' %}>Офисам</a>
       <a class="nav__link" href="{% url 'shop:contacts' %}"{% current 'shop:contacts' %}>Контакты</a>
+      <a class="nav__link" href="{% url 'shop:faq' %}"{% current 'shop:faq' %}>FAQ</a>
     </nav>
 
     <div class="header-actions">
@@ -39,7 +41,10 @@
       <button class="icon-btn" type="button" data-menu-close aria-label="Закрыть меню">{% icon 'close' %}</button>
     </div>
     <nav aria-label="Меню">
-      <a href="{% url 'shop:catalog' %}">Каталог</a>
+      <a href="{% url 'shop:about' %}">О нас</a>
+      <a href="{% url 'shop:catalog' %}">Букеты</a>
+      <a href="{% url 'shop:bouquet_builder' %}">Собери сам</a>
+      <a href="{% url 'shop:catalog' %}?sale=1#catalog-results">Акции</a>
       <a href="{% url 'shop:music' %}">Музыкальная открытка</a>
       <a href="{% url 'shop:delivery' %}">Доставка и оплата</a>
       <a href="{% url 'shop:offices' %}">Цветы для офиса</a>

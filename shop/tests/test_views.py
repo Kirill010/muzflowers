@@ -15,7 +15,7 @@ class PageTests(ShopTestCase):
         FAQ.objects.create(question='Как быстро?', answer='За 15 минут', order=1)
 
     def test_all_public_pages_open(self):
-        names = ['home', 'catalog', 'music', 'offices', 'subscription', 'delivery', 'care', 'about', 'contacts', 'faq', 'privacy', 'offer',
+        names = ['home', 'catalog', 'bouquet_builder', 'music', 'offices', 'subscription', 'delivery', 'care', 'about', 'contacts', 'faq', 'privacy', 'offer',
                  'legal', 'consent', 'marketing_consent', 'cookies', 'cart']
         for name in names:
             with self.subTest(page=name):
@@ -79,7 +79,11 @@ class PageTests(ShopTestCase):
 
     def test_faq_page_has_faq_markup(self):
         r = self.client.get(reverse('shop:faq'))
-        self.assertEqual(json.loads(r.context['jsonld'][0])['@type'], 'FAQPage')
+        markup = json.loads(r.context['jsonld'][0])
+        self.assertEqual(markup['@type'], 'FAQPage')
+        self.assertEqual(len(r.context['items']), 6)
+        self.assertContains(r, 'Почему нельзя повторить букет точь-в-точь?')
+        self.assertIn('Как быстро?', {q['name'] for q in markup['mainEntity']})
 
     def test_announcement_and_pause_are_shown(self):
         self.update_site(announcement='Предзаказ на 8 Марта открыт')
@@ -148,6 +152,14 @@ class CatalogTests(ShopTestCase):
 
     def test_ready_only(self):
         self.assertEqual(self.names(ready='1'), ['Классика'])
+
+    def test_sale_only_uses_current_catalog_prices(self):
+        self.rose.old_price = self.rose.price + 500
+        self.rose.save()
+        self.chrys.old_price = self.chrys.price
+        self.chrys.save()
+        self.assertEqual(self.names(sale='1'), ['Классика'])
+        self.assertEqual(self.names(sale='1', q='хризантемы'), [])
 
     def test_category_page_filters(self):
         r = self.client.get(self.mono.get_absolute_url())

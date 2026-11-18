@@ -657,11 +657,12 @@ class Review(models.Model):
 
 
 class Lead(models.Model):
-    """Заявка с сайта: офисы, подписка, вопрос."""
+    """Заявка с сайта: офисы, подписка, вопрос или своя композиция."""
     class Kind(models.TextChoices):
         OFFICE = 'office', 'Цветы для офиса'
         SUBSCRIPTION = 'subscription', 'Подписка на цветы'
         QUESTION = 'question', 'Вопрос'
+        BOUQUET = 'bouquet', 'Свой букет'
 
     class Status(models.TextChoices):
         NEW = 'new', 'Новая'
@@ -674,6 +675,7 @@ class Lead(models.Model):
     phone = models.CharField('Телефон', max_length=20)
     email = models.EmailField('Почта', blank=True)
     message = models.TextField('Сообщение', blank=True, max_length=1000)
+    layout = models.JSONField('Эскиз композиции', default=dict, blank=True)
     status = models.CharField('Статус', max_length=6, choices=Status.choices, default=Status.NEW)
     staff_note = models.TextField('Заметка (клиент не видит)', blank=True)
     source = models.CharField('Откуда пришёл клиент', max_length=40, blank=True)
@@ -682,7 +684,7 @@ class Lead(models.Model):
     class Meta:
         ordering = ['-created']
         verbose_name = 'Заявка'
-        verbose_name_plural = 'Заявки (офисы, подписка)'
+        verbose_name_plural = 'Заявки'
 
     def __str__(self):
         return f'{self.get_kind_display()} — {self.name}'

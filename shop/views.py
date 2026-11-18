@@ -13,9 +13,10 @@ from django.views.decorators.cache import cache_control
 from django.views.decorators.http import require_GET
 
 from . import art as artlib
-from . import notifications, seo
+from . import bouquet, notifications, seo
+from .faq import presentation_questions
 from .legal import record_acceptance
-from .forms import LeadForm
+from .forms import BouquetForm, LeadForm
 from .models import FAQ, Addon, Category, Lead, Product, Review, Shop, SiteSettings
 from .thumbs import thumb_url
 from .throttle import throttled
@@ -56,12 +57,12 @@ def home(request):
     ready = sorted((p for p in products if p.is_ready), key=lambda p: p.price_from)[:4]
     context = {
         'ready': ready,
-        'featured': products[:8],
+        'featured': [p for p in products if p not in ready][:8],
         'occasions': OCCASION_FILTERS.items(),
         'budgets': [(key, *values) for key, values in BUDGETS.items()],
         'categories': Category.objects.filter(is_active=True),
         'reviews': Review.objects.filter(is_published=True)[:6],
-        'faq': FAQ.objects.filter(is_active=True)[:6],
+        'faq': presentation_questions(SiteSettings.load()),
         'og_image': og_image(request),
         'jsonld': seo.dump(seo.florist(origin_of(request))),
     }
@@ -80,6 +81,8 @@ def _apply_filters(request, items):
         items = [p for p in items if p.occasion == params['occasion']]
     if params.get('ready') == '1':
         items = [p for p in items if p.is_ready]
+    if params.get('sale') == '1':
+        items = [p for p in items if p.old_price and p.old_price > p.price]
     budget = BUDGETS.get(params.get('budget'))
     min_price, max_price = budget[1:] if budget else (params.get('min', ''), params.get('max', ''))
     if min_price.isdigit():
@@ -113,9 +116,10 @@ def catalog(request, slug=None):
         'category': category, 'page': page, 'products': page.object_list, 'total': len(items),
         'categories': Category.objects.filter(is_active=True), 'q': q, 'sort': sort, 'sorts': SORTS.items(),
         'occasion': occasion, 'occasions': OCCASION_FILTERS.items(),
-        'ready_only': request.GET.get('ready') == '1', 'price_min': price_min, 'price_max': price_max,
+        'ready_only': request.GET.get('ready') == '1', 'sale_only': request.GET.get('sale') == '1',
+        'price_min': price_min, 'price_max': price_max,
         'price_floor': min(prices), 'price_ceil': max(prices),
-        'qs': urlencode(keep), 'filtered': bool(q or occasion or budget or request.GET.get('ready') or price_min or price_max),
+        'qs': urlencode(keep), 'filtered': bool(q or occasion or budget or request.GET.get('ready') or request.GET.get('sale') or price_min or price_max),
         'og_image': og_image(request),
     }
     origin = origin_of(request)
@@ -167,6 +171,14 @@ def art(request, kind, count, a, b):
     return HttpResponse(artlib.bouquet_svg(kind, count, '#' + a, '#' + b), content_type='image/svg+xml')
 
 
+@require_GET
+@cache_control(public=True, max_age=86400)
+def stem_art(request, kind):
+    if kind not in bouquet.FLOWERS:
+        raise Http404
+    return HttpResponse(bouquet.flower_svg(kind), content_type='image/svg+xml')
+
+
 # ───────────── страницы ─────────────
 
 def _page(request, template, **extra):
@@ -195,8 +207,10 @@ def contacts(request):
 
 
 def faq(request):
-    items = list(FAQ.objects.filter(is_active=True))
-    return _page(request, 'shop/faq.html', items=items, jsonld=seo.dump(seo.faq_ld(items)))
+    items = presentation_questions(SiteSettings.load())
+    covered = [item.question for item in items] + ['Как оплатить заказ?', 'Сколько стоит доставка?']
+    extra = list(FAQ.objects.filter(is_active=True).exclude(question__in=covered))
+    return _page(request, 'shop/faq.html', items=items, extra=extra, jsonld=seo.dump(seo.faq_ld(items + extra)))
 
 
 def privacy(request):
@@ -223,21 +237,33 @@ def cookies(request):
     return _page(request, 'shop/cookies.html')
 
 
-def _lead_page(request, kind, template):
-    form = LeadForm(request.POST or None, kind=kind)
+def _lead_page(request, kind, template, *, form_class=LeadForm, **context):
+    form = form_class(request.POST if request.method == 'POST' else None, kind=kind)
     if request.method == 'POST':
         if throttled(request, 'lead', 5, 3600):
             messages.error(request, 'Слишком много заявок с одного адреса. Позвоните нам — мы на связи.')
         elif form.is_valid():
             d = form.cleaned_data
+            custom = kind == Lead.Kind.BOUQUET
             with transaction.atomic():
                 lead = Lead.objects.create(kind=kind, name=d['name'], company=d.get('company', ''), phone=d['phone'], email=d.get('email', ''),
-                                           message=d.get('message', ''), source=request.session.get('mz_src', '')[:40])
+                                           message=form.lead_message() if custom else d['message'],
+                                           layout=d['layout'] if custom else {},
+                                           source=request.session.get('mz_src', '')[:40])
                 record_acceptance(request, 'personal', reference=f'lead:{lead.pk}', contact=lead.email or lead.phone)
                 transaction.on_commit(lambda: notifications.dispatch_lead(lead.pk))
             messages.success(request, 'Спасибо! Мы получили заявку и позвоним вам в ближайшее время.')
             return redirect(request.path)
-    return _page(request, template, form=form)
+    return _page(request, template, form=form, **context)
+
+
+def bouquet_builder(request):
+    config = bouquet.builder_config()
+    flowers = list(config['flowers'].items())
+    middle = (len(flowers) + 1) // 2
+    palettes = [('left', flowers[:middle]), ('right', flowers[middle:])]
+    return _lead_page(request, Lead.Kind.BOUQUET, 'shop/builder.html', form_class=BouquetForm,
+                      builder_config=config, palettes=palettes, vessels=bouquet.VESSELS)
 
 
 def offices(request):

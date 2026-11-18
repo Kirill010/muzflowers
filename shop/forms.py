@@ -1,8 +1,8 @@
 from django import forms
 from django.utils import timezone
 
-from . import slots
-from .models import Addon, Lead, Order, Shop, SiteSettings
+from . import bouquet, slots
+from .models import Addon, Lead, Order, Product, Shop, SiteSettings
 from .orders import is_prepay_required, payment_options
 from .utils import normalize_phone
 
@@ -156,7 +156,7 @@ class CheckoutForm(forms.Form):
 
 
 class LeadForm(forms.Form):
-    """Заявка от офисов и на подписку."""
+    """Контактные данные и согласие для заявок с сайта."""
     name = forms.CharField(label='Ваше имя', max_length=100)
     company = forms.CharField(label='Компания', max_length=120, required=False)
     phone = forms.CharField(label='Телефон', max_length=30)
@@ -174,6 +174,7 @@ class LeadForm(forms.Form):
         placeholder = {
             Lead.Kind.OFFICE: 'Как часто нужны цветы, сколько человек, адрес офиса…',
             Lead.Kind.SUBSCRIPTION: 'Какие цветы любите, куда и в какой день недели привозить…',
+            Lead.Kind.BOUQUET: 'Цветовая гамма, упаковка и другие пожелания',
         }.get(kind, 'Ваш вопрос')
         self.fields['message'].widget.attrs['placeholder'] = placeholder
         if kind == Lead.Kind.OFFICE:
@@ -187,3 +188,65 @@ class LeadForm(forms.Form):
         if self.cleaned_data.get('website'):
             raise forms.ValidationError('Не удалось отправить форму.')
         return ''
+
+
+class BouquetForm(LeadForm):
+    layout = forms.JSONField(widget=forms.HiddenInput(attrs={'data-bouquet-value': ''}), required=False)
+    recipient = forms.CharField(label='Для кого букет', required=False, max_length=100)
+    occasion = forms.ChoiceField(label='Повод', choices=[('', 'Выберите повод'), *Product.OCCASIONS, ('other', 'Другой повод')], required=False)
+    budget = forms.IntegerField(label='Бюджет до, ₽', min_value=1, max_value=1000000, required=False)
+    date = forms.DateField(label='К какой дате нужен букет', required=False, widget=forms.DateInput(attrs={'type': 'date'}))
+    message = forms.CharField(label='Пожелания флористу', max_length=600, required=False,
+                              widget=forms.Textarea(attrs={'rows': 3}))
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['date'].widget.attrs['min'] = timezone.localdate().isoformat()
+
+    def clean_date(self):
+        date = self.cleaned_data['date']
+        if date and date < timezone.localdate():
+            raise forms.ValidationError('Выберите сегодняшнюю или будущую дату.')
+        return date
+
+    def clean_layout(self):
+        layout = self.cleaned_data['layout']
+        if not layout:
+            return {}
+        if isinstance(layout, dict) and isinstance(layout.get('vessel'), str) and layout['vessel'] in bouquet.VESSELS:
+            stems = layout.get('stems')
+            if isinstance(stems, list) and len(stems) <= bouquet.MAX_STEMS:
+                valid_stems = []
+                for stem in stems:
+                    if not isinstance(stem, dict):
+                        break
+                    kind, x, y = (stem.get(key) for key in ('kind', 'x', 'y'))
+                    if not (isinstance(kind, str) and kind in bouquet.FLOWERS
+                            and type(x) is int and bouquet.X_MIN <= x <= bouquet.X_MAX
+                            and type(y) is int and bouquet.Y_MIN <= y <= bouquet.Y_MAX):
+                        break
+                    valid_stems.append({'kind': kind, 'x': x, 'y': y})
+                else:
+                    return {'vessel': layout['vessel'], 'stems': valid_stems}
+        raise forms.ValidationError('Не удалось прочитать композицию. Соберите её заново.')
+
+    def clean(self):
+        data = super().clean()
+        layout = data.get('layout') or {}
+        if 'layout' not in self.errors and 'message' not in self.errors and not (layout.get('stems') or data.get('message')):
+            self.add_error('layout', 'Добавьте хотя бы один цветок или опишите композицию в пожеланиях.')
+        return data
+
+    def lead_message(self):
+        d = self.cleaned_data
+        layout = d['layout']
+        fields = (
+            ('Основа', bouquet.VESSELS[layout['vessel']] if layout else ''),
+            ('Состав', bouquet.describe(layout) if layout else ''),
+            ('Кому', d['recipient']),
+            ('Повод', dict(self.fields['occasion'].choices).get(d['occasion']) if d['occasion'] else ''),
+            ('Бюджет', f"до {d['budget']:,} ₽".replace(',', ' ') if d['budget'] else ''),
+            ('К дате', d['date'].strftime('%d.%m.%Y') if d['date'] else ''),
+            ('Пожелания', d['message']),
+        )
+        return '\n'.join(f'{label}: {value}' for label, value in fields if value)

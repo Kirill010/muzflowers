@@ -2,11 +2,14 @@
 {% load static shop_tags %}
 {% block title %}О нас — {{ site.shop_name }}, цветочный магазин у Курского вокзала{% endblock %}
 {% block description %}{{ site.shop_name }} — розничные цветочные магазины в Москве. Букеты из цветов с собственного оптового склада, быстрая сборка и музыкальная открытка.{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'shop/css/design.css' %}">{% endblock %}
 {% block content %}
-<section class="section">
-  <div class="wrap wrap--narrow prose">
-    <p class="eyebrow">О нас</p>
-    <h1 class="display display--lg">Мы — {{ site.shop_name }}. Собираем <em>быстро</em> и с душой</h1>
+<div class="section section--tight">
+  <div class="wrap">
+    {% include 'shop/_design_process.html' with process_heading=True %}
+  </div>
+  <div class="wrap wrap--narrow prose design-faq__extra">
+    <h2>{{ site.shop_name }}</h2>
     <p class="lead">Розничные цветочные магазины в Москве: у Курского вокзала и в Выхино. Цветы берём с собственного оптового склада и собираем из них готовые и авторские букеты.</p>
 
     <div class="about-logo"><img src="{% static 'shop/img/logo-sage.png' %}" alt="Логотип {{ site.shop_name }}" width="180" height="180" loading="lazy"></div>
@@ -24,5 +27,5 @@
     <p>Магазин у Курского вокзала работает {{ site.hours_display|lower }}. А если удобнее заказать с дивана — всё есть на сайте.</p>
     <p><a class="btn btn--primary" href="{% url 'shop:catalog' %}">Выбрать букет {% icon 'arrow' %}</a> <a class="btn btn--ghost" href="{% url 'shop:contacts' %}">Контакты</a></p>
   </div>
-</section>
+</div>
 {% endblock %}

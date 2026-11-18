@@ -1,0 +1,22 @@
+{% load static shop_tags %}
+<section class="design-panel design-catalog" id="catalog" aria-labelledby="design-catalog-title">
+  {% include 'shop/_design_lines.html' %}
+  <img class="design-catalog__flower design-catalog__flower--left" src="{% static 'shop/img/design-poppies.webp' %}" alt="" width="248" height="596" loading="lazy">
+  <img class="design-catalog__flower design-catalog__flower--right" src="{% static 'shop/img/design-tulips.webp' %}" alt="" width="264" height="594" loading="lazy">
+  <div class="design-panel__body">
+    {% if catalog_heading %}<h1 class="display design-title" id="design-catalog-title">А что ближе тебе?</h1>
+    {% else %}<h2 class="display design-title" id="design-catalog-title">А что ближе тебе?</h2>{% endif %}
+    <nav class="design-catalog__nav" aria-label="Выбор цветов">
+      <div class="design-catalog__links">
+        <a href="{% url 'shop:catalog' %}{% if catalog_heading %}#catalog-results{% endif %}">Букеты</a>
+        <a class="design-catalog__build" href="{% url 'shop:bouquet_builder' %}">Собери сам {% icon 'arrow' %}</a>
+        <a href="{% url 'shop:catalog' %}?sale=1#catalog-results">Акции</a>
+      </div>
+      {% if categories %}
+      <div class="design-catalog__links">
+        {% for c in categories %}<a href="{{ c.get_absolute_url }}">{{ c.name }}</a>{% endfor %}
+      </div>
+      {% endif %}
+    </nav>
+  </div>
+</section>

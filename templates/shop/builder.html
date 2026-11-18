@@ -1,0 +1,76 @@
+{% extends 'base.html' %}
+{% load static shop_tags %}
+{% block title %}Собери сам — конструктор букета {{ site.shop_name }}{% endblock %}
+{% block description %}Соберите цветы в вазе или корзине, двигайте их на эскизе и отправьте композицию флористу на согласование.{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'shop/css/builder.css' %}">{% endblock %}
+{% block content %}
+<section class="section section--tight">
+  <div class="wrap">
+    <nav class="breadcrumbs" aria-label="Хлебные крошки">
+      <a href="{% url 'shop:home' %}">Главная</a>
+      <a href="{% url 'shop:catalog' %}">Каталог</a>
+      <span aria-current="page">Собери сам</span>
+    </nav>
+    <header class="section__head">
+      <h1 class="display display--lg">Собери <em>сам</em></h1>
+      <p class="lead">Выберите вазу или корзину, добавьте цветы и расположите их по своему вкусу.</p>
+    </header>
+    <form class="bouquet-form" method="post" data-bouquet-editor novalidate>
+      {% csrf_token %}
+      {% if form.errors %}<p class="notice notice--error" role="alert">Проверьте отмеченные поля и отправьте заявку ещё раз.</p>{% endif %}
+      {{ builder_config|json_script:'bouquet-config' }}
+      {{ form.layout }}
+      <fieldset class="bouquet-workbench" aria-describedby="bouquet-hint" data-bouquet-workbench hidden>
+        <legend class="sr-only">Конструктор букета</legend>
+        <div class="bouquet-board">
+          <div class="bouquet-vessels" role="group" aria-label="Основа композиции">
+            {% for key, label in vessels.items %}
+              <button class="chip" type="button" data-vessel-choice="{{ key }}" aria-pressed="{% if forloop.first %}true{% else %}false{% endif %}">{{ label }}</button>
+            {% endfor %}
+          </div>
+          {% include 'shop/_bouquet_stage.html' %}
+          <div class="bouquet-board__bar">
+            <span data-bouquet-count role="status">0 / {{ builder_config.maxStems }} шт.</span>
+            <div class="bouquet-board__actions">
+              <button class="link-btn" type="button" data-remove-stem disabled>Убрать цветок</button>
+              <button class="link-btn" type="button" data-clear-stems disabled>Очистить</button>
+            </div>
+          </div>
+        </div>
+        {% for side, flowers in palettes %}
+        <ul class="bouquet-palette bouquet-palette--{{ side }}" aria-label="Цветы">
+          {% for key, flower in flowers %}
+          <li><button class="bouquet-palette__button" type="button" data-add-stem="{{ key }}" aria-label="Добавить: {{ flower.name }}">
+            <img src="{{ flower.url }}" alt="" width="58" height="58">
+            <span>{{ flower.name }}</span>
+          </button></li>
+          {% endfor %}
+        </ul>
+        {% endfor %}
+        <p class="bouquet-hint" id="bouquet-hint">Нажмите на цветок или перетащите его в композицию. Выбранный цветок можно двигать стрелками.</p>
+        <p class="sr-only" role="status" data-bouquet-announcement></p>
+      </fieldset>
+      {% for error in form.layout.errors %}<p class="field__error bouquet-error">{{ error }}</p>{% endfor %}
+      <noscript><p class="notice">Опишите цветы, основу и их расположение в пожеланиях флористу.</p></noscript>
+      <section class="panel bouquet-questionnaire" aria-labelledby="questionnaire-title">
+        <h2 class="display display--sm" id="questionnaire-title">Анкета для флориста</h2>
+        <p>Флорист уточнит наличие цветов и согласует состав, итоговую цену и время получения.</p>
+        <div class="grid grid--2">
+          {% include 'includes/_field.html' with field=form.recipient %}
+          {% include 'includes/_field.html' with field=form.occasion %}
+          {% include 'includes/_field.html' with field=form.date %}
+          {% include 'includes/_field.html' with field=form.budget %}
+          {% include 'includes/_field.html' with field=form.name %}
+          {% include 'includes/_field.html' with field=form.phone %}
+        </div>
+        {% include 'includes/_field.html' with field=form.message %}
+        <label class="check{% if form.consent.errors %} has-error{% endif %}">{{ form.consent }} <span>Согласен на <a href="{% url 'shop:consent' %}" target="_blank" rel="noopener">обработку персональных данных</a></span></label>
+        {% for error in form.consent.errors %}<p class="field__error">{{ error }}</p>{% endfor %}
+        <div class="hp" aria-hidden="true"><label>Сайт <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
+        <button class="btn btn--primary btn--lg" type="submit">Отправить заявку {% icon 'arrow' %}</button>
+      </section>
+    </form>
+  </div>
+</section>
+{% endblock %}
+{% block scripts %}<script src="{% static 'shop/js/builder.js' %}" defer></script>{% endblock %}

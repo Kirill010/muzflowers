@@ -2,6 +2,18 @@
 (function () {
   'use strict';
 
+  var recordToggle = document.querySelector('[data-record-toggle]');
+  if (recordToggle) {
+    var motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    recordToggle.hidden = motion.matches;
+    motion.addEventListener('change', function (event) { recordToggle.hidden = event.matches; });
+    recordToggle.addEventListener('click', function () {
+      var paused = recordToggle.getAttribute('aria-pressed') !== 'true';
+      recordToggle.setAttribute('aria-pressed', String(paused));
+      recordToggle.closest('.design-hero__record').classList.toggle('is-paused', paused);
+    });
+  }
+
   /* ───── открыто / закрыто (время по Москве) ───── */
   var status = document.querySelector('[data-open-now]');
   if (status) {

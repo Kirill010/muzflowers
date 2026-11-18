@@ -3,6 +3,7 @@
 {% block title %}{% if category %}{{ category.name }} — купить букет в Москве{% else %}Каталог букетов{% endif %} — {{ site.shop_name }}{% endblock %}
 {% block description %}{% if category and category.description %}{{ category.description|truncatechars:160 }}{% else %}Каталог букетов {{ site.shop_name }}: розы, хризантемы, гортензии, тюльпаны и авторские букеты. Самовывоз у Курского вокзала и доставка по Москве.{% endif %}{% endblock %}
 {% block robots %}{% if q or filtered or page.number > 1 %}noindex, follow{% else %}index, follow{% endif %}{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'shop/css/design.css' %}">{% endblock %}
 {% block content %}
 <section class="section section--tight">
   <div class="wrap">
@@ -10,14 +11,19 @@
       <a href="{% url 'shop:home' %}">Главная</a>
       {% if category %}<a href="{% url 'shop:catalog' %}">Каталог</a><span aria-current="page">{{ category.name }}</span>{% else %}<span aria-current="page">Каталог</span>{% endif %}
     </nav>
-    <header class="section__head">
-      <h1 class="display display--lg">{% if category %}{{ category.name }}{% else %}Каталог <em>букетов</em>{% endif %}</h1>
-      {% if category and category.description %}<p class="lead">{{ category.description }}</p>{% endif %}
-    </header>
+    {% if category %}
+      <header class="section__head" id="catalog-results">
+        <h1 class="display display--lg">{{ category.name }}</h1>
+        {% if category.description %}<p class="lead">{{ category.description }}</p>{% endif %}
+      </header>
+    {% else %}
+      {% include 'shop/_design_catalog.html' with catalog_heading=True %}
+    {% endif %}
 
-    <nav class="chips" aria-label="Разделы каталога">
+    <nav class="chips catalog-switch" aria-label="Разделы каталога"{% if not category %} id="catalog-results"{% endif %}>
       <a class="chip{% if not category %} is-active{% endif %}" href="{% url 'shop:catalog' %}">Все</a>
       {% for c in categories %}<a class="chip{% if category and category.pk == c.pk %} is-active{% endif %}" href="{{ c.get_absolute_url }}">{{ c.name }}</a>{% endfor %}
+      <a class="chip" href="{% url 'shop:bouquet_builder' %}">Собери сам {% icon 'arrow' %}</a>
     </nav>
 
     <details class="filter-panel" open data-filter-panel>
@@ -45,6 +51,7 @@
         <select class="select" name="sort">{% for key, title in sorts %}<option value="{{ key }}"{% if key == sort %} selected{% endif %}>{{ title }}</option>{% endfor %}</select>
       </label>
       <label class="check check--pill"><input type="checkbox" name="ready" value="1"{% if ready_only %} checked{% endif %}> Готовые за 2 минуты</label>
+      <label class="check check--pill"><input type="checkbox" name="sale" value="1"{% if sale_only %} checked{% endif %}> Только со скидкой</label>
       <button class="btn btn--primary btn--sm" type="submit">Показать</button>
       {% if filtered %}<a class="link-btn" href="{{ request.path }}">Сбросить</a>{% endif %}
       </form>

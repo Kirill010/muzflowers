@@ -11,6 +11,7 @@ urlpatterns = [
     path('catalog/<slug:slug>/', views.catalog, name='category'),
     path('product/<slug:slug>/', views.product, name='product'),
     path('search/suggest/', views.suggest, name='suggest'),
+    path('bouquet/', views.bouquet_builder, name='bouquet_builder'),
 
     path('cart/', cart_views.cart_page, name='cart'),
     path('cart/add/', cart_views.cart_add, name='cart_add'),
@@ -42,6 +43,7 @@ urlpatterns = [
     path('cookies/', views.cookies, name='cookies'),
 
     path('art/<slug:kind>/<int:count>/<str:a>/<str:b>.svg', views.art, name='art'),
+    path('art/stem/<slug:kind>.svg', views.stem_art, name='stem_art'),
     path('favicon.ico', views.favicon, name='favicon'),
     path('robots.txt', seo.robots, name='robots'),
     path('sitemap.xml', sitemap, {'sitemaps': seo.SITEMAPS}, name='sitemap'),
