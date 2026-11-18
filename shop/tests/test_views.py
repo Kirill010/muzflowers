@@ -77,7 +77,10 @@ class PageTests(ShopTestCase):
         self.assertRedirects(response, reverse('shop:about'), status_code=301)
         about = self.client.get(reverse('shop:about'))
         self.assertContains(about, 'Как мы собираем букеты')
-        self.assertNotContains(about, 'Школа Бизнеса')
+        for page in (about, self.client.get(reverse('shop:home'))):
+            self.assertNotContains(page, 'Наталья Боброва')
+            self.assertNotContains(page, 'Школа Бизнеса')
+            self.assertNotContains(page, 'Великой Школе Бизнеса')
 
     def test_existing_reviews_and_social_channel_stay_off_the_storefront(self):
         self.update_site(telegram='muzflowers', yandex_rating='4.8', yandex_votes=24,
