@@ -64,9 +64,9 @@
         head.setAttribute('tabindex', '0');
         head.setAttribute('role', 'button');
         head.setAttribute('aria-label', flower.name + ', цветок ' + (index + 1));
-        head.append(svgElement('circle', { r: 41, class: 'bouquet-head__outline' }));
+        head.append(svgElement('circle', { r: 45, class: 'bouquet-head__outline' }));
       }
-      head.append(svgElement('image', { x: -38, y: -38, width: 76, height: 76, href: flower.url }));
+      head.append(svgElement('image', { x: -42, y: -42, width: 84, height: 84, href: flower.url }));
       heads.append(head);
       updateStem(index);
     });

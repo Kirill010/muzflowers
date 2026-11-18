@@ -12,11 +12,14 @@
         <a class="design-catalog__build" href="{% url 'shop:bouquet_builder' %}">Собери сам {% icon 'arrow' %}</a>
         <a href="{% url 'shop:catalog' %}?sale=1#catalog-results">Акции</a>
       </div>
-      {% if categories %}
       <div class="design-catalog__links">
-        {% for c in categories %}<a href="{{ c.get_absolute_url }}">{{ c.name }}</a>{% endfor %}
+        {% for c in categories %}{% if c.slug == 'season' %}<a href="{{ c.get_absolute_url }}">Сезонные цветы</a>{% endif %}{% endfor %}
+        <a href="{% url 'shop:bouquet_builder' %}">Композиции</a>
+        {% for c in categories %}{% if c.slug == 'roses' %}<a href="{{ c.get_absolute_url }}">Розы</a>{% endif %}{% endfor %}
+        <a href="{% url 'shop:catalog' %}{% if catalog_heading %}#catalog-results{% endif %}">Цветы</a>
+        <a href="{{ site.phone_href }}" title="Уточнить наличие шаров по телефону">Шары <small>по наличию</small></a>
+        <a href="{{ site.phone_href }}" title="Уточнить наличие сувениров по телефону">Сувениры <small>по наличию</small></a>
       </div>
-      {% endif %}
     </nav>
   </div>
 </section>

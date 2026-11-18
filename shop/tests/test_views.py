@@ -65,6 +65,17 @@ class PageTests(ShopTestCase):
         self.assertContains(self.client.get(self.rose.get_absolute_url()), 'Иллюстрация, не фото готового букета')
         self.assertContains(self.client.get(reverse('shop:catalog')), 'Самовывоз — бесплатно')
 
+    def test_presentation_links_and_brand_artwork(self):
+        Category.objects.create(name='Сезонные', slug='season')
+        self.cat.slug = 'roses'
+        self.cat.save()
+        r = self.client.get(reverse('shop:home'))
+        for label in ('Букеты', 'Собери сам', 'Акции', 'Сезонные цветы', 'Композиции', 'Розы', 'Цветы', 'Шары', 'Сувениры'):
+            self.assertContains(r, label)
+        self.assertContains(r, 'brand-mark.svg')
+        self.assertContains(r, 'hero-bouquet.webp')
+        self.assertNotContains(r, 'data-record-toggle')
+
     def test_product_page_has_offer_and_breadcrumbs(self):
         r = self.client.get(self.rose.get_absolute_url())
         kinds = [json.loads(b)['@type'] for b in r.context['jsonld']]

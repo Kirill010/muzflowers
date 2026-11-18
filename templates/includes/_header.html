@@ -3,9 +3,9 @@
   <div class="wrap site-header__bar">
     <button class="icon-btn burger" type="button" data-menu-open aria-label="Открыть меню" aria-expanded="false" aria-controls="mobile-nav">{% icon 'menu' %}</button>
 
-    <a class="brand" href="{% url 'shop:home' %}" aria-label="{{ site.shop_name }} — на главную">
-      <img class="brand__mark" src="{% static 'shop/img/logo-sage.png' %}" width="46" height="46" alt="">
-      <span class="brand__word">MUZ<span>FLOWERS</span></span>
+    <a class="brand brand--atelier" href="{% url 'shop:home' %}" aria-label="{{ site.shop_name }} — на главную">
+      <img class="brand__mark" src="{% static 'shop/img/brand-mark.svg' %}" width="46" height="46" alt="">
+      <span class="brand__word">MUZFLOWERS<span>ЦВЕТОЧНАЯ МАСТЕРСКАЯ</span></span>
     </a>
 
     <nav class="nav" aria-label="Основное меню">
@@ -42,7 +42,7 @@
 <div class="mobile-nav" id="mobile-nav" data-mobile-nav hidden>
   <div class="mobile-nav__panel">
     <div class="mobile-nav__head">
-      <span class="brand__word">MUZ<span>FLOWERS</span></span>
+      <span class="brand__word">MUZFLOWERS<span>ЦВЕТОЧНАЯ МАСТЕРСКАЯ</span></span>
       <button class="icon-btn" type="button" data-menu-close aria-label="Закрыть меню">{% icon 'close' %}</button>
     </div>
     <nav aria-label="Меню">

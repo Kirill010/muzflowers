@@ -1,26 +1,6 @@
-/* Вращение эмблемы на главной и мелодия на странице музыкальной открытки. */
+/* Мелодия-пример на странице музыкальной открытки. */
 (function () {
   'use strict';
-
-  var recordToggle = document.querySelector('[data-record-toggle]');
-  if (recordToggle) {
-    var motion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    var hint = document.querySelector('[data-record-hint]');
-    function setSpinning(spinning) {
-      recordToggle.setAttribute('aria-pressed', String(spinning));
-      hint.textContent = spinning ? 'Нажмите, чтобы остановить' : 'Нажмите на эмблему';
-    }
-    function syncMotion() {
-      recordToggle.disabled = motion.matches;
-      hint.hidden = motion.matches;
-      if (motion.matches) setSpinning(false);
-    }
-    syncMotion();
-    motion.addEventListener('change', syncMotion);
-    recordToggle.addEventListener('click', function () {
-      setSpinning(recordToggle.getAttribute('aria-pressed') !== 'true');
-    });
-  }
 
   /* ───── мелодия-пример: играет прямо в браузере, без файлов ───── */
   var section = document.querySelector('[data-music]');

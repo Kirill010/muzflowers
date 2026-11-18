@@ -71,7 +71,7 @@
 .bouquet-palette--right { grid-area: right; }
 .bouquet-palette__button {
   display: grid;
-  grid-template-rows: 56px auto;
+  grid-template-rows: 72px auto;
   justify-items: center;
   align-items: center;
   gap: .15rem;

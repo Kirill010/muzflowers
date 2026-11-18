@@ -53,7 +53,7 @@
         <ul class="bouquet-palette bouquet-palette--{{ side }}" aria-label="Цветы">
           {% for key, flower in flowers %}
           <li><button class="bouquet-palette__button" type="button" data-add-stem="{{ key }}" aria-label="Добавить: {{ flower.name }}">
-            <img src="{{ flower.url }}" alt="" width="58" height="58">
+            <img src="{{ flower.url }}" alt="" width="72" height="72">
             <span>{{ flower.name }}</span>
           </button></li>
           {% endfor %}
