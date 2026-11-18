@@ -18,7 +18,7 @@ from . import bouquet, notifications, seo
 from .faq import presentation_questions
 from .legal import record_acceptance
 from .forms import BouquetForm, LeadForm
-from .models import FAQ, Addon, Category, Lead, Product, Review, Shop, SiteSettings
+from .models import FAQ, Addon, Category, Lead, Product, Shop, SiteSettings
 from .thumbs import thumb_url
 from .throttle import throttled
 from .utils import plural_ru, rub
@@ -66,7 +66,6 @@ def home(request):
         'occasions': OCCASION_FILTERS.items(),
         'price_tiers': PRICE_TIERS,
         'categories': Category.objects.filter(is_active=True),
-        'reviews': Review.objects.filter(is_published=True)[:6],
         'faq': presentation_questions(SiteSettings.load(), storefront=getattr(settings, 'SITES_STOREFRONT', False)),
         'og_image': og_image(request),
         'jsonld': seo.dump(seo.florist(origin_of(request))),
@@ -208,22 +207,6 @@ def care(request):
 
 def about(request):
     return _page(request, 'shop/about.html', jsonld=seo.dump(seo.florist(origin_of(request))))
-
-
-def presentation(request):
-    slides = [
-        ('01', 'Великая Школа Бизнеса', 'Защита проекта MuzFlowers. Боброва Наталья.'),
-        ('02', 'Главная страница', 'Свежие цветы от поставщика, доставка, витамины в подарок и музыкальная открытка.'),
-        ('03', 'Каталог и навигация', 'Букеты, «Собери сам», акции, сезонные цветы, композиции, розы, цветы, шары и сувениры.'),
-        ('04', 'Вопрос — ответ', 'Сколько простоят цветы, как оплатить и оформить доставку, что такое сезонные цветы, как ухаживать за букетом и почему он может отличаться от фото.'),
-        ('05', 'Как мы работаем', 'Получаем цветы от поставщиков, подготавливаем стебли, собираем композицию, выдаём в магазине или доставляем.'),
-        ('06', 'Как помогаем выбрать', 'Приветствуем, уточняем повод, срок и бюджет, предлагаем несколько вариантов. Согласуем состав, цену, адрес и время. После покупки просим отзыв.'),
-        ('07', 'Telegram', 'Фирменный канал MuzFlowers. На слайде показано оформление канала на момент защиты.'),
-        ('08', 'Авито', 'На слайде показаны объявления магазина на момент защиты проекта.'),
-        ('09', 'Видеоотзывы', 'Два кадра из видеоотзывов покупателей.'),
-        ('10', 'Итоги обучения', 'Всегда можно научиться. Всегда нужно учиться. Учиться — это самое интересное.'),
-    ]
-    return _page(request, 'shop/presentation.html', slides=slides)
 
 
 def contacts(request):

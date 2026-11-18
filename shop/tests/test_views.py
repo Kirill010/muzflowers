@@ -15,7 +15,7 @@ class PageTests(ShopTestCase):
         FAQ.objects.create(question='Как быстро?', answer='За 15 минут', order=1)
 
     def test_all_public_pages_open(self):
-        names = ['home', 'catalog', 'presentation', 'bouquet_builder', 'music', 'offices', 'subscription', 'delivery', 'care', 'about', 'contacts', 'faq', 'privacy', 'offer',
+        names = ['home', 'catalog', 'bouquet_builder', 'music', 'offices', 'subscription', 'delivery', 'care', 'about', 'contacts', 'faq', 'privacy', 'offer',
                  'legal', 'consent', 'marketing_consent', 'cookies', 'cart']
         for name in names:
             with self.subTest(page=name):
@@ -72,10 +72,24 @@ class PageTests(ShopTestCase):
         offer = json.loads(r.context['jsonld'][0])['offers']
         self.assertEqual((offer['price'], offer['priceCurrency']), ('1990', 'RUB'))
 
-    def test_no_fake_reviews_or_rating_markup(self):
-        r = self.client.get(reverse('shop:home'))
-        self.assertNotContains(r, 'aggregateRating')
-        self.assertEqual(Review.objects.count(), 0)
+    def test_old_presentation_address_opens_the_workshop_page(self):
+        response = self.client.get(reverse('shop:presentation'))
+        self.assertRedirects(response, reverse('shop:about'), status_code=301)
+        about = self.client.get(reverse('shop:about'))
+        self.assertContains(about, 'Как мы собираем букеты')
+        self.assertNotContains(about, 'Школа Бизнеса')
+
+    def test_existing_reviews_and_social_channel_stay_off_the_storefront(self):
+        self.update_site(telegram='muzflowers', yandex_rating='4.8', yandex_votes=24,
+                         yandex_maps_url='https://yandex.ru/maps/')
+        Review.objects.create(name='Покупатель', text='Текст сохранённого отзыва', rating=5)
+        for name in ('home', 'about', 'contacts', 'care', 'faq', 'delivery'):
+            with self.subTest(page=name):
+                response = self.client.get(reverse(f'shop:{name}'))
+                self.assertNotContains(response, 't.me/muzflowers')
+                self.assertNotContains(response, 'Текст сохранённого отзыва')
+                self.assertNotContains(response, 'Читать и оставить отзыв')
+                self.assertNotContains(response, 'aggregateRating')
 
     def test_faq_page_has_faq_markup(self):
         r = self.client.get(reverse('shop:faq'))
@@ -218,6 +232,7 @@ class SeoAndArtTests(ShopTestCase):
         self.assertContains(r, self.rose.get_absolute_url())
         self.assertContains(r, self.cat.get_absolute_url())
         self.assertNotContains(r, '/cart/')
+        self.assertNotContains(r, '/presentation/')
         ET.fromstring(r.content)
 
     def test_robots(self):

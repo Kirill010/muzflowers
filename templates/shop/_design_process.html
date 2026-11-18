@@ -2,13 +2,12 @@
 <section class="design-panel design-process" id="process" aria-labelledby="process-title">
   {% include 'shop/_design_lines.html' %}
   <div class="design-panel__body">
-    {% if process_heading %}<h1 class="display design-title" id="process-title">Как мы это делаем?</h1>
-    {% else %}<h2 class="display design-title" id="process-title">Как мы это делаем?</h2>{% endif %}
+    <h2 class="display design-title" id="process-title">Как мы собираем букеты</h2>
     <ol class="design-process__steps">
       <li><h3>Получаем цветы</h3><p>Привозим цветы напрямую от поставщиков и из теплиц.</p></li>
       <li><h3>Готовим к сборке</h3><p>Флористы проверяют каждый стебель, зачищают его и ставят цветы в воду.</p></li>
-      <li><h3>Собираем композицию</h3><p>Вы выбираете готовый букет или рисуете эскиз в конструкторе. Флорист согласует состав и оформление.</p></li>
-      <li><h3>Передаём букет</h3><p>Заберите его в магазине или выберите интервал доставки по Москве.</p></li>
+      <li><h3>Собираем композицию</h3><p>Флорист собирает букет из подготовленных цветов и упаковывает его перед выдачей.</p></li>
+      <li><h3>Передаём букет</h3><p>Заберите его в магазине{% if site.delivery_enabled %} или выберите интервал доставки по Москве{% endif %}.</p></li>
     </ol>
     <a class="btn design-button design-button--primary" href="{% url 'shop:bouquet_builder' %}">Собрать свой букет {% icon 'arrow' %}</a>
   </div>

@@ -9,7 +9,7 @@
     <div class="design-hero__text">
       <p class="eyebrow design-hero__location">Цветочная мастерская · Выхино</p>
       <h1 id="home-title" class="display design-hero__title">Любовь начинается <em>с жеста.</em></h1>
-      <p class="design-hero__intro">Собираем букеты из свежих цветов напрямую от поставщиков. Расскажите, для кого букет, и мы поможем выбрать цветы по вашему бюджету.</p>
+      <p class="design-hero__intro">Собираем букеты из свежих цветов от поставщиков. Готовые букеты можно забрать в Выхино{% if site.delivery_enabled %} или заказать с доставкой по Москве{% endif %}.</p>
       <div class="design-hero__buttons">
         <a class="btn design-button design-button--primary btn--lg" href="{% url 'shop:catalog' %}">Выбрать букет {% icon 'arrow' %}</a>
         <a class="btn design-button design-button--light btn--lg" href="{% url 'shop:bouquet_builder' %}">Собрать самому</a>
@@ -102,30 +102,7 @@
 <div class="wrap design-home-info">
   {% include 'shop/_design_faq.html' with items=faq %}
   {% include 'shop/_design_process.html' %}
-  {% include 'shop/_studio_story.html' %}
 </div>
-
-{% if site.yandex_rating or reviews %}
-<section class="section section--tint">
-  <div class="wrap reviews">
-    {% if site.yandex_rating %}
-    <div class="rating" data-reveal>
-      <p class="rating__score">{{ site.yandex_rating|floatformat:1 }}</p>
-      {% stars site.yandex_rating %}
-      {% if site.yandex_votes %}<p class="rating__votes">{{ site.yandex_votes }} {{ site.yandex_votes|plural:"оценка,оценки,оценок" }} на Яндекс Картах</p>{% endif %}
-      {% if site.yandex_reviews_url %}<a class="btn btn--ghost btn--sm" href="{{ site.yandex_reviews_url }}" target="_blank" rel="noopener">Читать и оставить отзыв</a>{% endif %}
-    </div>
-    {% endif %}
-    {% for r in reviews %}
-    <figure class="review" data-reveal>
-      {% if r.rating %}{% stars r.rating %}{% endif %}
-      <blockquote>{{ r.text }}</blockquote>
-      <figcaption>{{ r.name }} · {{ r.get_source_display }}</figcaption>
-    </figure>
-    {% endfor %}
-  </div>
-</section>
-{% endif %}
 
 <section class="section" id="contacts">
   <div class="wrap find">
@@ -138,7 +115,6 @@
       <ul class="facts">
         <li>{% icon 'clock' %} {{ site.hours_display }}</li>
         <li>{% icon 'phone' %} <a href="{{ site.phone_href }}">{{ site.phone }}</a></li>
-        {% if site.telegram_url %}<li>{% icon 'send' %} <a href="{{ site.telegram_url }}" target="_blank" rel="noopener">t.me/{{ site.telegram }}</a></li>{% endif %}
       </ul>
       <div class="buttons">
         <a class="btn btn--primary" href="{{ site.phone_href }}">{% icon 'phone' %} Позвонить</a>

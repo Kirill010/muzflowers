@@ -37,7 +37,7 @@
     <p>Заменим равноценным по цвету и размеру и обязательно напишем вам.</p>
 
     <h2>Если что-то пошло не так</h2>
-    <p>Позвоните или напишите нам сразу, лучше с фото: <a href="{{ site.phone_href }}">{{ site.phone }}</a>{% if site.telegram_url %}, <a href="{{ site.telegram_url }}" target="_blank" rel="noopener">Telegram</a>{% endif %}. Мы разберёмся лично.</p>
+    <p>Позвоните нам по номеру <a href="{{ site.phone_href }}">{{ site.phone }}</a>{% if site.email %} или пришлите фото на <a href="mailto:{{ site.email }}">{{ site.email }}</a>{% endif %}. Мы разберёмся лично.</p>
 
     <p><a class="btn btn--primary" href="{% url 'shop:catalog' %}">Выбрать букет {% icon 'arrow' %}</a></p>
   </div>

@@ -7,7 +7,6 @@
         <span class="brand__word">MUZ<span>FLOWERS</span></span>
       </a>
       <p>Цветочный магазин в Выхино. Собираем букеты из цветов с собственного оптового склада.</p>
-      {% if site.telegram_url %}<a class="btn btn--light btn--sm" href="{{ site.telegram_url }}" target="_blank" rel="noopener">{% icon 'send' %} Новые букеты и акции в Telegram</a>{% endif %}
     </div>
 
     <nav class="site-footer__col" aria-label="Магазин">
@@ -15,7 +14,7 @@
       <a href="{% url 'shop:catalog' %}">Каталог</a>
       <a href="{% url 'shop:bouquet_builder' %}">Собери сам</a>
       <a href="{% url 'shop:music' %}">Музыкальная открытка</a>
-      <a href="{% url 'shop:presentation' %}">Презентация MuzFlowers</a>
+      <a href="{% url 'shop:about' %}">О мастерской</a>
       <a href="{% url 'shop:offices' %}">Цветы для офиса</a>
       <a href="{% url 'shop:subscription' %}">Подписка на цветы</a>
     </nav>
@@ -37,7 +36,7 @@
       {% for shop in shops %}<span>{% icon 'pin' %} {{ shop.full_address|default:shop.name }}</span>{% endfor %}
       <span>{% icon 'clock' %} {{ site.hours_display }}</span>
       {% if site.email %}<a href="mailto:{{ site.email }}">{% icon 'mail' %} {{ site.email }}</a>{% endif %}
-      {% if site.yandex_maps_url %}<a href="{{ site.yandex_maps_url }}" target="_blank" rel="noopener">{% icon 'star-o' %} Мы на Яндекс Картах</a>{% endif %}
+      {% if site.yandex_maps_url %}<a href="{{ site.yandex_maps_url }}" target="_blank" rel="noopener">{% icon 'pin' %} Маршрут в Яндекс Картах</a>{% endif %}
     </address>
   </div>
   <div class="wrap site-footer__bottom">

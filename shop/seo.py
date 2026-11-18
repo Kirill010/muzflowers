@@ -11,7 +11,7 @@ from .models import Category, Product, Shop, SiteSettings
 from .thumbs import thumb_url
 
 PUBLIC_PAGES = ['shop:home', 'shop:catalog', 'shop:bouquet_builder', 'shop:music', 'shop:delivery', 'shop:care', 'shop:offices',
-                'shop:subscription', 'shop:about', 'shop:presentation', 'shop:contacts', 'shop:faq', 'shop:privacy', 'shop:offer',
+                'shop:subscription', 'shop:about', 'shop:contacts', 'shop:faq', 'shop:privacy', 'shop:offer',
                 'shop:legal', 'shop:consent', 'shop:marketing_consent', 'shop:cookies']
 
 
@@ -82,8 +82,9 @@ def florist(origin):
             '@type': 'OpeningHoursSpecification',
             'dayOfWeek': ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
             'opens': site.open_time.strftime('%H:%M'), 'closes': site.close_time.strftime('%H:%M')}],
-        'sameAs': [u for u in (site.telegram_url, site.yandex_maps_url) if u],
     }
+    if site.yandex_maps_url:
+        data['sameAs'] = [site.yandex_maps_url]
     if shop and shop.address:
         data['address'] = {'@type': 'PostalAddress', 'streetAddress': shop.address, 'addressLocality': 'Москва', 'addressCountry': 'RU'}
     if site.email:

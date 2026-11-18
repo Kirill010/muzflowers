@@ -1,20 +1,20 @@
 {% extends 'base.html' %}
 {% load static shop_tags %}
 {% block title %}О нас — {{ site.shop_name }}, цветочная мастерская в Выхино{% endblock %}
-{% block description %}{{ site.shop_name }} — розничные цветочные магазины в Москве. Букеты из цветов с собственного оптового склада, быстрая сборка и музыкальная открытка.{% endblock %}
+{% block description %}Как в мастерской {{ site.shop_name }} готовят свежие цветы и собирают букеты. Самовывоз в Выхино и доставка по Москве.{% endblock %}
 {% block head %}<link rel="stylesheet" href="{% static 'shop/css/design.css' %}">{% endblock %}
 {% block content %}
-<div class="section section--tight">
+<section class="section section--tight">
   <div class="wrap">
-    {% include 'shop/_design_process.html' with process_heading=True %}
+    <header class="section__head">
+      <h1 class="display display--lg">Цветочная мастерская <em>в Выхино</em></h1>
+      <p class="lead">В {{ site.shop_name }} собираем готовые букеты и композиции на заказ, в том числе в вазах и корзинах. С каждым букетом дарим средство для срезанных цветов.</p>
+      <div class="buttons">
+        <a class="btn btn--primary" href="{% url 'shop:catalog' %}">Смотреть букеты {% icon 'arrow' %}</a>
+        <a class="btn btn--ghost" href="{% url 'shop:contacts' %}">Адрес и часы работы {% icon 'pin' %}</a>
+      </div>
+    </header>
+    {% include 'shop/_design_process.html' %}
   </div>
-  <div class="wrap design-home-info">
-    {% include 'shop/_studio_story.html' %}
-    <div class="prose wrap--narrow">
-      <h2>Наталья Боброва и MuzFlowers</h2>
-      <p>Проект цветочной мастерской Наталья представила на Великой Школе Бизнеса. В презентации рассказала, как магазин работает с поставщиками, как флористы помогают выбрать букет и как появилась идея музыкальной открытки.</p>
-      <p>В Выхино можно заглянуть за готовым букетом или поговорить с флористом и собрать свой. {{ site.hours_display }}.</p>
-    </div>
-  </div>
-</div>
+</section>
 {% endblock %}

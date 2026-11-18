@@ -1,5 +1,6 @@
 from django.contrib.sitemaps.views import sitemap
 from django.urls import path
+from django.views.generic import RedirectView
 
 from . import cart_views, checkout_views, seo, views
 
@@ -33,7 +34,7 @@ urlpatterns = [
     path('delivery/', views.delivery, name='delivery'),
     path('care/', views.care, name='care'),
     path('about/', views.about, name='about'),
-    path('presentation/', views.presentation, name='presentation'),
+    path('presentation/', RedirectView.as_view(pattern_name='shop:about', permanent=True), name='presentation'),
     path('contacts/', views.contacts, name='contacts'),
     path('faq/', views.faq, name='faq'),
     path('privacy/', views.privacy, name='privacy'),
