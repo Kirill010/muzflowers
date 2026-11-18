@@ -28,6 +28,7 @@ class ShopTestCase(TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
         self.site = SiteSettings.load()
+        self.update_site(pickup_discount_percent=0)
         self.shop = Shop.objects.create(name='Выхино', address='ул. Вешняковская, 39Г', is_pickup=True)
         self.cat = Category.objects.create(name='Розы')
         self.rose = Product.objects.create(category=self.cat, name='Классика', price=1990, tagline='7 роз, зелень', is_ready=True, popularity=10)

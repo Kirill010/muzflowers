@@ -17,9 +17,13 @@
         <a href="{% url 'shop:bouquet_builder' %}">Композиции</a>
         {% for c in categories %}{% if c.slug == 'roses' %}<a href="{{ c.get_absolute_url }}">Розы</a>{% endif %}{% endfor %}
         <a href="{% url 'shop:catalog' %}{% if catalog_heading %}#catalog-results{% endif %}">Цветы</a>
-        <a href="{{ site.phone_href }}" title="Уточнить наличие шаров по телефону">Шары <small>по наличию</small></a>
-        <a href="{{ site.phone_href }}" title="Уточнить наличие сувениров по телефону">Сувениры <small>по наличию</small></a>
+        <a href="{{ site.phone_href }}" title="Уточнить наличие шаров по телефону">Шары</a>
+        <a href="{{ site.phone_href }}" title="Уточнить наличие сувениров по телефону">Сувениры</a>
       </div>
     </nav>
+    <div class="design-catalog__offers">
+      {% if site.delivery_enabled %}<p>Доставим от 1 часа по Москве{% if not site.delivery_cost %} — доставка бесплатная{% elif site.free_delivery_from %} · бесплатно от {{ site.free_delivery_from|rub }}{% else %} · {{ site.delivery_cost|rub }}{% endif %}</p>{% endif %}
+      {% if site.pickup_discount_percent %}<p><b>Скидка {{ site.pickup_discount_percent }}% при самовывозе</b></p>{% endif %}
+    </div>
   </div>
 </section>

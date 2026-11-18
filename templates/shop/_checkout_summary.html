@@ -15,6 +15,7 @@
 <dl class="totals">
   <div><dt>Букеты</dt><dd>{{ quote.subtotal|rub }}</dd></div>
   {% if quote.discount %}<div class="totals__discount"><dt>Скидка{% if quote.promo %} {{ quote.promo.code }}{% endif %}</dt><dd>−{{ quote.discount|rub }}</dd></div>{% endif %}
+  {% if quote.pickup_discount %}<div class="totals__discount"><dt>Скидка за самовывоз ({{ site.pickup_discount_percent }}%)</dt><dd>−{{ quote.pickup_discount|rub }}</dd></div>{% endif %}
   {% if quote.addons_total %}<div><dt>Дополнения</dt><dd>{{ quote.addons_total|rub }}</dd></div>{% endif %}
   <div><dt>{% if quote.method == 'delivery' %}Доставка{% else %}Самовывоз{% endif %}</dt><dd>{% if quote.delivery %}{{ quote.delivery|rub }}{% else %}бесплатно{% endif %}</dd></div>
   <div class="totals__sum"><dt>Итого</dt><dd data-total>{{ quote.total|rub }}</dd></div>

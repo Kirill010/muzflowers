@@ -66,15 +66,19 @@ class PageTests(ShopTestCase):
         self.assertContains(self.client.get(reverse('shop:catalog')), 'Самовывоз — бесплатно')
 
     def test_presentation_links_and_brand_artwork(self):
+        self.update_site(pickup_discount_percent=10)
         Category.objects.create(name='Сезонные', slug='season')
         self.cat.slug = 'roses'
         self.cat.save()
         r = self.client.get(reverse('shop:home'))
         for label in ('Букеты', 'Собери сам', 'Акции', 'Сезонные цветы', 'Композиции', 'Розы', 'Цветы', 'Шары', 'Сувениры'):
             self.assertContains(r, label)
-        self.assertContains(r, 'brand-mark.svg')
-        self.assertContains(r, 'hero-bouquet.webp')
-        self.assertNotContains(r, 'data-record-toggle')
+        self.assertContains(r, 'logo-sage.png')
+        self.assertContains(r, 'data-record-toggle')
+        self.assertContains(r, 'Скидка 10% при самовывозе')
+        self.assertNotContains(r, 'по наличию')
+        self.assertContains(r, 'favicon-32.png')
+        self.assertNotContains(r, 'rel="icon" href="/static/shop/img/favicon.svg"')
 
     def test_product_page_has_offer_and_breadcrumbs(self):
         r = self.client.get(self.rose.get_absolute_url())
@@ -93,17 +97,19 @@ class PageTests(ShopTestCase):
             self.assertNotContains(page, 'Школа Бизнеса')
             self.assertNotContains(page, 'Великой Школе Бизнеса')
 
-    def test_existing_reviews_and_social_channel_stay_off_the_storefront(self):
-        self.update_site(telegram='muzflowers', yandex_rating='4.8', yandex_votes=24,
+    def test_contacts_include_saved_messengers_without_fake_reviews(self):
+        self.update_site(telegram='muzflowers', max_url='https://max.ru/muzflowers', yandex_rating='4.8', yandex_votes=24,
                          yandex_maps_url='https://yandex.ru/maps/')
         Review.objects.create(name='Покупатель', text='Текст сохранённого отзыва', rating=5)
         for name in ('home', 'about', 'contacts', 'care', 'faq', 'delivery'):
             with self.subTest(page=name):
                 response = self.client.get(reverse(f'shop:{name}'))
-                self.assertNotContains(response, 't.me/muzflowers')
                 self.assertNotContains(response, 'Текст сохранённого отзыва')
                 self.assertNotContains(response, 'Читать и оставить отзыв')
                 self.assertNotContains(response, 'aggregateRating')
+        contacts = self.client.get(reverse('shop:contacts'))
+        self.assertContains(contacts, 'https://t.me/muzflowers')
+        self.assertContains(contacts, 'https://max.ru/muzflowers')
 
     def test_faq_page_has_faq_markup(self):
         r = self.client.get(reverse('shop:faq'))

@@ -38,6 +38,8 @@ class SiteSettings(models.Model):
     phone = models.CharField('Телефон', max_length=30, default='+7 (995) 152-21-31')
     email = models.EmailField('Почта магазина', blank=True, help_text='Показывается на сайте и в письмах клиентам')
     telegram = models.CharField('Telegram-канал (без @)', max_length=40, blank=True, default='muzflowers')
+    max_url = models.URLField('MAX: ссылка на контакт или канал', blank=True, default='https://web.max.ru/-73754300368320',
+                              help_text='Полная ссылка, начинается с https://. Пусто — ссылку не показываем')
     yandex_maps_url = models.URLField('Карточка в Яндекс Картах (ссылка)', blank=True,
                                       default='https://yandex.ru/maps/?text=%D0%9C%D0%BE%D1%81%D0%BA%D0%B2%D0%B0%2C%20%D1%83%D0%BB.%20%D0%92%D0%B5%D1%88%D0%BD%D1%8F%D0%BA%D0%BE%D0%B2%D1%81%D0%BA%D0%B0%D1%8F%2C%2039%D0%93')
     yandex_rating = models.DecimalField('Рейтинг в Яндекс Картах', max_digits=2, decimal_places=1, null=True, blank=True,
@@ -61,7 +63,9 @@ class SiteSettings(models.Model):
                                           default='Доставляем по Москве. За МКАД и в другие города — по договорённости.')
     pickup_lead_minutes = models.PositiveSmallIntegerField('Самовывоз: за сколько минут готовим', default=20,
                                                            help_text='Ближайшее время выдачи = сейчас + столько минут')
-    delivery_lead_minutes = models.PositiveSmallIntegerField('Доставка: минимум минут до приезда', default=120)
+    pickup_discount_percent = models.PositiveSmallIntegerField('Скидка при самовывозе, %', default=10,
+                                                                validators=[MaxValueValidator(100)], help_text='0 — без скидки. Считается от букетов после промокода')
+    delivery_lead_minutes = models.PositiveSmallIntegerField('Доставка: минимум минут до приезда', default=60)
     delivery_window_hours = models.PositiveSmallIntegerField('Доставка: длина окна, часов', default=2,
                                                              validators=[MinValueValidator(1), MaxValueValidator(6)])
     max_days_ahead = models.PositiveSmallIntegerField('На сколько дней вперёд можно заказать', default=60)

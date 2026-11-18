@@ -41,7 +41,7 @@ class SlotTests(ShopTestCase):
 
     def test_delivery_today_respects_lead_time(self):
         values = [o['value'] for o in slots.time_options(TODAY, 'delivery')]
-        self.assertEqual(values[0], '15:00-17:00')  # первое окно после 14:00
+        self.assertEqual(values[0], '13:00-15:00')  # первое окно после 13:00 при доставке от одного часа
 
     def test_closed_special_day(self):
         SpecialDay.objects.create(date=TOMORROW, is_closed=True, note='Выходной')

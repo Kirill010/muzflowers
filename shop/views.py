@@ -183,7 +183,7 @@ def art(request, kind, count, a, b):
 def stem_art(request, kind):
     if kind not in bouquet.FLOWERS:
         raise Http404
-    return redirect(bouquet.flower_photo_url(kind))
+    return redirect(bouquet.flower_art_url(kind))
 
 
 # ───────────── страницы ─────────────

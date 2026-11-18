@@ -25,14 +25,14 @@ Y_MIN, Y_MAX = 40, 296
 
 def builder_config():
     return {
-        'flowers': {kind: {'name': name, 'url': flower_photo_url(kind)} for kind, name in FLOWERS.items()},
+        'flowers': {kind: {'name': name, 'url': flower_art_url(kind)} for kind, name in FLOWERS.items()},
         'maxStems': MAX_STEMS,
         'bounds': [X_MIN, X_MAX, Y_MIN, Y_MAX],
     }
 
 
-def flower_photo_url(kind):
-    return static(f'shop/img/flowers/{kind}.webp')
+def flower_art_url(kind):
+    return static(f'shop/img/flowers/{kind}.svg')
 
 
 def describe(layout):

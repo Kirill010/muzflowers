@@ -2,9 +2,9 @@
 <footer class="site-footer">
   <div class="wrap site-footer__grid">
     <div class="site-footer__brand">
-      <a class="brand brand--atelier" href="{% url 'shop:home' %}" aria-label="{{ site.shop_name }} — на главную">
-        <img class="brand__mark" src="{% static 'shop/img/brand-mark.svg' %}" width="52" height="52" alt="" loading="lazy">
-        <span class="brand__word">MUZFLOWERS<span>ЦВЕТОЧНАЯ МАСТЕРСКАЯ</span></span>
+      <a class="brand" href="{% url 'shop:home' %}" aria-label="{{ site.shop_name }} — на главную">
+        <img class="brand__mark" src="{% static 'shop/img/logo-pink.png' %}" width="52" height="52" alt="" loading="lazy">
+        <span class="brand__word">MUZ<span>FLOWERS</span></span>
       </a>
       <p>Цветочная мастерская в Выхино. Свежие цветы, готовые букеты и композиции на заказ.</p>
     </div>
@@ -33,6 +33,8 @@
     <address class="site-footer__col">
       <h2 class="site-footer__title">Контакты</h2>
       <a href="{{ site.phone_href }}">{% icon 'phone' %} {{ site.phone }}</a>
+      {% if site.telegram_url %}<a href="{{ site.telegram_url }}" target="_blank" rel="noopener">{% icon 'send' %} Telegram</a>{% endif %}
+      {% if site.max_url %}<a href="{{ site.max_url }}" target="_blank" rel="noopener">MAX</a>{% endif %}
       {% for shop in shops %}<span>{% icon 'pin' %} {{ shop.full_address|default:shop.name }}</span>{% endfor %}
       <span>{% icon 'clock' %} {{ site.hours_display }}</span>
       {% if site.email %}<a href="mailto:{{ site.email }}">{% icon 'mail' %} {{ site.email }}</a>{% endif %}

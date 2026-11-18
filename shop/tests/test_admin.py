@@ -229,6 +229,7 @@ class ModelAdminTests(AdminTestCase):
                                                               'pause_message', 'delivery_area_text', 'payment_details', 'announcement',
                                                               'legal_name', 'inn', 'ogrnip', 'legal_address', 'metrika_id')}
         form.update(phone='+7 (999) 111-22-33', delivery_cost=450, free_delivery_from=5000, min_order=0, pickup_lead_minutes=20,
+                    pickup_discount_percent=10,
                     delivery_lead_minutes=120, delivery_window_hours=2, max_days_ahead=60, daily_order_limit=0, open_time='09:00:00',
                     close_time='20:00:00', delivery_enabled='on', prepay_future_orders='on', allow_pay_on_receipt='on',
                     yandex_rating='4.6', yandex_votes='26')

@@ -211,12 +211,12 @@ class LeadAdmin(admin.ModelAdmin):
 @admin.register(SiteSettings)
 class SiteSettingsAdmin(admin.ModelAdmin):
     fieldsets = (
-        ('Контакты', {'fields': ('shop_name', 'phone', 'email', 'telegram', 'yandex_maps_url', ('yandex_rating', 'yandex_votes'))}),
+        ('Контакты', {'fields': ('shop_name', 'phone', 'email', 'telegram', 'max_url', 'yandex_maps_url', ('yandex_rating', 'yandex_votes'))}),
         ('Часы работы', {'fields': (('open_time', 'close_time'), 'hours_text')}),
         ('Принимаем ли заказы', {'fields': ('orders_paused', 'pause_message', 'announcement')}),
         ('Доставка', {'fields': ('delivery_enabled', 'delivery_cost', 'free_delivery_from', 'min_order', 'delivery_area_text',
                                  'delivery_lead_minutes', 'delivery_window_hours')}),
-        ('Самовывоз и даты', {'fields': ('pickup_lead_minutes', 'max_days_ahead', 'daily_order_limit')}),
+        ('Самовывоз и даты', {'fields': ('pickup_lead_minutes', 'pickup_discount_percent', 'max_days_ahead', 'daily_order_limit')}),
         ('Оплата', {'fields': ('prepay_future_orders', 'allow_pay_on_receipt', 'payment_details')}),
         ('Реквизиты продавца (по закону нужны интернет-магазину)', {'fields': ('legal_name', 'inn', 'ogrnip', 'legal_address')}),
         ('Статистика', {'fields': ('metrika_id',)}),

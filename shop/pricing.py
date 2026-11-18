@@ -45,6 +45,12 @@ class Quote:
     promo_error: str = ''
     free_from: int = 0
     free_left: int = 0
+    pickup_discount: int = 0
+
+    @property
+    def total_discount(self):
+        return self.discount + self.pickup_discount
+
     method: str = ''
     problems: list = field(default_factory=list)
 
@@ -81,6 +87,8 @@ def build_quote(lines, addon_rows, promo_code='', method='', site=None, today=No
 
     addons_total = sum(addon.price for addon, _ in addon_rows)
     after_discount = subtotal - discount
+    pickup_discount = ((after_discount * site.pickup_discount_percent + 50) // 100
+                       if method == Order.Method.PICKUP else 0)
     free_from = site.free_delivery_from
     delivery = 0
     if method == Order.Method.DELIVERY:
@@ -94,7 +102,8 @@ def build_quote(lines, addon_rows, promo_code='', method='', site=None, today=No
 
     return Quote(
         lines=lines, addon_rows=addon_rows, subtotal=subtotal, discount=discount, addons_total=addons_total,
-        delivery=delivery, total=after_discount + addons_total + delivery, promo=promo, promo_error=promo_error,
+        delivery=delivery, total=after_discount - pickup_discount + addons_total + delivery,
+        pickup_discount=pickup_discount, promo=promo, promo_error=promo_error,
         free_from=free_from, free_left=max(0, free_from - after_discount) if free_from else 0,
         method=method, problems=problems,
     )

@@ -78,7 +78,7 @@ def create_order(*, quote, data, user=None, source='', origin='', request=None):
         date=day, time_from=option['time_from'], time_to=option['time_to'], asap=option['asap'],
         card_text=data.get('card_text', ''), comment=data.get('comment', ''),
         promo_code=promo.code if promo else '',
-        subtotal=quote.subtotal, discount=quote.discount, addons_total=quote.addons_total,
+        subtotal=quote.subtotal, discount=quote.total_discount, addons_total=quote.addons_total,
         delivery_cost=quote.delivery, total=quote.total,
         payment_method=pay_method, prepay_required=prepay,
         payment_status=Order.PayStatus.UNPAID if pay_method == Order.Pay.ON_RECEIPT else Order.PayStatus.PENDING,

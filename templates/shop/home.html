@@ -16,13 +16,16 @@
       </div>
       <a class="design-hero__music" href="{% url 'shop:music' %}">{% icon 'music' %} Добавить открытку с вашей песней</a>
     </div>
-    <figure class="design-hero__visual">
-      <div class="design-hero__photo">
-        <img src="{% static 'shop/img/hero-bouquet.webp' %}" alt="Композиция из гербер в стеклянной вазе" width="1400" height="1014" fetchpriority="high">
-        <a class="design-hero__badge" href="{% url 'shop:music' %}">{% icon 'music' %}<span><b>MUZFLOWERS</b><small>букет + ваша песня</small></span></a>
+    <div class="design-hero__visual">
+      <img class="design-hero__flower design-hero__flower--gerbera" src="{% static 'shop/img/design-gerbera.webp' %}" alt="" width="526" height="778">
+      <img class="design-hero__flower design-hero__flower--tulips" src="{% static 'shop/img/design-tulips.webp' %}" alt="" width="264" height="596">
+      <div class="design-hero__record">
+        <button class="design-hero__disc" type="button" data-record-toggle aria-label="Вращение эмблемы MuzFlowers" aria-pressed="false" aria-describedby="record-hint">
+          <span class="design-hero__vinyl"><img src="{% static 'shop/img/logo-sage.png' %}" alt="" width="400" height="400"></span>
+        </button>
+        <span class="design-hero__hint" id="record-hint" data-record-hint>Нажмите на эмблему</span>
       </div>
-      <figcaption class="design-hero__credit"><a href="https://commons.wikimedia.org/wiki/File:Flower_Bouquet-2.jpg" target="_blank" rel="noopener">Фото: David Condrey · CC0</a></figcaption>
-    </figure>
+    </div>
   </div>
   <div class="design-hero__strip">
     <div class="wrap design-hero__facts">
@@ -112,6 +115,8 @@
       <ul class="facts">
         <li>{% icon 'clock' %} {{ site.hours_display }}</li>
         <li>{% icon 'phone' %} <a href="{{ site.phone_href }}">{{ site.phone }}</a></li>
+        {% if site.telegram_url %}<li>{% icon 'send' %} <a href="{{ site.telegram_url }}" target="_blank" rel="noopener">Telegram</a></li>{% endif %}
+        {% if site.max_url %}<li><a href="{{ site.max_url }}" target="_blank" rel="noopener">MAX</a></li>{% endif %}
       </ul>
       <div class="buttons">
         <a class="btn btn--primary" href="{{ site.phone_href }}">{% icon 'phone' %} Позвонить</a>
@@ -119,7 +124,7 @@
       </div>
     </div>
     <div class="find__card" aria-hidden="true">
-      <img src="{% static 'shop/img/brand-mark.svg' %}" alt="" width="220" height="220" loading="lazy">
+      <img src="{% static 'shop/img/logo-sage.png' %}" alt="" width="220" height="220" loading="lazy">
     </div>
   </div>
 </section>
