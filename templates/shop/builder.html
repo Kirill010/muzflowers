@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static shop_tags %}
+{% load static shop_tags l10n %}
 {% block title %}Собери сам — конструктор букета {{ site.shop_name }}{% endblock %}
 {% block description %}Соберите цветы в вазе или корзине, двигайте их на эскизе и отправьте композицию флористу на согласование.{% endblock %}
 {% block head %}<link rel="stylesheet" href="{% static 'shop/css/builder.css' %}">{% endblock %}
@@ -13,13 +13,25 @@
     </nav>
     <header class="section__head">
       <h1 class="display display--lg">Собери <em>сам</em></h1>
-      <p class="lead">Выберите вазу или корзину, добавьте цветы и расположите их по своему вкусу.</p>
+      <p class="lead">Соберите эскиз из фотографий цветов. Флорист уточнит оттенки, наличие и итоговую цену.</p>
     </header>
     <form class="bouquet-form"{% if sites_storefront %} data-storefront-draft{% else %} method="post"{% endif %} data-bouquet-editor novalidate>
       {% if not sites_storefront %}{% csrf_token %}{% endif %}
       {% if form.errors %}<p class="notice notice--error" role="alert">Проверьте отмеченные поля и отправьте заявку ещё раз.</p>{% endif %}
       {{ builder_config|json_script:'bouquet-config' }}
       {{ form.layout }}
+      <fieldset class="bouquet-tier-picker">
+        <legend class="field__label">Формат букета</legend>
+        <div class="price-tiers">
+          {% for key, title, minimum in price_tiers %}
+          <label class="price-tier">
+            <input type="radio" name="tier" value="{{ key }}" data-tier-min="{{ minimum|unlocalize }}"{% if form.tier.value == key %} checked{% endif %}>
+            <span>{{ title }}</span><b>от {{ minimum|rub }}</b>
+          </label>
+          {% endfor %}
+        </div>
+        {% for error in form.tier.errors %}<p class="field__error">{{ error }}</p>{% endfor %}
+      </fieldset>
       <fieldset class="bouquet-workbench" aria-describedby="bouquet-hint" data-bouquet-workbench hidden>
         <legend class="sr-only">Конструктор букета</legend>
         <div class="bouquet-board">
@@ -81,6 +93,7 @@
         {% endif %}
       </section>
     </form>
+    {% include 'shop/_flower_credits.html' %}
   </div>
 </section>
 {% endblock %}

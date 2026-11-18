@@ -21,7 +21,7 @@ from .forms import BouquetForm, LeadForm
 from .models import FAQ, Addon, Category, Lead, Product, Review, Shop, SiteSettings
 from .thumbs import thumb_url
 from .throttle import throttled
-from .utils import plural_ru
+from .utils import plural_ru, rub
 
 PAGE_SIZE = 24
 SORTS = {'pop': 'Сначала популярные', 'price_asc': 'Сначала дешевле', 'price_desc': 'Сначала дороже', 'new': 'Сначала новые'}
@@ -31,6 +31,11 @@ BUDGETS = {
     'medium': ('2 500–5 000 ₽', '2500', '5000'),
     'large': ('Более 5 000 ₽', '5001', ''),
 }
+PRICE_TIERS = [(key, title, minimum) for key, (title, minimum, _) in bouquet.TIERS.items()]
+BUDGETS.update({
+    key: (f'{title} — от {rub(minimum)}', str(minimum), str(maximum) if maximum else '')
+    for key, (title, minimum, maximum) in bouquet.TIERS.items()
+})
 
 
 def catalog_qs():
@@ -59,7 +64,7 @@ def home(request):
         'ready': ready,
         'featured': [p for p in products if p not in ready][:8],
         'occasions': OCCASION_FILTERS.items(),
-        'budgets': [(key, *values) for key, values in BUDGETS.items()],
+        'price_tiers': PRICE_TIERS,
         'categories': Category.objects.filter(is_active=True),
         'reviews': Review.objects.filter(is_published=True)[:6],
         'faq': presentation_questions(SiteSettings.load(), storefront=getattr(settings, 'SITES_STOREFRONT', False)),
@@ -118,6 +123,7 @@ def catalog(request, slug=None):
         'categories': Category.objects.filter(is_active=True), 'q': q, 'sort': sort, 'sorts': SORTS.items(),
         'occasion': occasion, 'occasions': OCCASION_FILTERS.items(),
         'budget_ranges': {key: values[1:] for key, values in BUDGETS.items()},
+        'price_tiers': PRICE_TIERS, 'selected_budget': request.GET.get('budget'),
         'ready_only': request.GET.get('ready') == '1', 'sale_only': request.GET.get('sale') == '1',
         'price_min': price_min, 'price_max': price_max,
         'price_floor': min(prices), 'price_ceil': max(prices),
@@ -178,7 +184,7 @@ def art(request, kind, count, a, b):
 def stem_art(request, kind):
     if kind not in bouquet.FLOWERS:
         raise Http404
-    return HttpResponse(bouquet.flower_svg(kind), content_type='image/svg+xml')
+    return redirect(bouquet.flower_photo_url(kind))
 
 
 # ───────────── страницы ─────────────
@@ -281,7 +287,7 @@ def bouquet_builder(request):
     middle = (len(flowers) + 1) // 2
     palettes = [('left', flowers[:middle]), ('right', flowers[middle:])]
     return _lead_page(request, Lead.Kind.BOUQUET, 'shop/builder.html', form_class=BouquetForm,
-                      builder_config=config, palettes=palettes, vessels=bouquet.VESSELS)
+                      builder_config=config, palettes=palettes, vessels=bouquet.VESSELS, price_tiers=PRICE_TIERS)
 
 
 def offices(request):

@@ -22,7 +22,10 @@
     controller = new AbortController();
     results.style.opacity = '.55';
     fetch(target, { headers: { 'X-Requested-With': 'fetch' }, signal: controller.signal, credentials: 'same-origin' })
-      .then(function (r) { return r.text(); })
+      .then(function (r) {
+        if (!r.ok) throw new Error('Не удалось обновить каталог');
+        return r.text();
+      })
       .then(function (html) {
         results.innerHTML = html;
         results.style.opacity = '';

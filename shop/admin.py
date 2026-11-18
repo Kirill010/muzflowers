@@ -11,6 +11,7 @@ from django.utils.html import format_html, format_html_join
 from django.utils.safestring import mark_safe
 
 from . import bouquet
+from .admin_site import awaiting_prepayment
 from .models import (FAQ, Addon, Category, Lead, LegalAcceptance, Order, OrderAddon, OrderItem, Product, ProductImage, PromoCode, Review, Shop,
                      SiteSettings, SpecialDay, Variant)
 from .utils import rub
@@ -164,6 +165,7 @@ class FAQAdmin(admin.ModelAdmin):
 class LeadAdmin(admin.ModelAdmin):
     list_display = ('created', 'kind', 'name', 'company', 'display_phone', 'status_chip', 'source')
     list_filter = ('status', 'kind')
+    list_display_links = ('created', 'name')
     search_fields = ('name', 'company', 'phone', 'email', 'message')
     readonly_fields = ('kind', 'name', 'company', 'phone', 'email', 'message', 'source', 'created')
     fields = ('status', 'staff_note', 'kind', 'name', 'company', 'phone', 'email', 'message', 'source', 'created')
@@ -190,7 +192,7 @@ class LeadAdmin(admin.ModelAdmin):
 
     @admin.display(description='Телефон')
     def display_phone(self, obj):
-        return obj.display_phone
+        return format_html('<a class="mz-dial" href="tel:{}">{}</a>', obj.phone, obj.display_phone)
 
     @admin.display(description='Статус')
     def status_chip(self, obj):
@@ -267,11 +269,24 @@ class DayFilter(admin.SimpleListFilter):
         }.get(self.value(), queryset)
 
 
+class PrepaymentFilter(admin.SimpleListFilter):
+    title = 'Предоплата'
+    parameter_name = 'prepay'
+
+    def lookups(self, request, model_admin):
+        return [('waiting', 'Ждут предоплату')]
+
+    def queryset(self, request, queryset):
+        if self.value() == 'waiting':
+            return awaiting_prepayment(queryset)
+        return queryset
+
+
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     list_display = ('order_no', 'when', 'customer', 'place', 'total_rub', 'status_chip', 'pay_chip', 'source', 'created')
     list_display_links = ('order_no', 'customer')
-    list_filter = (DayFilter, 'status', 'receive_method', 'payment_status', 'source')
+    list_filter = (DayFilter, 'status', 'receive_method', PrepaymentFilter, 'payment_status', 'source')
     search_fields = ('id', 'name', 'phone', 'email', 'address', 'recipient_name')
     inlines = [OrderItemInline, OrderAddonInline]
     save_on_top = True

@@ -88,6 +88,11 @@
   let move = null;
   let paletteDrag = null;
   let suppressClick = false;
+  const bouquetSpots = [
+    { x: 320, y: 136 }, { x: 238, y: 163 }, { x: 402, y: 159 },
+    { x: 278, y: 70 }, { x: 362, y: 68 }, { x: 312, y: 218 },
+    ...[156, 484, 74, 566, 238, 402, 320].flatMap(x => [136, 208, 64, 276].map(y => ({ x, y }))),
+  ];
 
   function sync() {
     field.value = JSON.stringify(layout);
@@ -128,10 +133,8 @@
     }
     // Find the nearest unoccupied spot when a flower is added using a button.
     if (!drop) {
-      const spots = [320, 238, 402, 156, 484, 74, 566].flatMap((x) =>
-        [136, 208, 64, 276].map(y => ({ x, y })));
-      drop = spots.find(({ x, y }) => layout.stems.every(stem => Math.hypot(stem.x - x, stem.y - y) >= 62))
-        || spots[layout.stems.length];
+      drop = bouquetSpots.find(({ x, y }) => layout.stems.every(stem => Math.hypot(stem.x - x, stem.y - y) >= 62))
+        || bouquetSpots[layout.stems.length];
     }
     layout.stems.push({ kind, ...position(drop.x, drop.y) });
     drawStems();
@@ -271,6 +274,19 @@
   sync();
   workbench.hidden = false;
 
+  if (editor.elements.budget) {
+    const reflectMinimum = () => {
+      const tier = editor.querySelector('input[name="tier"]:checked');
+      if (!tier) return;
+      editor.elements.budget.min = tier.dataset.tierMin;
+      editor.elements.budget.placeholder = 'От ' + Number(tier.dataset.tierMin).toLocaleString('ru-RU') + ' ₽';
+    };
+    editor.addEventListener('change', event => {
+      if (event.target.name === 'tier') reflectMinimum();
+    });
+    reflectMinimum();
+  }
+
   const copyDraft = editor.querySelector('[data-copy-draft]');
   if (copyDraft) {
     const status = editor.querySelector('[data-draft-status]');
@@ -288,7 +304,9 @@
         return;
       }
       const occasion = elements.occasion;
+      const tier = editor.querySelector('input[name="tier"]:checked');
       const fields = [
+        tier && 'Формат: ' + tier.parentElement.innerText.replace(/\s+/g, ' '),
         'Основа: ' + (layout.vessel === 'basket' ? 'Корзина' : 'Ваза'),
         composition && 'Состав: ' + composition,
         elements.recipient.value.trim() && 'Кому: ' + elements.recipient.value.trim(),

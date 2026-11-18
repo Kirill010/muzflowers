@@ -8,6 +8,7 @@ from django.urls import reverse
 
 from shop.bouquet import MAX_STEMS
 from shop.models import Lead, LegalAcceptance
+from shop.utils import rub
 
 
 class BouquetTests(TestCase):
@@ -30,6 +31,7 @@ class BouquetTests(TestCase):
         lead = Lead.objects.get(kind=Lead.Kind.BOUQUET)
         self.assertEqual(lead.layout, self.layout)
         self.assertIn('Корзина', lead.message)
+        self.assertIn(f'Эконом — от {rub(3000)}', lead.message)
         self.assertIn('Роза × 1, Пион × 1', lead.message)
         self.assertIn('4 500 ₽', lead.message)
         self.assertTrue(LegalAcceptance.objects.filter(reference=f'lead:{lead.pk}').exists())
@@ -60,3 +62,12 @@ class BouquetTests(TestCase):
         lead = Lead.objects.get(kind=Lead.Kind.BOUQUET)
         self.assertEqual(lead.layout, {})
         self.assertIn('Розы в маленькой вазе', lead.message)
+
+    def test_selected_tier_sets_the_minimum_budget(self):
+        response = self.client.post(self.url, dict(self.data, tier='premium', budget=14999))
+        self.assertIn(rub(15000), response.context['form'].errors['budget'][0])
+        self.assertFalse(Lead.objects.exists())
+
+        response = self.client.post(self.url, dict(self.data, tier='premium', budget=17000))
+        self.assertRedirects(response, self.url, fetch_redirect_response=False)
+        self.assertIn(f'Премиум — от {rub(15000)}', Lead.objects.get().message)

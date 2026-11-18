@@ -11,7 +11,7 @@
   background: #f8eee2;
   border-radius: 16px;
 }
-.bouquet-stem { fill: none; stroke: #58734d; stroke-width: 3; stroke-linecap: round; }
+.bouquet-stem { fill: none; stroke: #536e42; stroke-width: 2.7; stroke-linecap: round; }
 .bouquet-head[data-stem-index] { cursor: grab; outline: none; }
 .bouquet-head[data-stem-index]:active { cursor: grabbing; }
 .bouquet-head__outline { fill: transparent; stroke: transparent; stroke-width: 2; }
@@ -103,15 +103,20 @@
 .bouquet-questionnaire > p { color: var(--muted); margin: .4rem 0 1.3rem; }
 .bouquet-questionnaire > .field { margin-block: 1rem; }
 .bouquet-questionnaire .check { margin-block: .5rem 1.2rem; }
+.bouquet-tier-picker { margin: 0 0 .55rem; padding: 0; min-width: 0; border: 0; }
+.bouquet-tier-picker legend { margin-bottom: .45rem; }
+.bouquet-credits { width: min(100%, 820px); margin: 0 auto; font-size: .85rem; color: var(--muted); }
+.bouquet-credits summary { cursor: pointer; padding: .65rem 0; }
+.bouquet-credits ul { list-style: disc; padding-inline-start: 1.35rem; margin-top: .45rem; }
 
 @media (max-width: 820px) {
   .bouquet-workbench {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "board" "hint" "left" "right";
+    grid-template-areas: "board" "left" "right" "hint";
   }
   .bouquet-palette { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
-@media (max-width: 380px) {
+@media (max-width: 350px) {
   .bouquet-palette { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .bouquet-questionnaire .grid { grid-template-columns: 1fr; }
 }

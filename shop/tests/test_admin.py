@@ -12,7 +12,7 @@ from django.test import override_settings
 from django.urls import reverse
 from PIL import Image
 
-from shop.models import Order, OrderAddon, OrderItem, Product, ProductImage, SiteSettings, Variant
+from shop.models import Lead, Order, OrderAddon, OrderItem, Product, ProductImage, SiteSettings, Variant
 from shop.thumbs import process_upload, thumb_url
 
 from .helpers import TODAY, TOMORROW, ShopTestCase
@@ -68,6 +68,31 @@ class DashboardTests(AdminTestCase):
         self.client.logout()
         for url in (reverse('admin:index'), reverse('admin:shop_order_print', args=[self.order.pk])):
             self.assertEqual(self.client.get(url).status_code, 302)
+
+    def test_only_authorized_queues_are_visible(self):
+        lead = Lead.objects.create(kind=Lead.Kind.BOUQUET, name='Клиент конструктора', phone='+79000000001',
+                                   layout={'vessel': 'vase', 'stems': [{'kind': 'rose', 'x': 240, 'y': 120}]})
+        staff = User.objects.create_user('staff@example.com', is_staff=True)
+        staff.user_permissions.add(Permission.objects.get(codename='view_lead'))
+        self.client.force_login(staff)
+
+        response = self.client.get(reverse('admin:index'))
+        self.assertContains(response, reverse('admin:shop_lead_change', args=[lead.pk]))
+        self.assertContains(response, 'есть эскиз')
+        self.assertContains(response, 'tel:+79000000001')
+        self.assertNotContains(response, self.order.display_phone)
+        self.assertNotContains(response, 'Реквизиты продавца')
+
+    def test_prepayment_tile_matches_filter(self):
+        self.order.prepay_required = True
+        self.order.payment_status = Order.PayStatus.UNPAID
+        self.order.save(update_fields=['prepay_required', 'payment_status'])
+        Order.objects.create(name='Отменённый', phone='+79000000002', date=TODAY, subtotal=100, total=100,
+                             prepay_required=True, payment_status=Order.PayStatus.PENDING, status=Order.Status.CANCELED)
+        dashboard = self.client.get(reverse('admin:index'))
+        self.assertEqual(dashboard.context['waiting_pay'], 1)
+        response = self.client.get(reverse('admin:shop_order_changelist'), {'prepay': 'waiting'})
+        self.assertEqual(list(response.context['cl'].result_list), [self.order])
 
 
 class QuickActionTests(AdminTestCase):

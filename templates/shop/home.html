@@ -57,7 +57,7 @@
         <span class="field__label">На какую сумму?</span>
         <select class="select" name="budget">
           <option value="">Любой бюджет</option>
-          {% for value, title, min_price, max_price in budgets %}<option value="{{ value }}">{{ title }}</option>{% endfor %}
+          {% for key, title, minimum in price_tiers %}<option value="{{ key }}">{{ title }} — от {{ minimum|rub }}</option>{% endfor %}
         </select>
       </label>
       <button class="btn btn--primary" type="submit">Показать букеты {% icon 'arrow' %}</button>

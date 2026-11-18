@@ -26,14 +26,26 @@
       <a class="chip" href="{% url 'shop:bouquet_builder' %}">Собери сам {% icon 'arrow' %}</a>
     </nav>
 
-    <details class="filter-panel" open data-filter-panel>
-      <summary class="filter-panel__toggle">Фильтры{% if filtered %}<small>применены</small>{% endif %}</summary>
-    <form class="filters" method="get" action="{% if category %}{{ category.get_absolute_url }}{% else %}{% url 'shop:catalog' %}{% endif %}" data-filters>
+    <nav class="price-tiers" aria-label="Выбрать букет по бюджету">
+      {% for key, title, minimum in price_tiers %}
+      <a class="price-tier" href="?budget={{ key }}#catalog-results"{% if selected_budget == key %} aria-current="true"{% endif %}>
+        <span>{{ title }}</span><b>от {{ minimum|rub }}</b>
+      </a>
+      {% endfor %}
+    </nav>
+
+    <form method="get" action="{% if category %}{{ category.get_absolute_url }}{% else %}{% url 'shop:catalog' %}{% endif %}" data-filters>
+    <div class="catalog-search">
       <label class="field field--search">
         <span class="sr-only">Поиск по каталогу</span>
         {% icon 'search' %}
-        <input class="input" type="search" name="q" value="{{ q }}" placeholder="Поиск по каталогу" autocomplete="off">
+        <input class="input" type="search" name="q" value="{{ q }}" placeholder="Найти букет или цветок" autocomplete="off">
       </label>
+      <button class="btn btn--primary" type="submit">Найти</button>
+    </div>
+    <details class="filter-panel" open data-filter-panel>
+      <summary class="filter-panel__toggle">Цена, повод и сортировка</summary>
+      <div class="filters">
       <label class="field">
         <span class="field__label">Цена от</span>
         <input class="input input--sm" type="number" inputmode="numeric" name="min" value="{{ price_min }}" min="0" step="100" placeholder="{{ price_floor }}">
@@ -53,9 +65,10 @@
       <label class="check check--pill"><input type="checkbox" name="ready" value="1"{% if ready_only %} checked{% endif %}> Готовые за 2 минуты</label>
       <label class="check check--pill"><input type="checkbox" name="sale" value="1"{% if sale_only %} checked{% endif %}> Только со скидкой</label>
       <button class="btn btn--primary btn--sm" type="submit">Показать</button>
-      {% if filtered or sites_storefront %}<a class="link-btn" href="{{ request.path }}">Сбросить</a>{% endif %}
-      </form>
+      <a class="link-btn" href="{{ request.path }}">Сбросить</a>
+      </div>
     </details>
+    </form>
 
     <div class="results" data-results aria-live="polite">
       {% include 'shop/_catalog_results.html' %}

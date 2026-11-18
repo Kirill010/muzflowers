@@ -150,6 +150,13 @@ class CatalogTests(ShopTestCase):
         self.assertEqual((r.context['price_min'], r.context['price_max']), ('2500', '5000'))
         self.assertEqual(r.context['qs'], 'sort=price_asc&min=2500&max=5000')
 
+    def test_bouquet_tiers_filter_at_exact_price_boundaries(self):
+        for price in (3000, 6999, 7000, 14999, 15000):
+            Product.objects.create(category=self.cat, name=f'Букет {price}', price=price)
+        self.assertEqual(self.names(budget='economy', sort='price_asc'), ['Букет 3000', '25 роз', 'Букет 6999'])
+        self.assertEqual(self.names(budget='standard', sort='price_asc'), ['Букет 7000', 'Букет 14999'])
+        self.assertEqual(self.names(budget='premium'), ['Букет 15000'])
+
     def test_ready_only(self):
         self.assertEqual(self.names(ready='1'), ['Классика'])
 

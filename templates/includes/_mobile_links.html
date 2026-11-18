@@ -1,0 +1,12 @@
+{% load shop_tags %}
+<nav class="mobile-links" aria-label="Быстрые ссылки">
+  <a href="{% url 'shop:catalog' %}"{% current 'shop:catalog' 'shop:category' 'shop:product' %}>{% icon 'flower' %}<span>Букеты</span></a>
+  <a href="{% url 'shop:bouquet_builder' %}"{% current 'shop:bouquet_builder' %}>{% icon 'sparkle' %}<span>Собери сам</span></a>
+  {% if not sites_storefront %}
+    <a href="{% url 'shop:cart' %}"{% current 'shop:cart' %}>
+      <span class="mobile-links__bag">{% icon 'bag' %}<span class="cart-btn__count" data-cart-count data-count="{{ cart_count }}">{{ cart_count }}</span></span>
+      <span>Корзина</span>
+    </a>
+  {% endif %}
+  <a href="{% url 'shop:contacts' %}"{% current 'shop:contacts' %}>{% icon 'pin' %}<span>Контакты</span></a>
+</nav>

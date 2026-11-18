@@ -3,6 +3,7 @@
 {% block title %}Оформление заказа — {{ site.shop_name }}{% endblock %}
 {% block robots %}noindex, nofollow{% endblock %}
 {% block drawer %}{% endblock %}
+{% block mobile_links %}{% endblock %}
 {% block content %}
 <section class="section section--tight">
   <div class="wrap">
@@ -14,6 +15,7 @@
       {% csrf_token %}
       <input type="hidden" name="promo" value="{{ quote.promo.code|default:'' }}">
 
+      <a class="checkout__jump" href="#checkout-review"><span>Состав заказа</span> <b data-total-btn>{{ quote.total|rub }}</b> {% icon 'chevron' %}</a>
       <div class="checkout__main">
         {% if form.non_field_errors %}<div class="notice notice--error" role="alert">{% icon 'info' %} <div>{% for e in form.non_field_errors %}<p>{{ e }}</p>{% endfor %}</div></div>
         {% elif form.errors %}<div class="notice notice--error" role="alert" tabindex="-1" data-error-summary>{% icon 'info' %} Проверьте поля, отмеченные красным.</div>{% endif %}
@@ -93,8 +95,9 @@
           <p class="notice notice--warn" data-day-problem role="alert"{% if not day_problem %} hidden{% endif %}>{% icon 'info' %} <span>{{ day_problem }}</span></p>
         </fieldset>
 
-        <fieldset class="panel">
-          <legend class="panel__title"><b>4</b> Открытка и пожелания</legend>
+        <details class="panel checkout-extra"{% if form.errors or form.card_text.value or form.comment.value or quote.addon_rows %} open{% endif %}>
+          <summary><span>{% icon 'gift' %} Открытка и пожелания</span><small>По желанию</small>{% icon 'chevron' 'checkout-extra__arrow' %}</summary>
+          <div class="checkout-extra__body">
           {% include 'includes/_field.html' with field=form.card_text hide_required=True %}
           {% for addon, check, note in form.addon_rows %}
           <div class="addon{% if check.value %} is-on{% endif %}" data-addon>
@@ -115,10 +118,11 @@
           </div>
           {% endfor %}
           {% include 'includes/_field.html' with field=form.comment hide_required=True %}
-        </fieldset>
+          </div>
+        </details>
 
         <fieldset class="panel">
-          <legend class="panel__title"><b>5</b> Оплата</legend>
+          <legend class="panel__title"><b>4</b> Оплата</legend>
           <div class="choices" data-payments role="radiogroup" aria-label="Способ оплаты">
             {% for o in payments %}
             <label class="choice"><input type="radio" name="payment_method" value="{{ o.value }}"{% if selected_payment == o.value %} checked{% elif not selected_payment and o.default %} checked{% endif %}><span><b>{{ o.label }}</b>{% if o.hint %}<small>{{ o.hint }}</small>{% endif %}</span></label>
@@ -138,7 +142,7 @@
         </div>
       </div>
 
-      <aside class="checkout__side">
+      <aside class="checkout__side" id="checkout-review" aria-label="Проверка заказа" tabindex="-1">
         <div class="summary" data-summary>{% include 'shop/_checkout_summary.html' %}</div>
         <button class="btn btn--primary btn--lg btn--block" type="submit" data-submit>Подтвердить заказ <span data-total-btn>{{ quote.total|rub }}</span></button>
         <p class="summary__note">{% icon 'lock' %} Данные нужны только для выполнения заказа.</p>

@@ -45,6 +45,7 @@
 </main>
 
 {% include 'includes/_footer.html' %}
+{% block mobile_links %}{% include 'includes/_mobile_links.html' %}{% endblock %}
 {% block drawer %}{% if not sites_storefront %}{% include 'includes/_drawer.html' %}{% endif %}{% endblock %}
 <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
 

@@ -8,7 +8,6 @@ from django.core.management.base import BaseCommand, CommandError
 from django.test import Client, override_settings
 from django.urls import reverse
 
-from shop.bouquet import FLOWERS
 from shop.models import Category, Product
 from shop.seo import PUBLIC_PAGES
 
@@ -47,7 +46,7 @@ class Command(BaseCommand):
         pages = [reverse(name) for name in PUBLIC_PAGES]
         pages += [category.get_absolute_url() for category in Category.objects.filter(is_active=True)]
         pages += [product.get_absolute_url() for product in products]
-        art_paths = {reverse('shop:stem_art', args=[kind]) for kind in FLOWERS}
+        art_paths = set()
         assets = PageAssets()
         with override_settings(
             SITES_STOREFRONT=True, SITE_URL=origin.rstrip('/'), ALLOWED_HOSTS=[url.hostname],

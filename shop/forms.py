@@ -4,7 +4,7 @@ from django.utils import timezone
 from . import bouquet, slots
 from .models import Addon, Lead, Order, Product, Shop, SiteSettings
 from .orders import is_prepay_required, payment_options
-from .utils import normalize_phone
+from .utils import normalize_phone, rub
 
 PHONE_ERROR = 'Введите телефон полностью — например, +7 900 123-45-67'
 
@@ -194,6 +194,8 @@ class BouquetForm(LeadForm):
     layout = forms.JSONField(widget=forms.HiddenInput(attrs={'data-bouquet-value': ''}), required=False)
     recipient = forms.CharField(label='Для кого букет', required=False, max_length=100)
     occasion = forms.ChoiceField(label='Повод', choices=[('', 'Выберите повод'), *Product.OCCASIONS, ('other', 'Другой повод')], required=False)
+    tier = forms.ChoiceField(label='Формат букета', required=False, initial='economy',
+                             choices=[(key, title) for key, (title, _, _) in bouquet.TIERS.items()], widget=forms.RadioSelect)
     budget = forms.IntegerField(label='Бюджет до, ₽', min_value=1, max_value=1000000, required=False)
     date = forms.DateField(label='К какой дате нужен букет', required=False, widget=forms.DateInput(attrs={'type': 'date'}))
     message = forms.CharField(label='Пожелания флористу', max_length=600, required=False,
@@ -232,6 +234,16 @@ class BouquetForm(LeadForm):
 
     def clean(self):
         data = super().clean()
+        if 'tier' not in self.errors:
+            budget = data.get('budget')
+            tier = data.get('tier') or next(
+                (key for key, (_, minimum, _) in reversed(bouquet.TIERS.items()) if budget and budget >= minimum),
+                'economy',
+            )
+            data['tier'] = tier
+            minimum = bouquet.TIERS[tier][1]
+            if budget and budget < minimum:
+                self.add_error('budget', f'Для этого формата бюджет начинается от {rub(minimum)}.')
         layout = data.get('layout') or {}
         if 'layout' not in self.errors and 'message' not in self.errors and not (layout.get('stems') or data.get('message')):
             self.add_error('layout', 'Добавьте хотя бы один цветок или опишите композицию в пожеланиях.')
@@ -240,7 +252,9 @@ class BouquetForm(LeadForm):
     def lead_message(self):
         d = self.cleaned_data
         layout = d['layout']
+        title, minimum, _ = bouquet.TIERS[d['tier']]
         fields = (
+            ('Формат', f'{title} — от {rub(minimum)}'),
             ('Основа', bouquet.VESSELS[layout['vessel']] if layout else ''),
             ('Состав', bouquet.describe(layout) if layout else ''),
             ('Кому', d['recipient']),

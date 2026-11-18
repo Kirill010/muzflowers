@@ -42,6 +42,11 @@ def _sorted(qs):
     return qs.order_by(F('time_from').asc(nulls_first=True), 'id')  # «как можно скорее» — первыми
 
 
+def awaiting_prepayment(orders):
+    return orders.filter(prepay_required=True, payment_status__in=[Order.PayStatus.UNPAID, Order.PayStatus.PENDING]) \
+        .exclude(status=Order.Status.CANCELED)
+
+
 class OwnerLoginForm(AdminAuthenticationForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -49,7 +54,7 @@ class OwnerLoginForm(AdminAuthenticationForm):
 
 
 class MuzAdminSite(AdminSite):
-    site_header = 'MuzFlowers — панель владельца'
+    site_header = 'MuzFlowers — рабочая панель'
     site_title = 'MuzFlowers'
     index_title = 'Что сегодня?'
     index_template = 'admin/dashboard.html'
@@ -80,10 +85,16 @@ class MuzAdminSite(AdminSite):
         site = SiteSettings.load()
         today = timezone.localdate()
         tomorrow = today + timedelta(days=1)
-        live = Order.objects.exclude(status=Order.Status.CANCELED)
+        can_change_orders = request.user.has_perm('shop.change_order')
+        can_view_orders = can_change_orders or request.user.has_perm('shop.view_order')
+        can_view_leads = request.user.has_perm('shop.view_lead') or request.user.has_perm('shop.change_lead')
+        can_view_products = request.user.has_perm('shop.view_product') or request.user.has_perm('shop.change_product')
+        can_manage_shop = request.user.has_perm('shop.change_sitesettings')
+        orders = _orders_qs() if can_view_orders else Order.objects.none()
+        live = orders.exclude(status=Order.Status.CANCELED)
 
         def board(day):
-            rows = _sorted(_orders_qs().filter(date=day).exclude(status=Order.Status.CANCELED))
+            rows = _sorted(live.filter(date=day))
             return [{'order': o, 'step': next_step(o)} for o in rows]
 
         month_start = today.replace(day=1)
@@ -93,21 +104,24 @@ class MuzAdminSite(AdminSite):
         for row in sources:
             row['label'] = row['source'] or 'Сайт напрямую'
 
-        checklist = self.checklist(request, site)
-        new_orders = list(_orders_qs().filter(status=Order.Status.NEW).order_by('created')[:50])
+        checklist = self.checklist(request, site) if can_manage_shop else []
+        new_queue = orders.filter(status=Order.Status.NEW)
+        new_orders = list(new_queue.order_by('created')[:50])
         new_elsewhere = [o for o in new_orders if o.date not in (today, tomorrow)]  # на сегодня и завтра они уже видны в карточках выше
-        later = _orders_qs().filter(date__gt=tomorrow, date__lte=today + timedelta(days=14)) \
-            .exclude(status__in=[Order.Status.CANCELED, Order.Status.NEW]).order_by('date', F('time_from').asc(nulls_first=True), 'id')
-        waiting_pay = list(_orders_qs().filter(prepay_required=True, payment_status__in=[Order.PayStatus.UNPAID, Order.PayStatus.PENDING])
-                           .exclude(status=Order.Status.CANCELED).order_by('date')[:20])
+        later = live.filter(date__gt=tomorrow, date__lte=today + timedelta(days=14)) \
+            .exclude(status=Order.Status.NEW).order_by('date', F('time_from').asc(nulls_first=True), 'id')
+        waiting_pay = awaiting_prepayment(orders).count()
+        leads = Lead.objects.filter(status=Lead.Status.NEW) if can_view_leads else Lead.objects.none()
         return {
             'today': today, 'tomorrow': tomorrow, 'board_today': board(today), 'board_tomorrow': board(tomorrow),
-            'new_orders': new_orders, 'new_rows': [{'order': o, 'step': next_step(o)} for o in new_elsewhere], 'waiting_pay': waiting_pay,
+            'new_orders': new_queue.count(), 'new_rows': [{'order': o, 'step': next_step(o)} for o in new_elsewhere], 'waiting_pay': waiting_pay,
             'board_later': [{'order': o, 'step': next_step(o)} for o in later],
-            'new_leads': Lead.objects.filter(status=Lead.Status.NEW).count(),
+            'new_leads': leads.count(), 'recent_leads': list(leads.order_by('created')[:4]),
             'month': month, 'week': week, 'sources': sources, 'month_name': month_start,
             'checklist': checklist, 'todo_count': sum(1 for item in checklist if not item['ok']),
-            'off_products': Product.objects.filter(is_active=True, in_stock=False).count(),
+            'off_products': Product.objects.filter(is_active=True, in_stock=False).count() if can_view_products else 0,
+            'can_view_orders': can_view_orders, 'can_change_orders': can_change_orders,
+            'can_view_leads': can_view_leads, 'can_view_products': can_view_products, 'can_manage_shop': can_manage_shop,
             'dash_site': site,
         }
 
@@ -164,7 +178,7 @@ class MuzAdminSite(AdminSite):
 
     # ───────────── печать ─────────────
     def _can_print(self, request):
-        if not request.user.has_perm('shop.view_order'):
+        if not (request.user.has_perm('shop.view_order') or request.user.has_perm('shop.change_order')):
             raise PermissionDenied
 
     def print_order(self, request, pk):

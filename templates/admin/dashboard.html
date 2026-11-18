@@ -5,14 +5,24 @@
 {% block content %}
 <div class="mz-dash">
 
-  <section class="mz-attention">
-    <a class="mz-tile{% if new_orders %} is-hot{% endif %}" href="{% url 'admin:shop_order_changelist' %}?status=new"><b>{{ new_orders|length }}</b><span>новых заказов</span></a>
-    <a class="mz-tile{% if waiting_pay %} is-warn{% endif %}" href="{% url 'admin:shop_order_changelist' %}?payment_status=pending"><b>{{ waiting_pay|length }}</b><span>ждут предоплату</span></a>
-    <a class="mz-tile{% if new_leads %} is-hot{% endif %}" href="{% url 'admin:shop_lead_changelist' %}?status=new"><b>{{ new_leads }}</b><span>новых заявок</span></a>
-    <a class="mz-tile{% if off_products %} is-warn{% endif %}" href="{% url 'admin:shop_product_changelist' %}?in_stock__exact=0"><b>{{ off_products }}</b><span>букетов «нет сегодня»</span></a>
-    <a class="mz-tile{% if todo_count %} is-warn{% endif %}" href="#checklist"><b>{{ todo_count }}</b><span>дел в списке «заполнить»</span></a>
+  {% if can_view_orders or can_view_leads or can_view_products %}
+  <nav class="mz-quick" aria-label="Рабочие разделы">
+    {% if can_view_orders %}<a class="mz-btn mz-btn--main" href="{% url 'admin:shop_order_changelist' %}">Заказы</a>{% endif %}
+    {% if can_view_leads %}<a class="mz-btn" href="{% url 'admin:shop_lead_changelist' %}">Заявки</a>{% endif %}
+    {% if can_view_products %}<a class="mz-btn" href="{% url 'admin:shop_product_changelist' %}">Наличие букетов</a>{% endif %}
+    {% if can_manage_shop %}<a class="mz-btn" href="#checklist">Настройки магазина</a>{% endif %}
+  </nav>
+  <section class="mz-attention" aria-label="Очереди">
+    {% if can_view_orders %}
+    <a class="mz-tile{% if new_orders %} is-hot{% endif %}" href="{% url 'admin:shop_order_changelist' %}?status__exact=new"><b>{{ new_orders }}</b><span>Новые заказы</span></a>
+    <a class="mz-tile{% if waiting_pay %} is-warn{% endif %}" href="{% url 'admin:shop_order_changelist' %}?prepay=waiting"><b>{{ waiting_pay }}</b><span>Ждут предоплату</span></a>
+    {% endif %}
+    {% if can_view_leads %}<a class="mz-tile{% if new_leads %} is-hot{% endif %}" href="{% url 'admin:shop_lead_changelist' %}?status__exact=new"><b>{{ new_leads }}</b><span>Новые заявки</span></a>{% endif %}
+    {% if can_view_products %}<a class="mz-tile{% if off_products %} is-warn{% endif %}" href="{% url 'admin:shop_product_changelist' %}?in_stock__exact=0"><b>{{ off_products }}</b><span>Нет в наличии</span></a>{% endif %}
   </section>
+  {% endif %}
 
+  {% if can_view_orders %}
   <div class="mz-cols">
     <section class="mz-card">
       <h2>Сегодня, {{ today|date:"j E" }}</h2>
@@ -25,6 +35,22 @@
         <a class="mz-btn" href="{% url 'admin:shop_order_day' %}?date={{ tomorrow|date:'Y-m-d' }}" target="_blank">Список на завтра</a></p>
     </section>
   </div>
+  {% endif %}
+
+  {% if recent_leads %}
+  <section class="mz-card">
+    <div class="mz-card__heading"><h2>Новые заявки</h2><a class="mz-btn" href="{% url 'admin:shop_lead_changelist' %}?status__exact=new">Все новые заявки</a></div>
+    <ul class="mz-queue">
+      {% for lead in recent_leads %}
+      <li>
+        <div><a class="mz-queue__name" href="{% url 'admin:shop_lead_change' lead.pk %}">{{ lead.name }}</a>
+        <small>{{ lead.get_kind_display }} · {{ lead.created|date:"j E, H:i" }}{% if lead.layout %} · есть эскиз{% endif %}</small></div>
+        <a class="mz-btn" href="tel:{{ lead.phone }}">{{ lead.display_phone }}</a>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
 
   {% if new_rows %}
   <section class="mz-card">
@@ -40,9 +66,10 @@
   </section>
   {% endif %}
 
+  {% if can_manage_shop %}
   <div class="mz-cols">
     <section class="mz-card" id="checklist">
-      <h2>Что осталось заполнить</h2>
+      <h2>Что осталось заполнить{% if todo_count %} · {{ todo_count }}{% endif %}</h2>
       <ul class="mz-check">
         {% for item in checklist %}
         <li class="{% if item.ok %}is-ok{% else %}is-todo{% endif %}">
@@ -53,7 +80,8 @@
       </ul>
     </section>
     <section class="mz-card">
-      <h2>Цифры</h2>
+      <h2>{% if can_view_orders %}Статистика{% else %}Управление{% endif %}</h2>
+      {% if can_view_orders %}
       <dl class="mz-stats">
         <div><dt>За 7 дней</dt><dd>{{ week.n }} {{ week.n|plural:"заказ,заказа,заказов" }} · {{ week.total|default:0|rub }}</dd></div>
         <div><dt>С начала {{ month_name|date:"E" }}</dt><dd>{{ month.n }} {{ month.n|plural:"заказ,заказа,заказов" }} · {{ month.total|default:0|rub }}</dd></div>
@@ -63,16 +91,17 @@
       <h3>Откуда заказы (в этом месяце)</h3>
       <ul class="mz-sources">{% for s in sources %}<li><span>{{ s.label }}</span><b>{{ s.n }}</b></li>{% endfor %}</ul>
       {% endif %}
+      {% endif %}
       <p class="mz-print">
-        <a class="mz-btn mz-btn--main" href="{% url 'admin:shop_product_add' %}">Добавить букет</a>
-        <a class="mz-btn" href="{% url 'admin:shop_order_changelist' %}">Все заказы</a>
+        {% if perms.shop.add_product %}<a class="mz-btn mz-btn--main" href="{% url 'admin:shop_product_add' %}">Добавить букет</a>{% endif %}
         <a class="mz-btn" href="{% url 'admin:shop_sitesettings_changelist' %}">Настройки сайта</a>
         <a class="mz-btn" href="{% url 'shop:legal' %}" target="_blank" rel="noopener">Юридические документы</a>
-        <a class="mz-btn" href="{% url 'admin:shop_legalacceptance_changelist' %}">Журнал согласий</a>
-        <a class="mz-btn" href="{% url 'admin:shop_promocode_changelist' %}">Промокоды</a>
+        {% if perms.shop.view_legalacceptance %}<a class="mz-btn" href="{% url 'admin:shop_legalacceptance_changelist' %}">Журнал согласий</a>{% endif %}
+        {% if perms.shop.view_promocode or perms.shop.change_promocode %}<a class="mz-btn" href="{% url 'admin:shop_promocode_changelist' %}">Промокоды</a>{% endif %}
       </p>
     </section>
   </div>
+  {% endif %}
 
 </div>
 <h2 class="mz-all">Все разделы</h2>

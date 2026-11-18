@@ -7,6 +7,7 @@
   const empty = results.querySelector('[data-catalog-empty]');
   const budgets = JSON.parse(document.querySelector('#catalog-budget-ranges').textContent);
   const plural = new Intl.PluralRules('ru');
+  if (matchMedia('(max-width:560px)').matches) document.querySelector('[data-filter-panel]').open = false;
 
   function restore() {
     const params = new URLSearchParams(location.search);

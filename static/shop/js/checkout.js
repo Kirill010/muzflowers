@@ -10,7 +10,7 @@
   var stateUrl = form.dataset.stateUrl, blocked = {};
   try { blocked = JSON.parse(form.dataset.blocked || '{}'); } catch (e) { blocked = {}; }
   var dateInput = $('[data-date]'), slotSelect = $('[data-slot]'), problemBox = $('[data-day-problem]'),
-    prepayNote = $('[data-prepay-note]'), summary = $('[data-summary]'), totalBtn = $('[data-total-btn]'),
+    prepayNote = $('[data-prepay-note]'), summary = $('[data-summary]'), totals = $$('[data-total-btn]'),
     submit = $('[data-submit]'), seq = 0, sent = false;
 
   var method = function () { var r = $('input[name="receive_method"]:checked'); return r ? r.value : 'pickup'; };
@@ -55,7 +55,7 @@
     prepayNote.hidden = !state.prepay;
     renderPayments(state.payments);
     summary.innerHTML = state.summary;
-    totalBtn.textContent = MZ.rub(state.total);
+    totals.forEach(function (total) { total.textContent = MZ.rub(state.total); });
   }
 
   function refresh() {
@@ -116,8 +116,8 @@
   });
 
   /* защита от двойного нажатия */
-  form.addEventListener('submit', function () {
-    if (sent) return;
+  form.addEventListener('submit', function (event) {
+    if (sent) { event.preventDefault(); return; }
     sent = true;
     MZ.goal('checkout_submit');
     if (submit) { submit.classList.add('is-disabled'); submit.setAttribute('aria-busy', 'true'); }
