@@ -1,14 +1,23 @@
 #!/usr/bin/env bash
-# Запуск сайта MuzFlowers на Mac / Linux:  ./start.sh
-set -e
-cd "$(dirname "$0")"
+# Запуск сайта MuzFlowers на macOS / Linux: bash start.sh
+set -eu
+cd -- "$(dirname -- "$0")"
 
-PY=python3
-command -v "$PY" >/dev/null 2>&1 || { echo "Не найден Python 3. Установите его: https://www.python.org/downloads/"; exit 1; }
+if [ ! -x .venv/bin/python ]; then
+  if ! python3 -c 'import sys; sys.exit(sys.version_info < (3, 12))'; then
+    printf '%s\n' 'Для запуска нужен Python 3.12 или новее.'
+    exit 1
+  fi
+  printf '%s\n' '[1/4] Создаю окружение Python...'
+  python3 -m venv .venv
+fi
 
-[ -d .venv ] || { echo "[1/4] Готовлю рабочую папку для программ..."; "$PY" -m venv .venv; }
+if ! .venv/bin/python -c 'import sys; sys.exit(sys.version_info < (3, 12))'; then
+  printf '%s\n' 'Окружение .venv не запускается или использует старый Python. Переименуйте только папку .venv и повторите запуск.'
+  exit 1
+fi
 echo "[2/4] Проверяю нужные программы..."
-.venv/bin/python -m pip install -q --disable-pip-version-check -r requirements.txt
+.venv/bin/python -m pip install -q --disable-pip-version-check --no-input -r requirements.txt
 [ -f .env ] || cp .env.example .env
 
 echo "[3/4] Готовлю базу данных..."

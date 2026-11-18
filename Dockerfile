@@ -26,4 +26,4 @@ USER app
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
     CMD python docker_healthcheck.py
 
-CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py seed_shop && gunicorn muzflowers.wsgi:application --bind 0.0.0.0:8000 --workers 3 --access-logfile -"]
+CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py seed_shop && exec gunicorn muzflowers.wsgi:application --bind 0.0.0.0:8000 --workers 3 --access-logfile -"]

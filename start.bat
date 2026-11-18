@@ -1,45 +1,53 @@
 @echo off
+setlocal
 chcp 65001 >nul
-cd /d "%~dp0"
+cd /d "%~dp0" || exit /b 1
 title MuzFlowers - сайт
 
 echo.
 echo  ==================================================
 echo   MuzFlowers: запускаю сайт
-echo   (в первый раз это займёт 2-3 минуты - ничего не закрывайте)
+echo   (при первом запуске скачаются зависимости)
 echo  ==================================================
 echo.
 
 rem Временные файлы держим в папке проекта, а не на диске C
-if not exist ".tmp" mkdir ".tmp"
+if not exist ".tmp" (
+  mkdir ".tmp"
+  if errorlevel 1 goto err
+)
 set "TEMP=%~dp0.tmp"
 set "TMP=%~dp0.tmp"
 set "PIP_CACHE_DIR=%~dp0.tmp\pip"
 set "PYTHONUTF8=1"
 
-rem Ищем Python
+set "VPY=%~dp0.venv\Scripts\python.exe"
+if exist "%VPY%" goto dependencies
+
+rem Ищем Python 3.12 или новее только для создания окружения.
 set "PY="
-py -3 --version >nul 2>nul && set "PY=py -3"
-if not defined PY python --version >nul 2>nul && set "PY=python"
+py -3 -c "import sys; sys.exit(sys.version_info < (3, 12))" >nul 2>nul && set "PY=py -3"
+if not defined PY (
+  python -c "import sys; sys.exit(sys.version_info < (3, 12))" >nul 2>nul && set "PY=python"
+)
 if not defined PY goto no_python
 
-if not exist ".venv\Scripts\python.exe" (
-  echo [1/4] Готовлю рабочую папку для программ...
-  %PY% -m venv .venv
-  if errorlevel 1 goto err
-)
-set "VPY=%~dp0.venv\Scripts\python.exe"
+echo [1/4] Создаю окружение Python...
+%PY% -m venv .venv
+if errorlevel 1 goto err
 
+:dependencies
+"%VPY%" -c "import sys; sys.exit(sys.version_info < (3, 12))"
+if errorlevel 1 goto bad_venv
 echo [2/4] Проверяю нужные программы (нужен интернет, если что-то не установлено)...
 "%VPY%" -m pip install -q --disable-pip-version-check --no-input -r requirements.txt
 if errorlevel 1 goto err
 
-rem Файл настроек от прошлой версии сайта (PostgreSQL, Redis, Celery) новому сайту не нужен: откладываем его, ничего не удаляя
-if exist ".env" findstr /b /c:"CELERY_" /c:"DB_NAME=" /c:"USE_REDIS=" ".env" >nul && (
-  echo Нашёл старый файл настроек - сохраняю его как .env.old и создаю новый.
-  move /y ".env" ".env.old" >nul
+rem Создаём настройки только при первом запуске.
+if not exist ".env" (
+  copy ".env.example" ".env" >nul
+  if errorlevel 1 goto err
 )
-if not exist ".env" copy ".env.example" ".env" >nul
 
 echo [3/4] Готовлю базу данных...
 "%VPY%" manage.py migrate --noinput
@@ -62,20 +70,26 @@ if not "%NO_BROWSER%"=="1" start "" /b cmd /c "ping -n 5 127.0.0.1 >nul & start 
 echo [4/4] Сайт работает. Окно не закрывайте, пока сайтом пользуетесь.
 echo.
 "%VPY%" manage.py runserver 127.0.0.1:8000
-goto :eof
+if errorlevel 1 goto err
+exit /b 0
 
 :no_python
 echo.
-echo  Не найден Python. Установите его с https://www.python.org/downloads/
+echo  Не найден Python 3.12 или новее. Установите его с https://www.python.org/downloads/
 echo  (на первом экране установщика поставьте галочку "Add Python to PATH")
 echo  и запустите start.bat ещё раз.
 echo.
-pause
-goto :eof
+goto err_exit
+
+:bad_venv
+echo  Окружение .venv не запускается или использует старый Python.
+echo  Переименуйте только папку .venv и запустите start.bat с Python 3.12 или новее.
+goto err_exit
 
 :err
 echo.
-echo  Что-то пошло не так (текст ошибки - выше). Проверьте интернет и запустите start.bat ещё раз.
-echo  Если не помогло - пришлите разработчику фото этого окна.
+echo  Запуск прервался. Причина указана выше.
 echo.
-pause
+:err_exit
+if not "%NO_BROWSER%"=="1" pause
+exit /b 1
