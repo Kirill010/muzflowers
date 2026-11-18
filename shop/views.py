@@ -281,6 +281,24 @@ def subscription(request):
     return _lead_page(request, Lead.Kind.SUBSCRIPTION, 'shop/subscription.html')
 
 
+def balloons(request):
+    return _lead_page(request, Lead.Kind.BALLOONS, 'shop/gifts.html',
+                      title='Шары к букету и празднику', heading='Шары к особенному дню',
+                      intro='Добавьте воздушные шары к букету или выберите отдельное украшение к празднику.',
+                      description='Шары к букету, дню рождения и празднику в Выхино. Подбор цветов, количества и стоимости с флористом MuzFlowers.',
+                      benefits=['Цвета и настроение подберём под ваш букет', 'Подойдут для дня рождения, открытия или сюрприза', 'Количество, наличие и стоимость согласуем до заказа'],
+                      submit_label='Узнать варианты шаров')
+
+
+def souvenirs(request):
+    return _lead_page(request, Lead.Kind.SOUVENIRS, 'shop/gifts.html',
+                      title='Сувениры и маленькие подарки к цветам', heading='Маленький подарок. Больше внимания.',
+                      intro='Добавьте к букету сувенир, который подчеркнёт повод и будет напоминать о вашем жесте.',
+                      description='Сувениры и небольшие подарки к букету в Выхино. Флорист MuzFlowers предложит доступные варианты под повод и бюджет.',
+                      benefits=['Предложим варианты под повод и получателя', 'Можно обсудить подарок вместе с букетом', 'Наличие, состав и цену подтвердим до оплаты'],
+                      submit_label='Узнать варианты сувениров')
+
+
 def favicon(request):
     """Браузеры сами просят /favicon.ico — отдаём значок из статики."""
     return redirect(static('shop/img/favicon-32.png'))

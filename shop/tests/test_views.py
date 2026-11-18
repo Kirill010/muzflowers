@@ -15,7 +15,7 @@ class PageTests(ShopTestCase):
         FAQ.objects.create(question='Как быстро?', answer='За 15 минут', order=1)
 
     def test_all_public_pages_open(self):
-        names = ['home', 'catalog', 'bouquet_builder', 'music', 'offices', 'subscription', 'delivery', 'care', 'about', 'contacts', 'faq', 'privacy', 'offer',
+        names = ['home', 'catalog', 'bouquet_builder', 'balloons', 'souvenirs', 'music', 'offices', 'subscription', 'delivery', 'care', 'about', 'contacts', 'faq', 'privacy', 'offer',
                  'legal', 'consent', 'marketing_consent', 'cookies', 'cart']
         for name in names:
             with self.subTest(page=name):
@@ -77,6 +77,9 @@ class PageTests(ShopTestCase):
         self.assertContains(r, 'data-record-toggle')
         self.assertContains(r, 'Скидка 10% при самовывозе')
         self.assertNotContains(r, 'по наличию')
+        self.assertContains(r, 'href="/balloons/"')
+        self.assertContains(r, 'href="/souvenirs/"')
+        self.assertNotContains(r, 'title="Уточнить наличие шаров по телефону"')
         self.assertContains(r, 'favicon-32.png')
         self.assertNotContains(r, 'rel="icon" href="/static/shop/img/favicon.svg"')
 
@@ -318,6 +321,16 @@ class LeadTests(ShopTestCase):
     def test_subscription_request_is_saved(self):
         self.post('subscription')
         self.assertEqual(Lead.objects.get().kind, 'subscription')
+
+    def test_gift_pages_save_the_right_kind_of_request(self):
+        for route, kind, text in (('balloons', Lead.Kind.BALLOONS, 'Нужны розовые шары'),
+                                  ('souvenirs', Lead.Kind.SOUVENIRS, 'Нужен сувенир к букету')):
+            with self.subTest(page=route):
+                response = self.post(route, message=text)
+                self.assertRedirects(response, reverse(f'shop:{route}'))
+                lead = Lead.objects.get(kind=kind)
+                self.assertEqual((lead.message, lead.status), (text, Lead.Status.NEW))
+                self.assertContains(self.client.get(reverse(f'shop:{route}')), 'name="message"')
 
     def test_success_message_is_shown_after_redirect(self):
         r = self.client.post(reverse('shop:offices'), {'name': 'О', 'phone': '9001112233', 'consent': 'on'}, follow=True)

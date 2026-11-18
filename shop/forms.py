@@ -175,6 +175,8 @@ class LeadForm(forms.Form):
             Lead.Kind.OFFICE: 'Как часто нужны цветы, сколько человек, адрес офиса…',
             Lead.Kind.SUBSCRIPTION: 'Какие цветы любите, куда и в какой день недели привозить…',
             Lead.Kind.BOUQUET: 'Цветовая гамма, упаковка и другие пожелания',
+            Lead.Kind.BALLOONS: 'Сколько шаров, какие цвета и к какой дате…',
+            Lead.Kind.SOUVENIRS: 'Что хотите добавить к букету, для кого и на какой бюджет…',
         }.get(kind, 'Ваш вопрос')
         self.fields['message'].widget.attrs['placeholder'] = placeholder
         if kind == Lead.Kind.OFFICE:

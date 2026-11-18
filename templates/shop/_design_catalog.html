@@ -17,8 +17,8 @@
         <a href="{% url 'shop:bouquet_builder' %}">Композиции</a>
         {% for c in categories %}{% if c.slug == 'roses' %}<a href="{{ c.get_absolute_url }}">Розы</a>{% endif %}{% endfor %}
         <a href="{% url 'shop:catalog' %}{% if catalog_heading %}#catalog-results{% endif %}">Цветы</a>
-        <a href="{{ site.phone_href }}" title="Уточнить наличие шаров по телефону">Шары</a>
-        <a href="{{ site.phone_href }}" title="Уточнить наличие сувениров по телефону">Сувениры</a>
+        <a href="{% url 'shop:balloons' %}">Шары</a>
+        <a href="{% url 'shop:souvenirs' %}">Сувениры</a>
       </div>
     </nav>
     <div class="design-catalog__offers">

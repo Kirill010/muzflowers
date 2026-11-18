@@ -671,6 +671,8 @@ class Lead(models.Model):
         SUBSCRIPTION = 'subscription', 'Подписка на цветы'
         QUESTION = 'question', 'Вопрос'
         BOUQUET = 'bouquet', 'Свой букет'
+        BALLOONS = 'balloons', 'Шары'
+        SOUVENIRS = 'souvenirs', 'Сувениры'
 
     class Status(models.TextChoices):
         NEW = 'new', 'Новая'

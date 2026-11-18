@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% load shop_tags %}
+{% block title %}{{ title }} — {{ site.shop_name }}{% endblock %}
+{% block description %}{{ description }}{% endblock %}
+{% block content %}
+<section class="section">
+  <div class="wrap duo duo--top">
+    <div class="stack">
+      <p class="eyebrow">Дополнение к цветам</p>
+      <h1 class="display display--lg">{{ heading }}</h1>
+      <p class="lead">{{ intro }}</p>
+      <ul class="checks">
+        {% for benefit in benefits %}<li>{% icon 'check' %} {{ benefit }}</li>{% endfor %}
+      </ul>
+      <p class="muted">Расскажите, что нужно. Флорист позвонит, предложит доступные варианты и согласует с вами детали.</p>
+      <a class="link-arrow" href="{% url 'shop:catalog' %}">Сначала выбрать букет {% icon 'arrow' %}</a>
+    </div>
+    {% include 'includes/_lead_form.html' with submit_label=submit_label %}
+  </div>
+</section>
+{% endblock %}

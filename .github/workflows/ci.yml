@@ -62,7 +62,7 @@ jobs:
               }
             }
             if (-not $healthy) { throw 'Сервер не ответил на проверку здоровья' }
-            foreach ($path in @('/', '/catalog/?budget=premium', '/bouquet/', '/admin/login/', '/static/shop/img/flowers/rose.svg')) {
+            foreach ($path in @('/', '/catalog/?budget=premium', '/bouquet/', '/balloons/', '/souvenirs/', '/admin/login/', '/static/shop/img/flowers/rose.svg')) {
               $response = Invoke-WebRequest -Uri "http://127.0.0.1:8000$path" -TimeoutSec 5
               if ($response.StatusCode -ne 200) { throw "Не открылась страница $path" }
             }
