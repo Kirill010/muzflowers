@@ -113,6 +113,7 @@ class PageTests(ShopTestCase):
         contacts = self.client.get(reverse('shop:contacts'))
         self.assertContains(contacts, 'https://t.me/muzflowers')
         self.assertContains(contacts, 'https://max.ru/muzflowers')
+        self.assertNotContains(contacts, '<b>MAX</b>')
 
     def test_faq_page_has_faq_markup(self):
         r = self.client.get(reverse('shop:faq'))
@@ -222,7 +223,9 @@ class CatalogTests(ShopTestCase):
         self.assertContains(r, 'noindex')  # вторые страницы поисковикам не нужны
 
     def test_empty_search_has_message(self):
-        self.assertContains(self.client.get(reverse('shop:catalog'), {'q': 'нетакого'}), 'Ничего не нашли')
+        response = self.client.get(reverse('shop:catalog'), {'q': 'нетакого'})
+        self.assertContains(response, 'Ничего не нашли')
+        self.assertContains(response, 'href="/bouquet/"')
 
     def test_suggest(self):
         data = self.client.get(reverse('shop:suggest'), {'q': 'клас'}).json()
