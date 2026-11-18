@@ -48,25 +48,38 @@
   font-size: .9rem;
   font-weight: 800;
 }
-.design-hero__visual { position: relative; max-width: 565px; width: 100%; justify-self: end; }
-.design-hero__photo {
+.design-hero__visual {
+  position: relative;
+  justify-self: end;
+  display: grid;
+  place-items: center;
+  max-width: 565px;
   width: 100%;
-  height: auto;
   aspect-ratio: 1.11;
-  object-fit: cover;
-  object-position: 51% 42%;
+  overflow: hidden;
   border-radius: 48% 48% .85rem .85rem / 45% 45% .85rem .85rem;
   border: 1px solid #a87971;
+  background: radial-gradient(ellipse at 45% 32%, #fbf2d9, transparent 63%),
+    linear-gradient(145deg, #f1d4b7, #efc6c6 76%, #e1aeb6);
   box-shadow: 0 18px 32px #4c483329;
 }
-.design-hero__record {
+.design-hero__visual::before {
+  content: "";
   position: absolute;
-  right: clamp(.65rem, 2.2vw, 1.7rem);
-  bottom: clamp(.65rem, 2.2vw, 1.55rem);
-  width: clamp(119px, 14vw, 208px);
+  width: 68%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: repeating-radial-gradient(circle, transparent 0 7px, #9c685e1c 8px 9px);
+}
+.design-hero__flower { position: absolute; height: auto; pointer-events: none; }
+.design-hero__flower--gerbera { width: 42%; left: -1%; bottom: -14%; transform: rotate(-19deg); }
+.design-hero__flower--tulips { width: 30%; right: 0; bottom: -15%; transform: rotate(23deg); }
+.design-hero__record {
+  position: relative;
+  width: clamp(128px, 53%, 258px);
   display: grid;
   justify-items: center;
-  gap: .5rem;
+  gap: .65rem;
 }
 .design-hero__disc {
   display: block;
@@ -228,10 +241,9 @@
 
 @media (max-width: 760px) {
   .design-hero__inner { grid-template-columns: 1fr; gap: 1.3rem; padding-top: 1.6rem; }
-  .design-hero__visual { justify-self: start; max-width: 550px; }
+  .design-hero__visual { justify-self: center; max-width: 550px; aspect-ratio: 1.27; }
   .design-hero__title { max-width: 11ch; font-size: clamp(3.2rem, 11.2vw, 5.2rem); }
   .design-hero__intro { margin-block: 1rem 1.15rem; }
-  .design-hero__photo { aspect-ratio: 1.27; object-position: 51% 38%; }
   .design-hero__facts { column-gap: 1rem; justify-content: flex-start; font-size: .8rem; }
   .design-faq .design-panel__body { width: 100%; }
   .design-faq__flower { opacity: .25; }
