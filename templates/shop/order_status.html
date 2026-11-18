@@ -28,6 +28,14 @@
     </ol>
     {% endif %}
 
+    {% if order.delivery_photo %}
+    <div class="panel panel--plain order-photo">
+      <h2 class="panel__title">{% icon 'flower' %} Фото вашего букета</h2>
+      <p>Флорист сфотографировал заказ перед выдачей или отправкой. Если что-то не так, свяжитесь с нами до получения.</p>
+      <div class="order-photo__image">{% photo order.delivery_photo 'Ваш собранный букет перед выдачей или доставкой' 'main' %}</div>
+    </div>
+    {% endif %}
+
     {% if order.status != 'canceled' %}
     <div class="panel panel--plain">
       <h2 class="panel__title">{% icon 'card' %} Оплата</h2>

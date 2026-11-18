@@ -2,6 +2,7 @@ import csv
 from datetime import timedelta
 
 from django.contrib import admin, messages
+from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
@@ -147,8 +148,9 @@ class ShopAdmin(admin.ModelAdmin):
 
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):
-    list_display = ('name', 'short_text', 'rating', 'source', 'is_published', 'created')
+    list_display = ('name', 'short_text', 'rating', 'source', 'permission_given', 'is_published', 'created')
     list_editable = ('is_published',)
+    list_filter = ('source', 'permission_given', 'is_published')
 
     @admin.display(description='Отзыв')
     def short_text(self, obj):
@@ -300,9 +302,20 @@ class OrderAdmin(admin.ModelAdmin):
         ('Получение', {'fields': ('receive_method', 'shop', 'address', 'address_details', 'recipient_name', 'recipient_phone',
                                   'surprise', 'date', 'asap', ('time_from', 'time_to'))}),
         ('Открытка и пожелания', {'fields': ('card_text', 'comment')}),
+        ('Фото перед выдачей или доставкой', {'fields': ('delivery_photo',),
+            'description': 'Загрузите только что сделанное фото собранного букета. Оно появится на странице заказа; при указанной почте клиент получит ссылку.'}),
         ('Деньги', {'fields': ('subtotal', 'discount', 'addons_total', 'delivery_cost', 'total', 'promo_code', 'prepay_required', 'paid_at')}),
         ('Служебное', {'classes': ('collapse',), 'fields': ('created', 'updated')}),
     )
+
+    def save_model(self, request, obj, form, change):
+        photo_added = 'delivery_photo' in form.changed_data
+        super().save_model(request, obj, form, change)
+        if photo_added and obj.delivery_photo:
+            from . import notifications
+            origin = request.build_absolute_uri('/').rstrip('/')
+            transaction.on_commit(lambda: notifications.dispatch_order_photo(obj.pk, origin))
+            self.message_user(request, 'Фото сохранено. Клиент видит его по ссылке на заказ.', messages.SUCCESS)
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('shop').prefetch_related('items', 'addons')

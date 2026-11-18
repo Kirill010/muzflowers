@@ -1,8 +1,10 @@
 import secrets
 from datetime import date, time
 from decimal import Decimal
+from urllib.parse import urlparse
 
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.conf import settings
 from django.db import models
@@ -514,6 +516,9 @@ class Order(models.Model):
     pay_url = models.URLField(max_length=500, blank=True, editable=False)
 
     status = models.CharField('Статус', max_length=12, choices=Status.choices, default=Status.NEW)
+    delivery_photo = models.ImageField('Фото букета перед выдачей или доставкой', upload_to='order-photos/', blank=True,
+                                       validators=[validate_image_size],
+                                       help_text='Только букет: без людей, адреса, документов и посторонних данных. Клиент увидит фото по ссылке на заказ')
     source = models.CharField('Откуда пришёл клиент', max_length=40, blank=True)
     marketing_consent = models.BooleanField('Согласен получать акции и новости', default=False)
     created = models.DateTimeField('Создан', auto_now_add=True)
@@ -527,6 +532,11 @@ class Order(models.Model):
 
     def __str__(self):
         return f'Заказ №{self.pk} — {self.name}'
+
+    def save(self, *args, **kwargs):
+        if self.delivery_photo and not self.delivery_photo._committed:
+            self.delivery_photo = process_upload(self.delivery_photo)
+        super().save(*args, **kwargs)
 
     def get_absolute_url(self):
         return reverse('shop:order_status', args=[self.token])
@@ -652,6 +662,9 @@ class Review(models.Model):
     text = models.TextField('Отзыв', max_length=600)
     rating = models.PositiveSmallIntegerField('Оценка', null=True, blank=True, validators=[MinValueValidator(1), MaxValueValidator(5)])
     source = models.CharField('Где оставили', max_length=8, choices=Source.choices, default=Source.YANDEX)
+    source_url = models.URLField('Ссылка на оригинальный отзыв', blank=True)
+    permission_given = models.BooleanField('Отзыв проверен и разрешён к публикации', default=False,
+                                           help_text='Ставьте только после проверки настоящего отзыва и права на его публикацию')
     is_published = models.BooleanField('Показывать на сайте', default=True)
     created = models.DateTimeField('Добавлен', default=timezone.now)
 
@@ -659,6 +672,20 @@ class Review(models.Model):
         ordering = ['-created']
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
+
+    def clean(self):
+        errors = {}
+        if self.is_published and not self.permission_given:
+            errors['permission_given'] = 'Перед публикацией проверьте отзыв и подтвердите разрешение.'
+        if self.source_url and urlparse(self.source_url).scheme not in ('http', 'https'):
+            errors['source_url'] = 'Допустима только ссылка http или https.'
+        if self.is_published and self.source == self.Source.YANDEX:
+            parsed = urlparse(self.source_url)
+            host = (parsed.hostname or '').lower()
+            if parsed.scheme != 'https' or not (host == 'yandex.ru' or host.endswith('.yandex.ru')) or '/maps/org/' not in parsed.path:
+                errors['source_url'] = 'Добавьте полную ссылку на отзыв в карточке организации на Яндекс Картах.'
+        if errors:
+            raise ValidationError(errors)
 
     def __str__(self):
         return f'{self.name}: {self.text[:30]}'

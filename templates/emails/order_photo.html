@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="ru">
+<body>
+  <p>Здравствуйте, {{ order.name }}!</p>
+  <p>Букет по заказу №{{ order.pk }} сфотографирован перед выдачей или отправкой.</p>
+  {% if url %}<p><a href="{{ url }}">Посмотреть фото и статус заказа</a></p>{% endif %}
+  <p>Если у вас есть вопросы, позвоните нам: <a href="{{ site.phone_href }}">{{ site.phone }}</a>.</p>
+  <p>{{ site.shop_name }}</p>
+</body>
+</html>

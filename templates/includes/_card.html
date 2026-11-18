@@ -3,6 +3,10 @@
   data-static-item data-name="{{ p.name }} {{ p.tagline }} {{ p.description }} {{ p.category.name }}"
   data-price="{{ p.price_from|unlocalize }}" data-occasion="{{ p.occasion }}" data-new="{{ p.created|date:'U' }}"
   data-ready="{% if p.is_ready %}1{% endif %}" data-sale="{% if p.old_price and p.old_price > p.price %}1{% endif %}"{% endif %}>
+  {% if not sites_storefront %}<form class="wishlist-toggle" method="post" action="{% url 'shop:wishlist_toggle' %}" data-wishlist-form>{% csrf_token %}
+    <input type="hidden" name="product" value="{{ p.pk }}"><input type="hidden" name="next" value="{{ request.get_full_path }}">
+    <button class="icon-btn" type="submit" data-wishlist-product="{{ p.pk }}" aria-pressed="{% if p.pk in wishlist_ids %}true{% else %}false{% endif %}" aria-label="{% if p.pk in wishlist_ids %}Убрать из избранного{% else %}Добавить в избранное{% endif %}: {{ p.name }}">{% icon 'heart' %}</button>
+  </form>{% endif %}
   <a class="card__media" href="{{ p.get_absolute_url }}" tabindex="-1" aria-hidden="true">
     {% product_image p 'card' %}
     {% if p.badge %}<span class="card__badge">{{ p.badge }}</span>{% elif p.discount_percent %}<span class="card__badge card__badge--sale">−{{ p.discount_percent }}%</span>{% endif %}

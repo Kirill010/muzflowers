@@ -25,6 +25,7 @@
       <a class="icon-btn" href="{{ site.phone_href }}" aria-label="Позвонить флористу">{% icon 'phone' %}</a>
       {% else %}
       <button class="icon-btn" type="button" data-search-open aria-label="Поиск по каталогу">{% icon 'search' %}</button>
+      <a class="icon-btn cart-btn" href="{% url 'shop:wishlist' %}" aria-label="Избранное">{% icon 'heart' %}<span class="cart-btn__count" data-wishlist-count data-count="{{ wishlist_count }}">{{ wishlist_count }}</span></a>
       {% if user.is_authenticated %}
         <a class="icon-btn hide-xs" href="{% url 'accounts:profile' %}" aria-label="Личный кабинет">{% icon 'user' %}</a>
       {% else %}
@@ -48,6 +49,7 @@
     <nav aria-label="Меню">
       <a href="{% url 'shop:about' %}">О нас</a>
       <a href="{% url 'shop:catalog' %}">Букеты</a>
+      {% if not sites_storefront %}<a href="{% url 'shop:wishlist' %}">Избранное · {{ wishlist_count }}</a>{% endif %}
       <a href="{% url 'shop:bouquet_builder' %}">Собери сам</a>
       <a href="{% url 'shop:catalog' %}?sale=1#catalog-results">Акции</a>
       <a href="{% url 'shop:music' %}">Музыкальная открытка</a>

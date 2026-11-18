@@ -49,7 +49,7 @@ def robots(request):
     from django.conf import settings
     origin = settings.SITE_URL or request.build_absolute_uri('/').rstrip('/')
     admin = '/' + settings.ADMIN_URL
-    lines = ['User-agent: *', 'Disallow: /cart/', 'Disallow: /checkout/', 'Disallow: /order/', 'Disallow: /accounts/',
+    lines = ['User-agent: *', 'Disallow: /cart/', 'Disallow: /wishlist/', 'Disallow: /checkout/', 'Disallow: /order/', 'Disallow: /accounts/',
              f'Disallow: {admin}', 'Disallow: /search/', 'Allow: /', f'Sitemap: {origin}/sitemap.xml']
     return HttpResponse('\n'.join(lines) + '\n', content_type='text/plain; charset=utf-8')
 

@@ -2,7 +2,7 @@ from django.contrib.sitemaps.views import sitemap
 from django.urls import path
 from django.views.generic import RedirectView
 
-from . import cart_views, checkout_views, seo, views
+from . import cart_views, checkout_views, seo, views, wishlist_views
 
 app_name = 'shop'
 
@@ -23,6 +23,9 @@ urlpatterns = [
     path('cart/addon/', cart_views.cart_addon, name='cart_addon'),
     path('cart/promo/', cart_views.cart_promo, name='cart_promo'),
     path('cart/fragment/', cart_views.cart_fragment, name='cart_fragment'),
+
+    path('wishlist/', wishlist_views.wishlist_page, name='wishlist'),
+    path('wishlist/toggle/', wishlist_views.wishlist_toggle, name='wishlist_toggle'),
 
     path('checkout/', checkout_views.checkout, name='checkout'),
     path('checkout/state/', checkout_views.checkout_state, name='checkout_state'),

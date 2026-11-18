@@ -85,6 +85,23 @@ def _order_paid(order_id):
     _each(f'оплата №{order_id}', lambda: send_telegram(text), lambda: _staff_mail(f'Заказ №{order.pk} оплачен', text))
 
 
+def dispatch_order_photo(order_id, origin=''):
+    _background(f'photo-{order_id}', _order_photo, order_id, origin)
+
+
+def _order_photo(order_id, origin):
+    order = Order.objects.get(pk=order_id)
+    if not order.email or not order.delivery_photo:
+        return
+    site = SiteSettings.load()
+    context = {'order': order, 'site': site, 'url': order_url(order, origin)}
+    mail = EmailMultiAlternatives(f'{site.shop_name}: фото букета по заказу №{order.pk}',
+                                  render_to_string('emails/order_photo.txt', context),
+                                  settings.DEFAULT_FROM_EMAIL, [order.email])
+    mail.attach_alternative(render_to_string('emails/order_photo.html', context), 'text/html')
+    mail.send()
+
+
 # ───────────── тексты ─────────────
 
 def order_url(order, origin=''):

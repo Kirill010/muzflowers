@@ -18,7 +18,7 @@ from . import bouquet, notifications, seo
 from .faq import presentation_questions
 from .legal import record_acceptance
 from .forms import BouquetForm, LeadForm
-from .models import FAQ, Addon, Category, Lead, Product, Shop, SiteSettings
+from .models import FAQ, Addon, Category, Lead, Product, Review, Shop, SiteSettings
 from .thumbs import thumb_url
 from .throttle import throttled
 from .utils import plural_ru, rub
@@ -63,6 +63,7 @@ def home(request):
     context = {
         'ready': ready,
         'featured': [p for p in products if p not in ready][:8],
+        'reviews': Review.objects.filter(is_published=True, permission_given=True).exclude(source=Review.Source.YANDEX, source_url='')[:6],
         'occasions': OCCASION_FILTERS.items(),
         'price_tiers': PRICE_TIERS,
         'categories': Category.objects.filter(is_active=True),

@@ -227,6 +227,34 @@
     if (form && form.requestSubmit) form.requestSubmit();
   });
 
+  /* ───── избранное ───── */
+  document.addEventListener('submit', function (e) {
+    var form = e.target;
+    if (!form.matches || !form.matches('[data-wishlist-form]')) return;
+    e.preventDefault();
+    if (form.classList.contains('is-busy')) return;
+    form.classList.add('is-busy');
+    MZ.post(form.action, new FormData(form)).then(function (data) {
+      if (!data || typeof data.count !== 'number') throw new Error('bad response');
+      $$('[data-wishlist-count]').forEach(function (el) {
+        el.textContent = data.count; el.setAttribute('data-count', data.count);
+      });
+      $$('[data-wishlist-product="' + data.product + '"]').forEach(function (button) {
+        button.setAttribute('aria-pressed', data.active ? 'true' : 'false');
+        button.setAttribute('aria-label', button.getAttribute('aria-label').replace(/^[^:]+/, data.active ? 'Убрать из избранного' : 'Добавить в избранное'));
+      });
+      if (data.ok && !data.active && $('[data-wishlist-page]')) {
+        var card = form.closest('.card');
+        if (card) card.remove();
+        if ($('[data-wishlist-grid]') && !$('[data-wishlist-grid] .card')) window.location.reload();
+      }
+      if (data.message) MZ.toast(data.message, { error: !data.ok });
+      if (data.ok) MZ.goal(data.active ? 'wishlist_add' : 'wishlist_remove');
+    }).catch(function () {
+      MZ.toast('Не удалось изменить избранное. Попробуйте ещё раз.', { error: true });
+    }).then(function () { form.classList.remove('is-busy'); });
+  });
+
   /* ───── появление блоков при прокрутке ───── */
   MZ.reveal = function (root) {
     var items = $$('[data-reveal]:not(.is-visible)', root);

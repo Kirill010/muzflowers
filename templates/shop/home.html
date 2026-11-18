@@ -99,6 +99,8 @@
 </section>
 {% endif %}
 
+{% if reviews %}{% include 'includes/_reviews.html' %}{% endif %}
+
 <div class="wrap design-home-info">
   {% include 'shop/_design_faq.html' with items=faq %}
   {% include 'shop/_design_process.html' %}

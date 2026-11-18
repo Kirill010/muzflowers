@@ -1,6 +1,7 @@
 import json
 import xml.etree.ElementTree as ET
 
+from django.core.exceptions import ValidationError
 from django.test import override_settings
 from django.urls import reverse
 
@@ -16,7 +17,7 @@ class PageTests(ShopTestCase):
 
     def test_all_public_pages_open(self):
         names = ['home', 'catalog', 'bouquet_builder', 'balloons', 'souvenirs', 'music', 'offices', 'subscription', 'delivery', 'care', 'about', 'contacts', 'faq', 'privacy', 'offer',
-                 'legal', 'consent', 'marketing_consent', 'cookies', 'cart']
+                 'legal', 'consent', 'marketing_consent', 'cookies', 'cart', 'wishlist']
         for name in names:
             with self.subTest(page=name):
                 self.assertEqual(self.client.get(reverse(f'shop:{name}')).status_code, 200)
@@ -115,6 +116,28 @@ class PageTests(ShopTestCase):
         self.assertContains(contacts, 'https://max.ru/muzflowers')
         self.assertNotContains(contacts, '<b>MAX</b>')
 
+    def test_only_checked_reviews_are_shown(self):
+        Review.objects.create(name='Не опубликовано', text='Непроверенный текст', permission_given=False)
+        verified = Review.objects.create(name='Анна', text='Проверенный отзыв покупателя', rating=5, permission_given=True,
+                                         source_url='https://yandex.ru/maps/org/muzflowers/123/reviews/456/')
+        response = self.client.get(reverse('shop:home'))
+        self.assertContains(response, verified.text)
+        self.assertContains(response, verified.source_url)
+        self.assertContains(response, 'Оригинал')
+        self.assertNotContains(response, 'Непроверенный текст')
+        self.assertNotContains(response, 'aggregateRating')
+
+    def test_review_requires_permission_and_verifiable_yandex_source(self):
+        with self.assertRaises(ValidationError):
+            Review(name='Анна', text='Отзыв', is_published=True, permission_given=False).full_clean()
+        for url in ('', 'https://example.com/review/1', 'https://yandex.ru/maps/?text=shop',
+                    'https://yandex.ru.evil.example/maps/org/shop/1/'):
+            with self.subTest(url=url):
+                with self.assertRaises(ValidationError):
+                    Review(name='Анна', text='Отзыв', permission_given=True, source_url=url).full_clean()
+        Review(name='Анна', text='Отзыв', permission_given=True,
+               source_url='https://yandex.ru/maps/org/shop/1/reviews/2/').full_clean()
+
     def test_faq_page_has_faq_markup(self):
         r = self.client.get(reverse('shop:faq'))
         markup = json.loads(r.context['jsonld'][0])
@@ -146,6 +169,53 @@ class PageTests(ShopTestCase):
                 self.assertNotContains(r, 'iiko')
         self.assertContains(self.client.get(reverse('shop:privacy')), 'Трансграничная передача')
         self.assertContains(self.client.get(reverse('shop:privacy')), 'ИИ и обезличенная аналитика')
+
+
+class WishlistTests(ShopTestCase):
+    def toggle(self, product=None, **extra):
+        return self.client.post(reverse('shop:wishlist_toggle'), {'product': (product or self.rose).pk, **extra},
+                                headers={'X-Requested-With': 'fetch'})
+
+    def test_toggle_persists_in_session_and_page(self):
+        response = self.toggle()
+        self.assertEqual(response.json(), {'ok': True, 'active': True, 'count': 1, 'product': self.rose.pk,
+                                           'message': '«Классика» — в избранном'})
+        self.assertEqual(self.client.session['mz_wishlist'], [self.rose.pk])
+        page = self.client.get(reverse('shop:wishlist'))
+        self.assertEqual([p.pk for p in page.context['products']], [self.rose.pk])
+        self.assertContains(page, 'Классика')
+        self.assertContains(page, 'noindex, nofollow')
+        self.assertContains(page, 'aria-pressed="true"')
+        self.assertFalse(self.toggle().json()['active'])
+        self.assertEqual(self.client.session['mz_wishlist'], [])
+
+    def test_header_count_and_catalog_button(self):
+        self.toggle()
+        page = self.client.get(reverse('shop:catalog'))
+        self.assertContains(page, 'data-wishlist-count data-count="1"')
+        self.assertContains(page, 'data-wishlist-form')
+
+    def test_hidden_products_cannot_be_added_and_disappear_from_page(self):
+        self.toggle()
+        self.rose.is_active = False
+        self.rose.save()
+        self.assertEqual(self.toggle().status_code, 404)
+        self.assertEqual(self.client.get(reverse('shop:wishlist')).context['products'], [])
+        self.cat.is_active = False
+        self.cat.save()
+        self.rose.is_active = True
+        self.rose.save()
+        self.assertEqual(self.toggle().status_code, 404)
+
+    def test_invalid_product_and_get_are_rejected(self):
+        self.assertEqual(self.client.post(reverse('shop:wishlist_toggle'), {'product': 'bad'}).status_code, 404)
+        self.assertEqual(self.client.get(reverse('shop:wishlist_toggle')).status_code, 405)
+
+    def test_redirect_cannot_leave_the_site(self):
+        response = self.client.post(reverse('shop:wishlist_toggle'), {'product': self.rose.pk, 'next': 'https://evil.example/'})
+        self.assertRedirects(response, reverse('shop:wishlist'))
+        response = self.client.post(reverse('shop:wishlist_toggle'), {'product': self.rose.pk, 'next': self.rose.get_absolute_url()})
+        self.assertRedirects(response, self.rose.get_absolute_url())
 
 
 class CatalogTests(ShopTestCase):
