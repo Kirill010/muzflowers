@@ -4,14 +4,12 @@ from django.utils.functional import SimpleLazyObject
 from .cart import Cart
 from .legal import DOCUMENT_DATE, DOCUMENT_VERSION
 from .models import Addon, Shop, SiteSettings
-from .wishlist import Wishlist
 
 
 def site(request):
     """Данные, нужные на каждой странице: настройки магазина, точки, корзина.
     Тяжёлое (точки, корзина) считается лениво — только если шаблон этого действительно касается."""
     cart = Cart(request)
-    wishlist = Wishlist(request)
     origin = settings.SITE_URL or request.build_absolute_uri('/').rstrip('/')
     shops = SimpleLazyObject(lambda: list(Shop.objects.filter(is_active=True)))
     return {
@@ -23,8 +21,6 @@ def site(request):
         'cart_promo': cart.promo,
         'cart_quote': SimpleLazyObject(cart.quote) if cart else None,
         'cart_addons': SimpleLazyObject(cart.addon_states),
-        'wishlist_ids': SimpleLazyObject(lambda: wishlist.ids),
-        'wishlist_count': SimpleLazyObject(lambda: wishlist.count),
         'site_origin': origin,
         'canonical_url': origin + request.path,
         'admin_url': '/' + settings.ADMIN_URL,

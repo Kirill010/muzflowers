@@ -38,7 +38,7 @@ class SiteSettings(models.Model):
 
     shop_name = models.CharField('Название магазина', max_length=60, default='MuzFlowers')
     phone = models.CharField('Телефон', max_length=30, default='+7 (995) 152-21-31')
-    email = models.EmailField('Почта магазина', blank=True, help_text='Показывается на сайте и в письмах клиентам')
+    email = models.EmailField('Почта магазина', blank=True, default='muzflowers@ya.ru', help_text='Показывается на сайте и в письмах клиентам')
     telegram = models.CharField('Telegram-канал (без @)', max_length=40, blank=True, default='muzflowers')
     max_url = models.URLField('MAX: ссылка на контакт или канал', blank=True, default='https://web.max.ru/-73754300368320',
                               help_text='Полная ссылка, начинается с https://. Пусто — ссылку не показываем')

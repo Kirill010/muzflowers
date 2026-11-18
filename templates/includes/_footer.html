@@ -33,11 +33,11 @@
     <address class="site-footer__col">
       <h2 class="site-footer__title">Контакты</h2>
       <a href="{{ site.phone_href }}">{% icon 'phone' %} {{ site.phone }}</a>
+      {% if site.email %}<a href="mailto:{{ site.email }}">{% icon 'mail' %} {{ site.email }}</a>{% endif %}
       {% if site.telegram_url %}<a href="{{ site.telegram_url }}" target="_blank" rel="noopener">{% icon 'send' %} Telegram</a>{% endif %}
-      {% if site.max_url %}<a href="{{ site.max_url }}" target="_blank" rel="noopener">MAX</a>{% endif %}
+      {% if site.max_url %}<a href="{{ site.max_url }}" target="_blank" rel="noopener">{% icon 'chat' %} MAX</a>{% endif %}
       {% for shop in shops %}<span>{% icon 'pin' %} {{ shop.full_address|default:shop.name }}</span>{% endfor %}
       <span>{% icon 'clock' %} {{ site.hours_display }}</span>
-      {% if site.email %}<a href="mailto:{{ site.email }}">{% icon 'mail' %} {{ site.email }}</a>{% endif %}
       {% if site.yandex_maps_url %}<a href="{{ site.yandex_maps_url }}" target="_blank" rel="noopener">{% icon 'pin' %} Маршрут в Яндекс Картах</a>{% endif %}
     </address>
   </div>

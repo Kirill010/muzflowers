@@ -17,10 +17,11 @@ class PageTests(ShopTestCase):
 
     def test_all_public_pages_open(self):
         names = ['home', 'catalog', 'bouquet_builder', 'balloons', 'souvenirs', 'music', 'offices', 'subscription', 'delivery', 'care', 'about', 'contacts', 'faq', 'privacy', 'offer',
-                 'legal', 'consent', 'marketing_consent', 'cookies', 'cart', 'wishlist']
+                 'legal', 'consent', 'marketing_consent', 'cookies', 'cart']
         for name in names:
             with self.subTest(page=name):
                 self.assertEqual(self.client.get(reverse(f'shop:{name}')).status_code, 200)
+        self.assertEqual(self.client.get('/wishlist/').status_code, 404)
 
     def test_category_and_product_pages(self):
         self.assertContains(self.client.get(self.cat.get_absolute_url()), 'Классика')
@@ -114,6 +115,12 @@ class PageTests(ShopTestCase):
         contacts = self.client.get(reverse('shop:contacts'))
         self.assertContains(contacts, 'https://t.me/muzflowers')
         self.assertContains(contacts, 'https://max.ru/muzflowers')
+        self.assertContains(contacts, 'mailto:muzflowers@ya.ru')
+        self.assertContains(contacts, '>Telegram</a>')
+        self.assertContains(contacts, '>MAX</a>')
+        self.assertContains(contacts, '#i-chat')
+        self.assertNotContains(contacts, 'Telegram —')
+        self.assertNotContains(contacts, 'Написать в MAX')
         self.assertNotContains(contacts, '<b>MAX</b>')
 
     def test_only_checked_reviews_are_shown(self):
@@ -169,53 +176,6 @@ class PageTests(ShopTestCase):
                 self.assertNotContains(r, 'iiko')
         self.assertContains(self.client.get(reverse('shop:privacy')), 'Трансграничная передача')
         self.assertContains(self.client.get(reverse('shop:privacy')), 'ИИ и обезличенная аналитика')
-
-
-class WishlistTests(ShopTestCase):
-    def toggle(self, product=None, **extra):
-        return self.client.post(reverse('shop:wishlist_toggle'), {'product': (product or self.rose).pk, **extra},
-                                headers={'X-Requested-With': 'fetch'})
-
-    def test_toggle_persists_in_session_and_page(self):
-        response = self.toggle()
-        self.assertEqual(response.json(), {'ok': True, 'active': True, 'count': 1, 'product': self.rose.pk,
-                                           'message': '«Классика» — в избранном'})
-        self.assertEqual(self.client.session['mz_wishlist'], [self.rose.pk])
-        page = self.client.get(reverse('shop:wishlist'))
-        self.assertEqual([p.pk for p in page.context['products']], [self.rose.pk])
-        self.assertContains(page, 'Классика')
-        self.assertContains(page, 'noindex, nofollow')
-        self.assertContains(page, 'aria-pressed="true"')
-        self.assertFalse(self.toggle().json()['active'])
-        self.assertEqual(self.client.session['mz_wishlist'], [])
-
-    def test_header_count_and_catalog_button(self):
-        self.toggle()
-        page = self.client.get(reverse('shop:catalog'))
-        self.assertContains(page, 'data-wishlist-count data-count="1"')
-        self.assertContains(page, 'data-wishlist-form')
-
-    def test_hidden_products_cannot_be_added_and_disappear_from_page(self):
-        self.toggle()
-        self.rose.is_active = False
-        self.rose.save()
-        self.assertEqual(self.toggle().status_code, 404)
-        self.assertEqual(self.client.get(reverse('shop:wishlist')).context['products'], [])
-        self.cat.is_active = False
-        self.cat.save()
-        self.rose.is_active = True
-        self.rose.save()
-        self.assertEqual(self.toggle().status_code, 404)
-
-    def test_invalid_product_and_get_are_rejected(self):
-        self.assertEqual(self.client.post(reverse('shop:wishlist_toggle'), {'product': 'bad'}).status_code, 404)
-        self.assertEqual(self.client.get(reverse('shop:wishlist_toggle')).status_code, 405)
-
-    def test_redirect_cannot_leave_the_site(self):
-        response = self.client.post(reverse('shop:wishlist_toggle'), {'product': self.rose.pk, 'next': 'https://evil.example/'})
-        self.assertRedirects(response, reverse('shop:wishlist'))
-        response = self.client.post(reverse('shop:wishlist_toggle'), {'product': self.rose.pk, 'next': self.rose.get_absolute_url()})
-        self.assertRedirects(response, self.rose.get_absolute_url())
 
 
 class CatalogTests(ShopTestCase):

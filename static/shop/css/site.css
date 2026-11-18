@@ -331,10 +331,6 @@ mark { background: var(--warn-bg); color: var(--warn-text); padding: .1em .4em; 
 .card__text { color: var(--muted); font-size: .9rem; line-height: 1.45; }
 .card__foot { display: flex; align-items: center; justify-content: space-between; gap: .6rem; margin-top: auto; padding-top: .7rem; flex-wrap: wrap; }
 .card__foot form, .card__foot .btn { position: relative; z-index: 2; }
-.wishlist-toggle { position: absolute; z-index: 3; top: 8px; right: 8px; }
-.wishlist-toggle .icon-btn { background: color-mix(in srgb, var(--surface) 90%, transparent); border-color: var(--line); color: var(--brand); box-shadow: var(--shadow-sm); }
-.wishlist-toggle [aria-pressed="true"] .i { fill: currentColor; }
-.wishlist-toggle.is-busy { opacity: .65; }
 .price { display: flex; align-items: baseline; flex-wrap: wrap; gap: .1rem .4rem; }
 .price b { font-size: 1.2rem; font-weight: 800; }
 .price__from { font-size: .8rem; color: var(--muted); }
