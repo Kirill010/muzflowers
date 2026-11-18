@@ -211,7 +211,7 @@ class ModelAdminTests(AdminTestCase):
         self.assertEqual(r.status_code, 302, getattr(r, 'context', None) and r.context['adminform'].form.errors)
         page = self.client.get(reverse('shop:delivery'))
         self.assertContains(page, '450')
-        self.assertContains(page, 'ежедневно, 9:00–20:00')
+        self.assertContains(page, 'ежедневно, 09:00–20:00')
 
     def test_order_changelist_filters_and_search(self):
         url = reverse('admin:shop_order_changelist')

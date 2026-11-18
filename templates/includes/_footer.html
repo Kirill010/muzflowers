@@ -6,7 +6,7 @@
         <img class="brand__mark" src="{% static 'shop/img/logo-pink.png' %}" width="52" height="52" alt="" loading="lazy">
         <span class="brand__word">MUZ<span>FLOWERS</span></span>
       </a>
-      <p>Цветочный магазин у Курского вокзала. Собираем букеты из цветов с собственного оптового склада.</p>
+      <p>Цветочный магазин в Выхино. Собираем букеты из цветов с собственного оптового склада.</p>
       {% if site.telegram_url %}<a class="btn btn--light btn--sm" href="{{ site.telegram_url }}" target="_blank" rel="noopener">{% icon 'send' %} Новые букеты и акции в Telegram</a>{% endif %}
     </div>
 
@@ -15,6 +15,7 @@
       <a href="{% url 'shop:catalog' %}">Каталог</a>
       <a href="{% url 'shop:bouquet_builder' %}">Собери сам</a>
       <a href="{% url 'shop:music' %}">Музыкальная открытка</a>
+      <a href="{% url 'shop:presentation' %}">Презентация MuzFlowers</a>
       <a href="{% url 'shop:offices' %}">Цветы для офиса</a>
       <a href="{% url 'shop:subscription' %}">Подписка на цветы</a>
     </nav>

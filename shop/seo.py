@@ -11,7 +11,7 @@ from .models import Category, Product, Shop, SiteSettings
 from .thumbs import thumb_url
 
 PUBLIC_PAGES = ['shop:home', 'shop:catalog', 'shop:bouquet_builder', 'shop:music', 'shop:delivery', 'shop:care', 'shop:offices',
-                'shop:subscription', 'shop:about', 'shop:contacts', 'shop:faq', 'shop:privacy', 'shop:offer',
+                'shop:subscription', 'shop:about', 'shop:presentation', 'shop:contacts', 'shop:faq', 'shop:privacy', 'shop:offer',
                 'shop:legal', 'shop:consent', 'shop:marketing_consent', 'shop:cookies']
 
 
@@ -59,7 +59,7 @@ def manifest(request):
     site = SiteSettings.load()
     return JsonResponse({
         'name': f'{site.shop_name} — цветочный магазин', 'short_name': site.shop_name, 'lang': 'ru', 'start_url': '/',
-        'display': 'standalone', 'background_color': '#fbf8f3', 'theme_color': '#4a6340',
+        'display': 'standalone', 'background_color': '#e4e9c9', 'theme_color': '#607344',
         'icons': [{'src': static('shop/img/icon-192.png'), 'sizes': '192x192', 'type': 'image/png'},
                   {'src': static('shop/img/icon-512.png'), 'sizes': '512x512', 'type': 'image/png'}],
     }, json_dumps_params={'ensure_ascii': False}, content_type='application/manifest+json')

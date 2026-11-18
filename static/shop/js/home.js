@@ -1,34 +1,25 @@
-/* Главная и страница «Музыкальная открытка»: «сейчас открыто» и короткая мелодия-пример. */
+/* Вращение эмблемы на главной и мелодия на странице музыкальной открытки. */
 (function () {
   'use strict';
 
   var recordToggle = document.querySelector('[data-record-toggle]');
   if (recordToggle) {
     var motion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    recordToggle.hidden = motion.matches;
-    motion.addEventListener('change', function (event) { recordToggle.hidden = event.matches; });
+    var hint = document.querySelector('[data-record-hint]');
+    function setSpinning(spinning) {
+      recordToggle.setAttribute('aria-pressed', String(spinning));
+      hint.textContent = spinning ? 'Нажмите, чтобы остановить' : 'Нажмите на эмблему';
+    }
+    function syncMotion() {
+      recordToggle.disabled = motion.matches;
+      hint.hidden = motion.matches;
+      if (motion.matches) setSpinning(false);
+    }
+    syncMotion();
+    motion.addEventListener('change', syncMotion);
     recordToggle.addEventListener('click', function () {
-      var paused = recordToggle.getAttribute('aria-pressed') !== 'true';
-      recordToggle.setAttribute('aria-pressed', String(paused));
-      recordToggle.closest('.design-hero__record').classList.toggle('is-paused', paused);
+      setSpinning(recordToggle.getAttribute('aria-pressed') !== 'true');
     });
-  }
-
-  /* ───── открыто / закрыто (время по Москве) ───── */
-  var status = document.querySelector('[data-open-now]');
-  if (status) {
-    var toMin = function (s) { var p = s.split(':'); return (+p[0]) * 60 + (+p[1]); };
-    var clock = function (s) { return String(parseInt(s.split(':')[0], 10)) + ':' + s.split(':')[1]; };
-    var parts = new Intl.DateTimeFormat('ru-RU', { timeZone: 'Europe/Moscow', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(new Date());
-    var now = 0;
-    parts.forEach(function (p) { if (p.type === 'hour') now += (+p.value % 24) * 60; if (p.type === 'minute') now += +p.value; });
-    var open = toMin(status.dataset.open), close = toMin(status.dataset.close), text;
-    if (now >= open && now < close) text = (close - now <= 60 ? 'Скоро закроемся — до ' : 'Открыто до ') + clock(status.dataset.close);
-    else if (now < open) text = 'Откроемся сегодня в ' + clock(status.dataset.open);
-    else text = 'Откроемся завтра в ' + clock(status.dataset.open);
-    var label = status.querySelector('[data-open-now-text]');
-    if (label) label.textContent = text;
-    status.classList.toggle('is-closed', !(now >= open && now < close));
   }
 
   /* ───── мелодия-пример: играет прямо в браузере, без файлов ───── */

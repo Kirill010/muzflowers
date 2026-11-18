@@ -11,9 +11,11 @@ def site(request):
     Тяжёлое (точки, корзина) считается лениво — только если шаблон этого действительно касается."""
     cart = Cart(request)
     origin = settings.SITE_URL or request.build_absolute_uri('/').rstrip('/')
+    shops = SimpleLazyObject(lambda: list(Shop.objects.filter(is_active=True)))
     return {
         'site': SiteSettings.load(),
-        'shops': SimpleLazyObject(lambda: list(Shop.objects.filter(is_active=True))),
+        'shops': shops,
+        'primary_pickup': SimpleLazyObject(lambda: next((shop for shop in shops if shop.is_pickup), None)),
         'music_addon': SimpleLazyObject(lambda: Addon.objects.filter(is_active=True, is_music=True).first()),
         'cart_count': cart.count,
         'cart_promo': cart.promo,
@@ -24,4 +26,5 @@ def site(request):
         'admin_url': '/' + settings.ADMIN_URL,
         'legal_version': DOCUMENT_VERSION,
         'legal_date': DOCUMENT_DATE,
+        'sites_storefront': getattr(settings, 'SITES_STOREFRONT', False),
     }

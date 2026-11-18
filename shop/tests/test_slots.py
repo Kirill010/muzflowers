@@ -25,7 +25,7 @@ class SlotTests(ShopTestCase):
     def test_asap_not_offered_before_opening(self):
         values = [o['value'] for o in slots.time_options(TODAY, 'pickup', now=at(6))]
         self.assertNotIn('asap', values)
-        self.assertEqual(values[0], '08:00')
+        self.assertEqual(values[0], '09:00')
 
     def test_nothing_left_late_in_the_evening(self):
         self.assertEqual(slots.time_options(TODAY, 'pickup', now=at(20, 50)), [])
@@ -33,15 +33,15 @@ class SlotTests(ShopTestCase):
 
     def test_future_day_has_full_grid(self):
         values = [o['value'] for o in slots.time_options(TOMORROW, 'pickup')]
-        self.assertEqual((values[0], values[-1], len(values)), ('08:00', '20:30', 26))
+        self.assertEqual((values[0], values[-1], len(values)), ('09:00', '20:30', 24))
 
     def test_delivery_windows(self):
         values = [o['value'] for o in slots.time_options(TOMORROW, 'delivery')]
-        self.assertEqual(values, ['08:00-10:00', '10:00-12:00', '12:00-14:00', '14:00-16:00', '16:00-18:00', '18:00-20:00', '20:00-21:00'])
+        self.assertEqual(values, ['09:00-11:00', '11:00-13:00', '13:00-15:00', '15:00-17:00', '17:00-19:00', '19:00-21:00'])
 
     def test_delivery_today_respects_lead_time(self):
         values = [o['value'] for o in slots.time_options(TODAY, 'delivery')]
-        self.assertEqual(values[0], '14:00-16:00')  # 12:00 + 120 минут
+        self.assertEqual(values[0], '15:00-17:00')  # первое окно после 14:00
 
     def test_closed_special_day(self):
         SpecialDay.objects.create(date=TOMORROW, is_closed=True, note='Выходной')
@@ -74,5 +74,5 @@ class SlotTests(ShopTestCase):
     def test_pick_option(self):
         self.assertEqual(slots.pick_option(TOMORROW, 'pickup', '10:00')['time_from'].hour, 10)
         self.assertIsNone(slots.pick_option(TOMORROW, 'pickup', '03:00'))
-        self.assertIsNone(slots.pick_option(TODAY, 'pickup', '08:00'))  # это время уже прошло
+        self.assertIsNone(slots.pick_option(TODAY, 'pickup', '09:00'))  # это время уже прошло
         self.assertTrue(slots.pick_option(TODAY, 'pickup', 'asap')['asap'])

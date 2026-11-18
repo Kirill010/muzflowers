@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load shop_tags %}
-{% block title %}Контакты и адрес — {{ site.shop_name }}, Курский вокзал, Москва{% endblock %}
+{% block title %}Контакты и адрес — {{ site.shop_name }}, Выхино, Москва{% endblock %}
 {% block description %}Адрес, телефон и часы работы {{ site.shop_name }}: {% for shop in shops|slice:":1" %}{{ shop.address }}, {% endfor %}{{ site.hours_display|lower }}. Как нас найти.{% endblock %}
 {% block content %}
 <section class="section">
@@ -15,7 +15,7 @@
         <p>{{ shop.address|default:"Адрес уточняйте по телефону" }}</p>
         {% if shop.landmark %}<p class="muted">{{ shop.landmark }}</p>{% endif %}
         <p>{% icon 'clock' %} {{ shop.hours_text|default:site.hours_display }}</p>
-        <p>{% icon 'phone' %} <a href="{{ site.phone_href }}">{{ shop.phone|default:site.phone }}</a></p>
+        <p>{% icon 'phone' %} <a href="{{ shop.phone_href|default:site.phone_href }}">{{ shop.phone|default:site.phone }}</a></p>
         {% if shop.map_url %}<a class="btn btn--ghost btn--sm" href="{{ shop.map_url }}" target="_blank" rel="noopener">Открыть карту</a>{% endif %}
       </article>
       {% endfor %}
@@ -25,7 +25,7 @@
         {% if site.telegram_url %}<p>{% icon 'send' %} <a href="{{ site.telegram_url }}" target="_blank" rel="noopener">t.me/{{ site.telegram }}</a></p>{% endif %}
         {% if site.email %}<p>{% icon 'mail' %} <a href="mailto:{{ site.email }}">{{ site.email }}</a></p>{% endif %}
         {% if site.yandex_maps_url %}<p>{% icon 'star-o' %} <a href="{{ site.yandex_maps_url }}" target="_blank" rel="noopener">Яндекс Карты</a>{% if site.yandex_rating %} — {{ site.yandex_rating|floatformat:1 }}{% endif %}</p>{% endif %}
-        <p class="muted">Отвечаем на сообщения и звонки в течение 15 минут в рабочее время.</p>
+        <p class="muted">Если не знаете, что выбрать, позвоните. Подскажем, что сегодня есть в магазине.</p>
       </article>
     </div>
 

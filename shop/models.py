@@ -35,19 +35,19 @@ class SiteSettings(models.Model):
     CACHE_KEY = 'mz:site-settings'
 
     shop_name = models.CharField('Название магазина', max_length=60, default='MuzFlowers')
-    phone = models.CharField('Телефон', max_length=30, default='+7 (917) 549-49-41')
+    phone = models.CharField('Телефон', max_length=30, default='+7 (995) 152-21-31')
     email = models.EmailField('Почта магазина', blank=True, help_text='Показывается на сайте и в письмах клиентам')
     telegram = models.CharField('Telegram-канал (без @)', max_length=40, blank=True, default='muzflowers')
     yandex_maps_url = models.URLField('Карточка в Яндекс Картах (ссылка)', blank=True,
-                                      default='https://yandex.ru/maps/org/muzflowers/31877720651/')
+                                      default='https://yandex.ru/maps/?text=%D0%9C%D0%BE%D1%81%D0%BA%D0%B2%D0%B0%2C%20%D1%83%D0%BB.%20%D0%92%D0%B5%D1%88%D0%BD%D1%8F%D0%BA%D0%BE%D0%B2%D1%81%D0%BA%D0%B0%D1%8F%2C%2039%D0%93')
     yandex_rating = models.DecimalField('Рейтинг в Яндекс Картах', max_digits=2, decimal_places=1, null=True, blank=True,
-                                        default=Decimal('4.6'), help_text='Поменяйте вручную, когда рейтинг изменится. Пусто — не показываем')
-    yandex_votes = models.PositiveIntegerField('Сколько оценок в Яндекс Картах', null=True, blank=True, default=26)
+                                        help_text='Поменяйте вручную, когда рейтинг изменится. Пусто — не показываем')
+    yandex_votes = models.PositiveIntegerField('Сколько оценок в Яндекс Картах', null=True, blank=True)
 
-    open_time = models.TimeField('Открываемся в', default=time(8, 0))
+    open_time = models.TimeField('Открываемся в', default=time(9, 0))
     close_time = models.TimeField('Закрываемся в', default=time(21, 0))
     hours_text = models.CharField('Часы работы (как написать на сайте)', max_length=80, blank=True,
-                                  help_text='Если пусто — напишем «Ежедневно, 8:00–21:00» по времени выше')
+                                  help_text='Если пусто — напишем «Ежедневно, 09:00–21:00» по времени выше')
 
     orders_paused = models.BooleanField('Пауза: временно не принимать заказы', default=False,
                                         help_text='Включите, если не успеваете. Букеты видно, но заказать нельзя')
@@ -118,11 +118,11 @@ class SiteSettings(models.Model):
 
     @property
     def yandex_reviews_url(self):
-        return self.yandex_maps_url.rstrip('/') + '/reviews/' if self.yandex_maps_url else ''
+        return self.yandex_maps_url.rstrip('/') + '/reviews/' if '/org/' in self.yandex_maps_url else ''
 
     @staticmethod
-    def _hm(t):  # 8:00 (без нуля впереди; %-H не работает на Windows, поэтому собираем вручную)
-        return f'{t.hour}:{t.minute:02d}'
+    def _hm(t):
+        return t.strftime('%H:%M')
 
     @property
     def hours_display(self):
@@ -134,10 +134,10 @@ class SiteSettings(models.Model):
 
 
 class Shop(models.Model):
-    """Точка, где можно забрать заказ (Курская, Выхино…)."""
+    """Точка, где можно забрать заказ."""
     name = models.CharField('Название', max_length=60)
     address = models.CharField('Адрес', max_length=200, blank=True)
-    landmark = models.CharField('Как найти', max_length=200, blank=True, help_text='Например: «подземный переход у Курского вокзала»')
+    landmark = models.CharField('Как найти', max_length=200, blank=True, help_text='Например: «рядом с выходом из метро»')
     phone = models.CharField('Телефон точки', max_length=30, blank=True, help_text='Пусто — покажем общий телефон магазина')
     hours_text = models.CharField('Часы работы', max_length=80, blank=True, help_text='Пусто — покажем общие часы')
     map_url = models.URLField('Ссылка на карту', blank=True)
@@ -156,6 +156,10 @@ class Shop(models.Model):
     @property
     def full_address(self):
         return ', '.join(x for x in (self.address, self.landmark) if x)
+
+    @property
+    def phone_href(self):
+        return 'tel:+' + ''.join(ch for ch in self.phone if ch.isdigit()) if self.phone else ''
 
 
 # ───────────────────────────── каталог ─────────────────────────────

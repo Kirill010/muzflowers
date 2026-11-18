@@ -4,35 +4,34 @@
 {% block head %}<link rel="stylesheet" href="{% static 'shop/css/design.css' %}">{% endblock %}
 {% block content %}
 
-<section class="design-hero">
+<section class="design-hero" aria-labelledby="home-title">
   <div class="wrap design-hero__inner">
-    <div class="design-hero__record">
-      <div class="design-hero__disc">
-        <img src="{% static 'shop/img/logo-sage.png' %}" alt="MuzFlowers" width="400" height="400" fetchpriority="high">
-      </div>
-      <button class="design-hero__pause" type="button" data-record-toggle aria-pressed="false" hidden>Пауза вращения</button>
-    </div>
     <div class="design-hero__text">
-      <p class="design-hero__tagline">Любовь начинается с жеста</p>
-      <h1 class="display design-hero__title">Свежие цветы напрямую от поставщика</h1>
-      <div class="design-hero__ribbon">
-        <span>Витамины для цветов в подарок</span>
-        <span>{% if music_addon and not music_addon.price %}Музыкальная открытка в подарок{% else %}Музыкальная открытка с вашей песней{% endif %}</span>
-      </div>
+      <p class="eyebrow design-hero__location">Цветочная мастерская · Выхино</p>
+      <h1 id="home-title" class="display design-hero__title">Любовь начинается <em>с жеста.</em></h1>
+      <p class="design-hero__intro">Собираем букеты из свежих цветов напрямую от поставщиков. Расскажите, для кого букет, и мы поможем выбрать цветы по вашему бюджету.</p>
       <div class="design-hero__buttons">
-        <a class="btn design-button design-button--primary btn--lg" href="{% url 'shop:catalog' %}">Заказать букет {% icon 'arrow' %}</a>
-        <a class="btn design-button design-button--light btn--lg" href="{% url 'shop:bouquet_builder' %}">Собери сам</a>
+        <a class="btn design-button design-button--primary btn--lg" href="{% url 'shop:catalog' %}">Выбрать букет {% icon 'arrow' %}</a>
+        <a class="btn design-button design-button--light btn--lg" href="{% url 'shop:bouquet_builder' %}">Собрать самому</a>
       </div>
-      <a class="design-hero__music" href="{% url 'shop:music' %}">{% icon 'music' %} Как звучит открытка</a>
+      <a class="design-hero__music" href="{% url 'shop:music' %}">{% icon 'music' %} Добавить открытку с вашей песней</a>
     </div>
-    <div class="design-hero__facts">
-      {% if site.delivery_enabled %}
-      <a href="{% url 'shop:delivery' %}">{% icon 'truck' %} Доставка по Москве{% if site.delivery_lead_minutes %} от {{ site.delivery_lead_minutes }} мин.{% endif %}</a>
-      {% endif %}
-      {% for shop in shops %}{% if shop.is_pickup %}{% ifchanged %}<a href="{% url 'shop:delivery' %}">{% icon 'pin' %} Самовывоз бесплатно</a>{% endifchanged %}{% endif %}{% endfor %}
-      <span data-open-now data-open="{{ site.open_time|time:'H:i' }}" data-close="{{ site.close_time|time:'H:i' }}">
-        {% icon 'clock' %} <span data-open-now-text>{{ site.hours_display }}</span>
-      </span>
+    <div class="design-hero__visual">
+      <img class="design-hero__photo" src="{% static 'shop/img/studio-portrait.webp' %}" alt="Наталья Боброва с авторским букетом MuzFlowers" width="882" height="909" fetchpriority="high">
+      <div class="design-hero__record">
+        <button class="design-hero__disc" type="button" data-record-toggle aria-label="Вращение эмблемы MuzFlowers" aria-pressed="false" aria-describedby="record-hint">
+          <span class="design-hero__vinyl"><img src="{% static 'shop/img/logo-sage.png' %}" alt="" width="400" height="400"></span>
+        </button>
+        <span class="design-hero__hint" id="record-hint" data-record-hint>Нажмите на эмблему</span>
+      </div>
+    </div>
+  </div>
+  <div class="design-hero__strip">
+    <div class="wrap design-hero__facts">
+      <a href="{% url 'shop:contacts' %}">{% icon 'pin' %} {% if primary_pickup %}{{ primary_pickup.address }}{% else %}Магазин в Выхино{% endif %}</a>
+      <span>{% icon 'clock' %} {{ site.hours_display }}</span>
+      <a href="{% url 'shop:delivery' %}">{% icon 'truck' %} {% if site.delivery_enabled %}Доставка по Москве{% else %}Самовывоз{% endif %}</a>
+      <span>{% icon 'leaf' %} Средство для срезанных цветов в подарок</span>
     </div>
   </div>
 </section>
@@ -44,7 +43,6 @@
 <section class="quick-pick" aria-labelledby="quick-pick-title">
   <div class="wrap quick-pick__inner">
     <div class="quick-pick__head">
-      <p class="eyebrow">Ничего лишнего</p>
       <h2 class="display display--sm" id="quick-pick-title">Букет под повод и бюджет</h2>
     </div>
     <form class="quick-pick__form" action="{% url 'shop:catalog' %}" method="get">
@@ -64,7 +62,7 @@
       </label>
       <button class="btn btn--primary" type="submit">Показать букеты {% icon 'arrow' %}</button>
     </form>
-    <p class="quick-pick__note">Упаковка уже в цене. Дату и удобный интервал выберите при оформлении.</p>
+    <p class="quick-pick__note">Упаковка уже в цене. {% if sites_storefront %}Когда удобно забрать букет, подскажет флорист.{% else %}Дату и удобный интервал выберите при оформлении.{% endif %}</p>
   </div>
 </section>
 
@@ -72,9 +70,9 @@
 <section class="section">
   <div class="wrap">
     <header class="section__head">
-      <p class="eyebrow">В магазине у Курской</p>
-      <h2 class="display">Готовые букеты <em>за 2 минуты</em></h2>
-      <p class="lead">В магазине их можно взять сразу. Заказали на сайте — заберёте через {{ site.pickup_lead_minutes }} минут. Упаковка уже в цене.</p>
+      <p class="eyebrow">Самовывоз в Выхино</p>
+      <h2 class="display">Готовые букеты <em>в Выхино</em></h2>
+      <p class="lead">В магазине можно забрать готовый букет сразу. Упаковка входит в цену.</p>
     </header>
     <div class="grid grid--4">{% for p in ready %}{% include 'includes/_card.html' %}{% endfor %}</div>
   </div>
@@ -103,6 +101,7 @@
 <div class="wrap design-home-info">
   {% include 'shop/_design_faq.html' with items=faq %}
   {% include 'shop/_design_process.html' %}
+  {% include 'shop/_studio_story.html' %}
 </div>
 
 {% if site.yandex_rating or reviews %}
@@ -131,7 +130,7 @@
   <div class="wrap find">
     <div class="find__text">
       <p class="eyebrow">Где нас найти</p>
-      <h2 class="display">Магазин у <em>Курского вокзала</em></h2>
+      <h2 class="display">Заходите в <em>Выхино</em></h2>
       {% for shop in shops %}{% if shop.is_pickup %}
       <p class="find__addr">{% icon 'pin' %} <span>{{ shop.address|default:shop.name }}{% if shop.landmark %}<small>{{ shop.landmark }}</small>{% endif %}</span></p>
       {% endif %}{% endfor %}

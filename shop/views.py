@@ -1,6 +1,7 @@
 import re
 from urllib.parse import urlencode
 
+from django.conf import settings
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db import transaction
@@ -37,7 +38,6 @@ def catalog_qs():
 
 
 def origin_of(request):
-    from django.conf import settings
     return settings.SITE_URL or request.build_absolute_uri('/').rstrip('/')
 
 
@@ -62,7 +62,7 @@ def home(request):
         'budgets': [(key, *values) for key, values in BUDGETS.items()],
         'categories': Category.objects.filter(is_active=True),
         'reviews': Review.objects.filter(is_published=True)[:6],
-        'faq': presentation_questions(SiteSettings.load()),
+        'faq': presentation_questions(SiteSettings.load(), storefront=getattr(settings, 'SITES_STOREFRONT', False)),
         'og_image': og_image(request),
         'jsonld': seo.dump(seo.florist(origin_of(request))),
     }
@@ -107,7 +107,8 @@ def catalog(request, slug=None):
     price_min, price_max = budget[1:] if budget else (request.GET.get('min', ''), request.GET.get('max', ''))
     occasion = request.GET.get('occasion') if request.GET.get('occasion') in OCCASION_FILTERS else ''
 
-    page = Paginator(items, PAGE_SIZE).get_page(request.GET.get('page'))
+    page_size = max(len(items), 1) if getattr(settings, 'SITES_STOREFRONT', False) else PAGE_SIZE
+    page = Paginator(items, page_size).get_page(request.GET.get('page'))
     keep = {k: v for k, v in request.GET.items() if k != 'page' and not (budget and k in ('budget', 'min', 'max')) and v}
     if budget:
         keep.update({key: value for key, value in (('min', price_min), ('max', price_max)) if value})
@@ -116,6 +117,7 @@ def catalog(request, slug=None):
         'category': category, 'page': page, 'products': page.object_list, 'total': len(items),
         'categories': Category.objects.filter(is_active=True), 'q': q, 'sort': sort, 'sorts': SORTS.items(),
         'occasion': occasion, 'occasions': OCCASION_FILTERS.items(),
+        'budget_ranges': {key: values[1:] for key, values in BUDGETS.items()},
         'ready_only': request.GET.get('ready') == '1', 'sale_only': request.GET.get('sale') == '1',
         'price_min': price_min, 'price_max': price_max,
         'price_floor': min(prices), 'price_ceil': max(prices),
@@ -202,14 +204,30 @@ def about(request):
     return _page(request, 'shop/about.html', jsonld=seo.dump(seo.florist(origin_of(request))))
 
 
+def presentation(request):
+    slides = [
+        ('01', 'Великая Школа Бизнеса', 'Защита проекта MuzFlowers. Боброва Наталья.'),
+        ('02', 'Главная страница', 'Свежие цветы от поставщика, доставка, витамины в подарок и музыкальная открытка.'),
+        ('03', 'Каталог и навигация', 'Букеты, «Собери сам», акции, сезонные цветы, композиции, розы, цветы, шары и сувениры.'),
+        ('04', 'Вопрос — ответ', 'Сколько простоят цветы, как оплатить и оформить доставку, что такое сезонные цветы, как ухаживать за букетом и почему он может отличаться от фото.'),
+        ('05', 'Как мы работаем', 'Получаем цветы от поставщиков, подготавливаем стебли, собираем композицию, выдаём в магазине или доставляем.'),
+        ('06', 'Как помогаем выбрать', 'Приветствуем, уточняем повод, срок и бюджет, предлагаем несколько вариантов. Согласуем состав, цену, адрес и время. После покупки просим отзыв.'),
+        ('07', 'Telegram', 'Фирменный канал MuzFlowers. На слайде показано оформление канала на момент защиты.'),
+        ('08', 'Авито', 'На слайде показаны объявления магазина на момент защиты проекта.'),
+        ('09', 'Видеоотзывы', 'Два кадра из видеоотзывов покупателей.'),
+        ('10', 'Итоги обучения', 'Всегда можно научиться. Всегда нужно учиться. Учиться — это самое интересное.'),
+    ]
+    return _page(request, 'shop/presentation.html', slides=slides)
+
+
 def contacts(request):
     return _page(request, 'shop/contacts.html', shops=Shop.objects.filter(is_active=True), jsonld=seo.dump(seo.florist(origin_of(request))))
 
 
 def faq(request):
-    items = presentation_questions(SiteSettings.load())
+    items = presentation_questions(SiteSettings.load(), storefront=getattr(settings, 'SITES_STOREFRONT', False))
     covered = [item.question for item in items] + ['Как оплатить заказ?', 'Сколько стоит доставка?']
-    extra = list(FAQ.objects.filter(is_active=True).exclude(question__in=covered))
+    extra = [] if getattr(settings, 'SITES_STOREFRONT', False) else list(FAQ.objects.filter(is_active=True).exclude(question__in=covered))
     return _page(request, 'shop/faq.html', items=items, extra=extra, jsonld=seo.dump(seo.faq_ld(items + extra)))
 
 

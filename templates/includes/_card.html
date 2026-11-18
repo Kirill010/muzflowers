@@ -1,5 +1,8 @@
-{% load shop_tags %}
-<article class="card{% if not p.is_orderable %} is-off{% endif %}">
+{% load shop_tags l10n %}
+<article class="card{% if not p.is_orderable %} is-off{% endif %}"{% if sites_storefront %}
+  data-static-item data-name="{{ p.name }} {{ p.tagline }} {{ p.description }} {{ p.category.name }}"
+  data-price="{{ p.price_from|unlocalize }}" data-occasion="{{ p.occasion }}" data-new="{{ p.created|date:'U' }}"
+  data-ready="{% if p.is_ready %}1{% endif %}" data-sale="{% if p.old_price and p.old_price > p.price %}1{% endif %}"{% endif %}>
   <a class="card__media" href="{{ p.get_absolute_url }}" tabindex="-1" aria-hidden="true">
     {% product_image p 'card' %}
     {% if p.badge %}<span class="card__badge">{{ p.badge }}</span>{% elif p.discount_percent %}<span class="card__badge card__badge--sale">−{{ p.discount_percent }}%</span>{% endif %}
@@ -13,7 +16,7 @@
     <div class="card__foot">
       <p class="price">{% if p.has_choice %}<span class="price__from">от</span> {% endif %}<b>{{ p.price_from|rub }}</b>{% if p.old_price %} <s class="price__old">{{ p.old_price|rub }}</s>{% endif %}</p>
       {% if p.is_orderable %}
-        {% if p.has_choice %}
+        {% if sites_storefront or p.has_choice %}
         <a class="btn btn--sm btn--ghost" href="{{ p.get_absolute_url }}">Выбрать</a>
         {% else %}
         <form method="post" action="{% url 'shop:cart_add' %}" data-cart-form data-add>{% csrf_token %}

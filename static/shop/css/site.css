@@ -2,30 +2,30 @@
 
 /* ───────── цвета и размеры ───────── */
 :root {
-  --sage: #9cb484;
-  --sage-100: #e4ecd9;
-  --sage-50: #f1f4ea;
-  --pink: #fca8c0;
-  --pink-100: #fde4ec;
+  --sage: #9db488;
+  --sage-100: #d8e2bb;
+  --sage-50: #ecedd4;
+  --pink: #f0a9bf;
+  --pink-100: #f7dce4;
 
-  --bg: #fbf8f3;
-  --surface: #ffffff;
-  --tint: #f1f4ea;
-  --text: #1f2b22;
-  --muted: #5b695e;
+  --bg: #e4e9c9;
+  --surface: #fbf1df;
+  --tint: #dce4bd;
+  --text: #263622;
+  --muted: #485744;
   --placeholder: #6d7a70;
   --line: rgba(31, 43, 34, .12);
   --line-strong: rgba(31, 43, 34, .28);
-  --brand: #4a6340;
-  --brand-hover: #3d5434;
+  --brand: #435b32;
+  --brand-hover: #354b27;
   --on-brand: #ffffff;
-  --brand-soft: #e4ecd9;
-  --accent: #b5395f;
-  --accent-soft: #fde4ec;
+  --brand-soft: #d7e2b8;
+  --accent: #982449;
+  --accent-soft: #f6d6e0;
   --on-accent: #ffffff;
-  --tile-1: #e4ecd9;
-  --tile-2: #fde4ec;
-  --tile-3: #f1f4ea;
+  --tile-1: #d9e1b7;
+  --tile-2: #f5d2dd;
+  --tile-3: #ede9c7;
   --danger: #b3261e;
   --warn-bg: #fff4d6;
   --warn-text: #5c4300;

@@ -20,6 +20,10 @@
 
     <div class="header-actions">
       <a class="header-phone" href="{{ site.phone_href }}">{% icon 'phone' %}<span>{{ site.phone }}</span></a>
+      {% if sites_storefront %}
+      <a class="icon-btn" href="{% url 'shop:catalog' %}#catalog-results" aria-label="Поиск по каталогу">{% icon 'search' %}</a>
+      <a class="icon-btn" href="{{ site.phone_href }}" aria-label="Позвонить флористу">{% icon 'phone' %}</a>
+      {% else %}
       <button class="icon-btn" type="button" data-search-open aria-label="Поиск по каталогу">{% icon 'search' %}</button>
       {% if user.is_authenticated %}
         <a class="icon-btn hide-xs" href="{% url 'accounts:profile' %}" aria-label="Личный кабинет">{% icon 'user' %}</a>
@@ -30,6 +34,7 @@
       <a class="icon-btn cart-btn" href="{% url 'shop:cart' %}" data-cart-open aria-label="Корзина" aria-haspopup="dialog">
         {% icon 'bag' %}<span class="cart-btn__count" data-cart-count data-count="{{ cart_count }}">{{ cart_count }}</span>
       </a>
+      {% endif %}
     </div>
   </div>
 </header>
@@ -54,15 +59,17 @@
     </nav>
     <div class="mobile-nav__foot">
       <a class="btn btn--primary btn--block" href="{{ site.phone_href }}">{% icon 'phone' %} {{ site.phone }}</a>
+      {% if not sites_storefront %}
       {% if user.is_authenticated %}<a class="btn btn--ghost btn--block" href="{% url 'accounts:profile' %}">{% icon 'user' %} Личный кабинет</a>
       {% else %}<a class="btn btn--ghost btn--block" href="{% url 'accounts:login' %}">{% icon 'user' %} Войти</a>{% endif %}
       <button class="btn btn--ghost btn--block" type="button" data-theme-toggle>{% icon 'moon' 'i--moon' %}{% icon 'sun' 'i--sun' %} Светлая / тёмная тема</button>
+      {% endif %}
     </div>
   </div>
   <div class="mobile-nav__shade" data-menu-close></div>
 </div>
 
-<div class="search" id="search" data-search data-url="{% url 'shop:suggest' %}" hidden role="dialog" aria-modal="true" aria-label="Поиск по каталогу">
+{% if not sites_storefront %}<div class="search" id="search" data-search data-url="{% url 'shop:suggest' %}" hidden role="dialog" aria-modal="true" aria-label="Поиск по каталогу">
   <div class="search__shade" data-search-close></div>
   <div class="search__panel">
     <form class="search__form" action="{% url 'shop:catalog' %}" method="get" role="search">
@@ -73,4 +80,4 @@
     <ul class="search__results" data-search-results></ul>
     <p class="search__hint">Нажмите Enter — покажем всё, что нашли в каталоге.</p>
   </div>
-</div>
+</div>{% endif %}

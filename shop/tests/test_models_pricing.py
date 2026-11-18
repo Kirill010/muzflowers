@@ -77,7 +77,7 @@ class CatalogModelTests(ShopTestCase):
         SiteSettings(pk=5, phone='+7 000').save()
         self.assertEqual(SiteSettings.objects.count(), 1)
         self.assertEqual(SiteSettings.load().phone, '+7 000')
-        self.assertEqual(SiteSettings().hours_display, 'Ежедневно, 8:00–21:00')
+        self.assertEqual(SiteSettings().hours_display, 'Ежедневно, 09:00–21:00')
 
     def test_order_set_status_marks_cash_order_paid_on_done(self):
         order = Order.objects.create(name='А', phone='+79175494941', date=TODAY, subtotal=100, total=100, status=Order.Status.READY)

@@ -3,16 +3,16 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>{% block title %}{{ site.shop_name }} — цветочный магазин у Курского вокзала в Москве{% endblock %}</title>
-<meta name="description" content="{% block description %}Букеты из цветов с собственного оптового склада: готовые за 2 минуты у Курского вокзала, доставка по Москве, музыкальная открытка с песней по QR-коду.{% endblock %}">
+<title>{% block title %}{{ site.shop_name }} — цветочный магазин в Выхино в Москве{% endblock %}</title>
+<meta name="description" content="{% block description %}Букеты из цветов с собственного оптового склада: готовые за 2 минуты в Выхино, доставка по Москве, музыкальная открытка с песней по QR-коду.{% endblock %}">
 <meta name="robots" content="{% block robots %}index, follow{% endblock %}">
 <link rel="canonical" href="{% block canonical %}{{ canonical_url }}{% endblock %}">
-<meta name="theme-color" content="#4a6340">
-<meta name="csrf-token" content="{{ csrf_token }}">
+<meta name="theme-color" content="#607344">
+{% if not sites_storefront %}<meta name="csrf-token" content="{{ csrf_token }}">{% endif %}
 <meta property="og:site_name" content="{{ site.shop_name }}">
 <meta property="og:type" content="{% block og_type %}website{% endblock %}">
 <meta property="og:locale" content="ru_RU">
-<meta property="og:title" content="{% block og_title %}{{ site.shop_name }} — цветочный магазин у Курского вокзала{% endblock %}">
+<meta property="og:title" content="{% block og_title %}{{ site.shop_name }} — цветочный магазин в Выхино{% endblock %}">
 <meta property="og:description" content="{% block og_description %}Букеты из цветов с собственного оптового склада. Готовые — за 2 минуты, доставка по Москве, музыкальная открытка по QR-коду.{% endblock %}">
 <meta property="og:url" content="{{ canonical_url }}">
 {% if og_image %}<meta property="og:image" content="{{ og_image }}">
@@ -45,10 +45,10 @@
 </main>
 
 {% include 'includes/_footer.html' %}
-{% block drawer %}{% include 'includes/_drawer.html' %}{% endblock %}
+{% block drawer %}{% if not sites_storefront %}{% include 'includes/_drawer.html' %}{% endif %}{% endblock %}
 <div class="toasts" id="toasts" role="status" aria-live="polite"></div>
 
-{% if site.metrika_id %}<meta name="metrika-id" content="{{ site.metrika_id }}">
+{% if site.metrika_id and not sites_storefront %}<meta name="metrika-id" content="{{ site.metrika_id }}">
 {% include 'includes/_cookie_consent.html' %}
 <script src="{% static 'shop/js/cookie_consent.js' %}?v=1" defer></script>{% endif %}
 <script src="{% static 'shop/js/core.js' %}" defer></script>

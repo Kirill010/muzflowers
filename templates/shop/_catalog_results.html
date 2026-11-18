@@ -1,11 +1,12 @@
 {% load shop_tags %}
 <div class="results__bar">
   {% if sale_only %}<h2 class="display display--sm">Акции</h2>{% endif %}
-  <p class="results__count">{{ total }} {{ total|plural:"букет,букета,букетов" }}</p>
+  <p class="results__count" data-results-count>{{ total }} {{ total|plural:"букет,букета,букетов" }}</p>
   <p class="results__delivery">Самовывоз — бесплатно{% if site.delivery_enabled %} · Доставка по Москве — {{ site.delivery_cost|rub }}{% if site.free_delivery_from %}, от {{ site.free_delivery_from|rub }} бесплатно{% endif %}{% endif %}</p>
 </div>
 {% if products %}
 <div class="grid grid--4">{% for p in products %}{% include 'includes/_card.html' %}{% endfor %}</div>
+{% endif %}
 {% if page.has_other_pages %}
 <nav class="pager" aria-label="Страницы каталога">
   {% if page.has_previous %}<a class="btn btn--ghost btn--sm" href="?{{ qs }}{% if qs %}&amp;{% endif %}page={{ page.previous_page_number }}">{% icon 'arrow-left' %} Назад</a>{% endif %}
@@ -13,8 +14,8 @@
   {% if page.has_next %}<a class="btn btn--ghost btn--sm" href="?{{ qs }}{% if qs %}&amp;{% endif %}page={{ page.next_page_number }}">Дальше {% icon 'arrow' %}</a>{% endif %}
 </nav>
 {% endif %}
-{% else %}
-<div class="empty">
+{% if not products or sites_storefront %}
+<div class="empty" data-catalog-empty{% if products %} hidden{% endif %}>
   {% icon 'flower' 'empty__icon' %}
   <h2>{% if sale_only %}Нет букетов со скидкой по этим условиям{% else %}Ничего не нашли{% endif %}</h2>
   <p>Измените условия поиска или посмотрите весь каталог.</p>

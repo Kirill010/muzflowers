@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load static shop_tags %}
+{% block title %}Презентация проекта — {{ site.shop_name }}{% endblock %}
+{% block description %}Десять слайдов Натальи Бобровой о проекте MuzFlowers, оформлении сайта и работе цветочной мастерской.{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'shop/css/design.css' %}">{% endblock %}
+{% block content %}
+<section class="section section--tight">
+  <div class="wrap">
+    <nav class="breadcrumbs" aria-label="Хлебные крошки">
+      <a href="{% url 'shop:home' %}">Главная</a>
+      <a href="{% url 'shop:about' %}">О нас</a>
+      <span aria-current="page">Презентация</span>
+    </nav>
+    <header class="section__head">
+      <p class="eyebrow">Великая Школа Бизнеса</p>
+      <h1 class="display display--lg">Как появился <em>MuzFlowers</em></h1>
+      <p class="lead">Десять слайдов из защиты проекта Натальи Бобровой. Актуальные условия и контакты собраны на страницах <a href="{% url 'shop:delivery' %}">«Доставка и оплата»</a> и <a href="{% url 'shop:contacts' %}">«Контакты»</a>.</p>
+    </header>
+    <div class="studio-slides">
+      {% for number, title, caption in slides %}
+      <figure class="studio-slide">
+        {% with path='shop/img/presentation/'|add:number|add:'.webp' %}
+        <a href="{% static path %}" aria-label="Открыть слайд {{ number }}: {{ title }}"><img src="{% static path %}" alt="" width="1344" height="756" loading="lazy" decoding="async"></a>
+        {% endwith %}
+        <figcaption><h2 class="display display--sm">{{ title }}</h2><p>{{ caption }}</p></figcaption>
+      </figure>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endblock %}

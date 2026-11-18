@@ -37,18 +37,18 @@ class CheckoutTests(ShopTestCase):
 
     def test_delivery_for_tomorrow_requires_prepayment_and_keeps_recipient(self):
         self.place_order(receive_method='delivery', address='Москва, ул. Пушкина, 1', address_details='подъезд 2',
-                         date=TOMORROW.isoformat(), time_slot='10:00-12:00', payment_method='transfer',
+                         date=TOMORROW.isoformat(), time_slot='11:00-13:00', payment_method='transfer',
                          other_recipient='on', recipient_name='Мама', recipient_phone='8 900 111-22-33', surprise='on')
         order = Order.objects.get()
         self.assertEqual((order.receive_method, order.shop, order.prepay_required), ('delivery', None, True))
         self.assertEqual((order.recipient_name, order.recipient_phone, order.surprise), ('Мама', '+79001112233', True))
-        self.assertEqual((order.time_from.hour, order.time_to.hour, order.delivery_cost, order.total), (10, 12, 300, 2290))
+        self.assertEqual((order.time_from.hour, order.time_to.hour, order.delivery_cost, order.total), (11, 13, 300, 2290))
         self.assertEqual(order.payment_status, 'pending')
 
     def test_free_delivery_over_threshold(self):
         self.add_to_cart(self.big)
         self.place_order(receive_method='delivery', address='Москва, ул. Пушкина, 1', date=TOMORROW.isoformat(),
-                         time_slot='10:00-12:00', payment_method='transfer')
+                         time_slot='11:00-13:00', payment_method='transfer')
         self.assertEqual((Order.objects.get().delivery_cost, Order.objects.get().total), (0, 7980))
 
     def test_promo_is_applied_and_counted(self):
@@ -103,12 +103,12 @@ class CheckoutTests(ShopTestCase):
     def test_delivery_needs_address_and_recipient(self):
         self.assertNoOrder(self.place_order(receive_method='delivery', address=''), 'address')
         r = self.place_order(receive_method='delivery', address='Москва, ул. Пушкина, 1', other_recipient='on',
-                             time_slot='16:00-18:00')
+                             time_slot='17:00-19:00')
         self.assertNoOrder(r, 'recipient_name')
 
     def test_delivery_can_be_switched_off(self):
         self.update_site(delivery_enabled=False)
-        r = self.place_order(receive_method='delivery', address='Москва, ул. Пушкина, 1', time_slot='16:00-18:00')
+        r = self.place_order(receive_method='delivery', address='Москва, ул. Пушкина, 1', time_slot='17:00-19:00')
         self.assertNoOrder(r, 'receive_method')
 
     def test_robots_are_caught_by_honeypot(self):
@@ -167,12 +167,12 @@ class CheckoutTests(ShopTestCase):
         self.assertEqual(r.context['method'], 'pickup')
         self.assertEqual(r.context['day'], TODAY)
         self.assertEqual(r.context['slot_options'][0]['value'], 'asap')
-        self.assertContains(r, 'Курская')
+        self.assertContains(r, 'Выхино')
 
     def test_state_endpoint_for_future_delivery(self):
         r = self.client.get(reverse('shop:checkout_state'), {'method': 'delivery', 'date': TOMORROW.isoformat(), 'addons': self.music.pk})
         data = r.json()
-        self.assertEqual(data['slots'][0], {'value': '08:00-10:00', 'label': '08:00–10:00'})
+        self.assertEqual(data['slots'][0], {'value': '09:00-11:00', 'label': '09:00–11:00'})
         self.assertTrue(data['prepay'])
         self.assertEqual([p['value'] for p in data['payments']], ['transfer'])
         self.assertEqual(data['total'], 1990 + 300 + 300)

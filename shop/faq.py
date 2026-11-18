@@ -2,21 +2,26 @@ from .models import FAQ
 from .utils import rub
 
 
-def presentation_questions(site):
-    payment = 'Доступные способы оплаты покажем при оформлении. Предоплату можно внести онлайн или переводом, в зависимости от доступных способов.'
+def presentation_questions(site, *, storefront=False):
+    payment = (
+        'Флорист назовёт сумму и доступные способы оплаты при заказе по телефону.'
+        if storefront else
+        'Доступные способы оплаты покажем при оформлении. Предоплату можно внести онлайн или переводом, в зависимости от доступных способов.'
+    )
     if site.allow_pay_on_receipt:
         payment += ' Для заказов без предоплаты доступна оплата при получении.'
     if site.prepay_future_orders:
         payment += ' Заказ на другую дату принимаем по предоплате.'
 
-    delivery = 'Сейчас доступен самовывоз у Курского вокзала.'
+    delivery = 'Сейчас доступен самовывоз в Выхино.'
     if site.delivery_enabled:
-        delivery = f'Доставляем по Москве. Выберите дату и интервал при оформлении. Стоимость доставки — {rub(site.delivery_cost)}.'
+        timing = 'Дату и время согласуем по телефону.' if storefront else 'Выберите дату и интервал при оформлении.'
+        delivery = f'Доставляем по Москве. {timing} Стоимость доставки — {rub(site.delivery_cost)}.'
         if site.delivery_lead_minutes:
             delivery += f' Ближайший интервал доставки начинается не раньше чем через {site.delivery_lead_minutes} мин.'
         if site.free_delivery_from:
             delivery += f' При заказе от {rub(site.free_delivery_from)} доставка бесплатная.'
-        delivery += ' Самовывоз у Курского вокзала бесплатный.'
+        delivery += ' Самовывоз в Выхино бесплатный.'
 
     return [
         FAQ(question='Сколько простоят цветы?',

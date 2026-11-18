@@ -15,8 +15,8 @@
       <h1 class="display display--lg">Собери <em>сам</em></h1>
       <p class="lead">Выберите вазу или корзину, добавьте цветы и расположите их по своему вкусу.</p>
     </header>
-    <form class="bouquet-form" method="post" data-bouquet-editor novalidate>
-      {% csrf_token %}
+    <form class="bouquet-form"{% if sites_storefront %} data-storefront-draft{% else %} method="post"{% endif %} data-bouquet-editor novalidate>
+      {% if not sites_storefront %}{% csrf_token %}{% endif %}
       {% if form.errors %}<p class="notice notice--error" role="alert">Проверьте отмеченные поля и отправьте заявку ещё раз.</p>{% endif %}
       {{ builder_config|json_script:'bouquet-config' }}
       {{ form.layout }}
@@ -54,20 +54,31 @@
       <noscript><p class="notice">Опишите цветы, основу и их расположение в пожеланиях флористу.</p></noscript>
       <section class="panel bouquet-questionnaire" aria-labelledby="questionnaire-title">
         <h2 class="display display--sm" id="questionnaire-title">Анкета для флориста</h2>
-        <p>Флорист уточнит наличие цветов и согласует состав, итоговую цену и время получения.</p>
+        <p>{% if sites_storefront %}Сохраните состав и пожелания, чтобы обсудить их с флористом по телефону.{% else %}Флорист уточнит наличие цветов и согласует состав, итоговую цену и время получения.{% endif %}</p>
         <div class="grid grid--2">
           {% include 'includes/_field.html' with field=form.recipient %}
           {% include 'includes/_field.html' with field=form.occasion %}
           {% include 'includes/_field.html' with field=form.date %}
           {% include 'includes/_field.html' with field=form.budget %}
+          {% if not sites_storefront %}
           {% include 'includes/_field.html' with field=form.name %}
           {% include 'includes/_field.html' with field=form.phone %}
+          {% endif %}
         </div>
         {% include 'includes/_field.html' with field=form.message %}
+        {% if sites_storefront %}
+        <div class="buttons">
+          <button type="button" class="btn btn--primary" data-copy-draft hidden>Скопировать состав</button>
+          <a class="btn btn--ghost" href="{{ site.phone_href }}">{% icon 'phone' %} Позвонить флористу</a>
+        </div>
+        <p role="status" data-draft-status></p>
+        <textarea class="input input--area" rows="5" readonly aria-label="Состав букета и пожелания" data-draft-output hidden></textarea>
+        {% else %}
         <label class="check{% if form.consent.errors %} has-error{% endif %}">{{ form.consent }} <span>Согласен на <a href="{% url 'shop:consent' %}" target="_blank" rel="noopener">обработку персональных данных</a></span></label>
         {% for error in form.consent.errors %}<p class="field__error">{{ error }}</p>{% endfor %}
         <div class="hp" aria-hidden="true"><label>Сайт <input type="text" name="website" tabindex="-1" autocomplete="off"></label></div>
         <button class="btn btn--primary btn--lg" type="submit">Отправить заявку {% icon 'arrow' %}</button>
+        {% endif %}
       </section>
     </form>
   </div>

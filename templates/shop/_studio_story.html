@@ -1,0 +1,13 @@
+{% load shop_tags %}
+<section class="studio-story" aria-labelledby="studio-story-title">
+  <div>
+    <p class="eyebrow">О мастерской</p>
+    <h2 class="display" id="studio-story-title">Подберём цветы под ваш бюджет</h2>
+    <p>Для начала нам достаточно знать, кому вы дарите цветы и по какому поводу. Предложим пару вариантов, покажем, из чего они собраны, и сразу назовём цену. Перед доставкой согласуем состав и время.</p>
+  </div>
+  <div class="studio-story__links">
+    <a class="btn btn--primary" href="{{ site.phone_href }}">{% icon 'phone' %} Позвонить флористу</a>
+    {% if site.telegram_url %}<a class="btn btn--ghost" href="{{ site.telegram_url }}" target="_blank" rel="noopener">{% icon 'send' %} Канал в Telegram</a>{% endif %}
+    <a class="link-arrow" href="{% url 'shop:presentation' %}">Презентация MuzFlowers {% icon 'arrow' %}</a>
+  </div>
+</section>

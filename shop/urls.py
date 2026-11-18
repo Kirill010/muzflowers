@@ -33,6 +33,7 @@ urlpatterns = [
     path('delivery/', views.delivery, name='delivery'),
     path('care/', views.care, name='care'),
     path('about/', views.about, name='about'),
+    path('presentation/', views.presentation, name='presentation'),
     path('contacts/', views.contacts, name='contacts'),
     path('faq/', views.faq, name='faq'),
     path('privacy/', views.privacy, name='privacy'),

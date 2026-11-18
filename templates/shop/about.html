@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% load static shop_tags %}
-{% block title %}О нас — {{ site.shop_name }}, цветочный магазин у Курского вокзала{% endblock %}
+{% block title %}О нас — {{ site.shop_name }}, цветочная мастерская в Выхино{% endblock %}
 {% block description %}{{ site.shop_name }} — розничные цветочные магазины в Москве. Букеты из цветов с собственного оптового склада, быстрая сборка и музыкальная открытка.{% endblock %}
 {% block head %}<link rel="stylesheet" href="{% static 'shop/css/design.css' %}">{% endblock %}
 {% block content %}
@@ -8,24 +8,13 @@
   <div class="wrap">
     {% include 'shop/_design_process.html' with process_heading=True %}
   </div>
-  <div class="wrap wrap--narrow prose design-faq__extra">
-    <h2>{{ site.shop_name }}</h2>
-    <p class="lead">Розничные цветочные магазины в Москве: у Курского вокзала и в Выхино. Цветы берём с собственного оптового склада и собираем из них готовые и авторские букеты.</p>
-
-    <div class="about-logo"><img src="{% static 'shop/img/logo-sage.png' %}" alt="Логотип {{ site.shop_name }}" width="180" height="180" loading="lazy"></div>
-
-    <h2>Что для нас важно</h2>
-    <ul>
-      <li><b>Скорость.</b> Готовые букеты — за 2 минуты, на заказ — за 15. Мимо вокзала идут люди, у которых нет времени ждать.</li>
-      <li><b>Свежесть.</b> Перед продажей проверяем каждый цветок: бутон должен быть плотным, лепестки — не осыпаться, стебель — крепким.</li>
-      <li><b>Авторские букеты.</b> Если хочется чего-то особенного — расскажите повод и бюджет, флорист предложит варианты.</li>
-      <li><b>Внимание.</b> Отвечаем на сообщения и звонки в течение 15 минут в рабочее время.</li>
-      <li><b>Музыка.</b> Название «Muz» — не случайно: к букету можно добавить открытку, которая играет вашу песню.</li>
-    </ul>
-
-    <h2>Заходите</h2>
-    <p>Магазин у Курского вокзала работает {{ site.hours_display|lower }}. А если удобнее заказать с дивана — всё есть на сайте.</p>
-    <p><a class="btn btn--primary" href="{% url 'shop:catalog' %}">Выбрать букет {% icon 'arrow' %}</a> <a class="btn btn--ghost" href="{% url 'shop:contacts' %}">Контакты</a></p>
+  <div class="wrap design-home-info">
+    {% include 'shop/_studio_story.html' %}
+    <div class="prose wrap--narrow">
+      <h2>Наталья Боброва и MuzFlowers</h2>
+      <p>Проект цветочной мастерской Наталья представила на Великой Школе Бизнеса. В презентации рассказала, как магазин работает с поставщиками, как флористы помогают выбрать букет и как появилась идея музыкальной открытки.</p>
+      <p>В Выхино можно заглянуть за готовым букетом или поговорить с флористом и собрать свой. {{ site.hours_display }}.</p>
+    </div>
   </div>
 </div>
 {% endblock %}

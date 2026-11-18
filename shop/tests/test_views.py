@@ -15,7 +15,7 @@ class PageTests(ShopTestCase):
         FAQ.objects.create(question='Как быстро?', answer='За 15 минут', order=1)
 
     def test_all_public_pages_open(self):
-        names = ['home', 'catalog', 'bouquet_builder', 'music', 'offices', 'subscription', 'delivery', 'care', 'about', 'contacts', 'faq', 'privacy', 'offer',
+        names = ['home', 'catalog', 'presentation', 'bouquet_builder', 'music', 'offices', 'subscription', 'delivery', 'care', 'about', 'contacts', 'faq', 'privacy', 'offer',
                  'legal', 'consent', 'marketing_consent', 'cookies', 'cart']
         for name in names:
             with self.subTest(page=name):
@@ -51,10 +51,10 @@ class PageTests(ShopTestCase):
         r = self.client.get(reverse('shop:home'))
         blocks = [json.loads(b) for b in r.context['jsonld']]
         self.assertEqual(blocks[0]['@type'], 'Florist')
-        self.assertEqual(blocks[0]['telephone'], '+79175494941')
-        self.assertEqual(blocks[0]['openingHoursSpecification'][0]['opens'], '08:00')
-        self.assertContains(r, '+7 (917) 549-49-41')
-        self.assertContains(r, 'Земляной Вал')
+        self.assertEqual(blocks[0]['telephone'], '+79951522131')
+        self.assertEqual(blocks[0]['openingHoursSpecification'][0]['opens'], '09:00')
+        self.assertContains(r, '+7 (995) 152-21-31')
+        self.assertContains(r, 'ул. Вешняковская, 39Г')
 
     def test_quick_pick_and_artwork_labels(self):
         r = self.client.get(reverse('shop:home'))

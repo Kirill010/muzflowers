@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static shop_tags %}
 {% block title %}{{ p.name }} — купить букет в Москве — {{ site.shop_name }}{% endblock %}
-{% block description %}{{ p.tagline|default:p.name }}. {{ p.price_from|rub }}. Самовывоз у Курского вокзала и доставка по Москве.{% endblock %}
+{% block description %}{{ p.tagline|default:p.name }}. {{ p.price_from|rub }}. Самовывоз в Выхино и доставка по Москве.{% endblock %}
 {% block og_type %}product{% endblock %}
 {% block og_title %}{{ p.name }} — {{ site.shop_name }}{% endblock %}
 {% block og_description %}{{ p.tagline|default:p.name }}. {{ p.price_from|rub }}.{% endblock %}
@@ -36,10 +36,14 @@
         <h1 class="display display--md">{{ p.name }}</h1>
         {% if p.tagline %}<p class="lead">{{ p.tagline }}</p>{% endif %}
 
+        {% if sites_storefront %}
+        <div data-pdp>
+        {% else %}
         <form method="post" action="{% url 'shop:cart_add' %}" data-cart-form data-add data-pdp>
           {% csrf_token %}
           <input type="hidden" name="product" value="{{ p.pk }}">
           <input type="hidden" name="next" value="{{ request.get_full_path }}">
+        {% endif %}
 
           {% if variants %}
           <fieldset class="variants">
@@ -53,6 +57,10 @@
           <p class="pdp__price price"><b data-pdp-price>{{ p.price_from|rub }}</b>{% if p.old_price %}<s class="price__old">{{ p.old_price|rub }}</s>{% endif %}</p>
 
           {% if p.is_orderable %}
+            {% if sites_storefront %}
+            <a class="btn btn--primary btn--lg" href="{{ site.phone_href }}">{% icon 'phone' %} Заказать по телефону</a>
+            <p class="pdp__facts">Флорист уточнит наличие, предложит открытку и согласует время получения.</p>
+            {% else %}
             {% if music_addon %}
             <label class="addon-check">
               <input type="checkbox" name="addon" value="{{ music_addon.pk }}">
@@ -69,14 +77,15 @@
               </div>
               <button class="btn btn--primary btn--lg pdp__add" type="submit">{% icon 'bag' %} В корзину</button>
             </div>
+            {% endif %}
           {% else %}
             <p class="notice">{{ p.unavailable_reason }}</p>
             <a class="btn btn--ghost" href="{% url 'shop:catalog' %}">Посмотреть другие букеты</a>
           {% endif %}
-        </form>
+        {% if sites_storefront %}</div>{% else %}</form>{% endif %}
 
         <ul class="pdp__facts">
-          <li>{% icon 'clock' %} Самовывоз у Курского вокзала — через {{ site.pickup_lead_minutes }} минут после заказа</li>
+          <li>{% icon 'clock' %} Самовывоз в Выхино{% if not sites_storefront %} — через {{ site.pickup_lead_minutes }} минут после заказа{% endif %}</li>
           <li>{% icon 'truck' %} Доставка по Москве — {{ site.delivery_cost|rub }}{% if site.free_delivery_from %}, от {{ site.free_delivery_from|rub }} бесплатно{% endif %}</li>
           <li>{% icon 'gift' %} Открытка с вашим текстом — бесплатно</li>
         </ul>

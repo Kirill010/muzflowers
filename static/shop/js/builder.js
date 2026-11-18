@@ -270,4 +270,42 @@
 
   sync();
   workbench.hidden = false;
+
+  const copyDraft = editor.querySelector('[data-copy-draft]');
+  if (copyDraft) {
+    const status = editor.querySelector('[data-draft-status]');
+    const output = editor.querySelector('[data-draft-output]');
+    editor.addEventListener('submit', event => event.preventDefault());
+    copyDraft.hidden = false;
+    copyDraft.addEventListener('click', async () => {
+      const counts = new Map();
+      for (const { kind } of layout.stems) counts.set(kind, (counts.get(kind) || 0) + 1);
+      const composition = Array.from(counts, ([kind, quantity]) => flowers[kind].name + ' × ' + quantity).join(', ');
+      const elements = editor.elements;
+      const note = elements.message.value.trim();
+      if (!composition && !note) {
+        status.textContent = 'Добавьте цветы или напишите, какой букет хотите.';
+        return;
+      }
+      const occasion = elements.occasion;
+      const fields = [
+        'Основа: ' + (layout.vessel === 'basket' ? 'Корзина' : 'Ваза'),
+        composition && 'Состав: ' + composition,
+        elements.recipient.value.trim() && 'Кому: ' + elements.recipient.value.trim(),
+        occasion.value && 'Повод: ' + occasion.selectedOptions[0].textContent,
+        elements.date.value && 'Дата: ' + elements.date.value,
+        elements.budget.value && 'Бюджет: до ' + elements.budget.value + ' ₽',
+        note && 'Пожелания: ' + note,
+      ].filter(Boolean);
+      output.value = fields.join('\n');
+      output.hidden = false;
+      try {
+        await navigator.clipboard.writeText(output.value);
+        status.textContent = 'Состав скопирован.';
+      } catch {
+        output.select();
+        status.textContent = 'Состав выделен. Его можно скопировать вручную.';
+      }
+    });
+  }
 })();

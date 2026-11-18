@@ -28,7 +28,7 @@ class ShopTestCase(TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
         self.site = SiteSettings.load()
-        self.shop = Shop.objects.create(name='Курская', address='Земляной Вал, 39/1', landmark='переход у вокзала', is_pickup=True)
+        self.shop = Shop.objects.create(name='Выхино', address='ул. Вешняковская, 39Г', is_pickup=True)
         self.cat = Category.objects.create(name='Розы')
         self.rose = Product.objects.create(category=self.cat, name='Классика', price=1990, tagline='7 роз, зелень', is_ready=True, popularity=10)
         self.big = Product.objects.create(category=self.cat, name='25 роз', price=5990, popularity=5)
