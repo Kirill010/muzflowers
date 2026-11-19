@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load static shop_tags l10n %}
 {% block title %}Собери сам — конструктор букета {{ site.shop_name }}{% endblock %}
-{% block description %}Соберите цветы в вазе или корзине, двигайте их на эскизе и отправьте композицию флористу на согласование.{% endblock %}
+{% block description %}Соберите эскиз из оригинальных рисунков цветов MuzFlowers, выберите вазу или корзину и отправьте композицию флористу на согласование.{% endblock %}
 {% block head %}<link rel="stylesheet" href="{% static 'shop/css/builder.css' %}">{% endblock %}
 {% block content %}
 <section class="section section--tight">
@@ -13,7 +13,7 @@
     </nav>
     <header class="section__head">
       <h1 class="display display--lg">Собери <em>сам</em></h1>
-      <p class="lead">Соберите эскиз из фотографий цветов. Флорист уточнит оттенки, наличие и итоговую цену.</p>
+      <p class="lead">Соберите эскиз из оригинальных рисунков MuzFlowers. Флорист уточнит оттенки, наличие и итоговую цену.</p>
     </header>
     <form class="bouquet-form"{% if sites_storefront %} data-storefront-draft{% else %} method="post"{% endif %} data-bouquet-editor novalidate>
       {% if not sites_storefront %}{% csrf_token %}{% endif %}
@@ -53,7 +53,7 @@
         <ul class="bouquet-palette bouquet-palette--{{ side }}" aria-label="Цветы">
           {% for key, flower in flowers %}
           <li><button class="bouquet-palette__button" type="button" data-add-stem="{{ key }}" aria-label="Добавить: {{ flower.name }}">
-            <img src="{{ flower.url }}" alt="" width="58" height="58">
+            <img src="{{ flower.url }}" alt="" width="72" height="72">
             <span>{{ flower.name }}</span>
           </button></li>
           {% endfor %}
@@ -93,7 +93,6 @@
         {% endif %}
       </section>
     </form>
-    {% include 'shop/_flower_credits.html' %}
   </div>
 </section>
 {% endblock %}

@@ -18,7 +18,10 @@
 <div class="empty" data-catalog-empty{% if products %} hidden{% endif %}>
   {% icon 'flower' 'empty__icon' %}
   <h2>{% if sale_only %}Нет букетов со скидкой по этим условиям{% else %}Ничего не нашли{% endif %}</h2>
-  <p>Измените условия поиска или посмотрите весь каталог.</p>
-  <a class="btn btn--ghost" href="{{ request.path }}">Сбросить фильтры</a>
+  <p>Измените условия поиска или опишите желаемую композицию флористу.</p>
+  <div class="buttons">
+    <a class="btn btn--ghost" href="{{ request.path }}">Сбросить фильтры</a>
+    <a class="btn btn--primary" href="{% url 'shop:bouquet_builder' %}">Собрать свой букет</a>
+  </div>
 </div>
 {% endif %}

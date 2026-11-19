@@ -2,8 +2,8 @@
 from .models import LegalAcceptance
 from .throttle import client_ip
 
-DOCUMENT_VERSION = '1.0'
-DOCUMENT_DATE = '17.11.2026'
+DOCUMENT_VERSION = '1.1'
+DOCUMENT_DATE = '19.11.2026'
 
 
 def record_acceptance(request, kind, *, reference='', contact='', user=None, action='accepted'):

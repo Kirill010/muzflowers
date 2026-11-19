@@ -12,5 +12,6 @@ db.sqlite3-*
 media
 staticfiles
 docs
+bot
 __pycache__
 *.pyc

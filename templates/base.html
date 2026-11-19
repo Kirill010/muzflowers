@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>{% block title %}{{ site.shop_name }} — цветочный магазин в Выхино в Москве{% endblock %}</title>
-<meta name="description" content="{% block description %}Букеты из цветов с собственного оптового склада: готовые за 2 минуты в Выхино, доставка по Москве, музыкальная открытка с песней по QR-коду.{% endblock %}">
+<meta name="description" content="{% block description %}Готовые букеты и композиции из свежих цветов: готовые за 2 минуты в Выхино, доставка по Москве, музыкальная открытка с песней по QR-коду.{% endblock %}">
 <meta name="robots" content="{% block robots %}index, follow{% endblock %}">
 <link rel="canonical" href="{% block canonical %}{{ canonical_url }}{% endblock %}">
 <meta name="theme-color" content="#607344">
@@ -13,11 +13,10 @@
 <meta property="og:type" content="{% block og_type %}website{% endblock %}">
 <meta property="og:locale" content="ru_RU">
 <meta property="og:title" content="{% block og_title %}{{ site.shop_name }} — цветочный магазин в Выхино{% endblock %}">
-<meta property="og:description" content="{% block og_description %}Букеты из цветов с собственного оптового склада. Готовые — за 2 минуты, доставка по Москве, музыкальная открытка по QR-коду.{% endblock %}">
+<meta property="og:description" content="{% block og_description %}Готовые букеты и композиции из свежих цветов. Готовые — за 2 минуты, доставка по Москве, музыкальная открытка по QR-коду.{% endblock %}">
 <meta property="og:url" content="{{ canonical_url }}">
 {% if og_image %}<meta property="og:image" content="{{ og_image }}">
 <meta name="twitter:card" content="summary_large_image">{% endif %}
-<link rel="icon" href="{% static 'shop/img/favicon.svg' %}" type="image/svg+xml">
 <link rel="icon" href="{% static 'shop/img/favicon-32.png' %}" sizes="32x32" type="image/png">
 <link rel="apple-touch-icon" href="{% static 'shop/img/apple-touch-icon.png' %}">
 <link rel="manifest" href="{% url 'shop:manifest' %}">
@@ -52,7 +51,7 @@
 {% if site.metrika_id and not sites_storefront %}<meta name="metrika-id" content="{{ site.metrika_id }}">
 {% include 'includes/_cookie_consent.html' %}
 <script src="{% static 'shop/js/cookie_consent.js' %}?v=1" defer></script>{% endif %}
-<script src="{% static 'shop/js/core.js' %}" defer></script>
+<script src="{% static 'shop/js/core.js' %}?v=3" defer></script>
 {% block scripts %}{% endblock %}
 </body>
 </html>

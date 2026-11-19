@@ -43,6 +43,13 @@ class BouquetTests(TestCase):
         self.assertContains(preview, 'data-bouquet-preview')
         self.assertContains(preview, '"x": 240')
 
+    def test_builder_uses_original_art_without_photo_credits(self):
+        response = self.client.get(self.url)
+        self.assertContains(response, 'Альстромерия')
+        self.assertContains(response, '.svg')
+        self.assertNotContains(response, 'Авторы фотографий')
+        self.assertNotContains(response, 'Wikimedia Commons')
+
     def test_rejects_invalid_layout_and_missing_consent(self):
         for layout in (
             {'vessel': 'box', 'stems': self.layout['stems']},

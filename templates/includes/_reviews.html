@@ -1,0 +1,21 @@
+{% load shop_tags %}
+<section class="section section--tint" aria-labelledby="reviews-title">
+  <div class="wrap">
+    <header class="section__head section__head--row">
+      <div>
+        <p class="eyebrow">Опыт покупателей</p>
+        <h2 class="display" id="reviews-title">Отзывы о <em>мастерской</em></h2>
+      </div>
+      {% if site.yandex_reviews_url %}<a class="link-arrow" href="{{ site.yandex_reviews_url }}" target="_blank" rel="noopener">Яндекс Карты {% icon 'arrow' %}</a>{% endif %}
+    </header>
+    <div class="review-grid">
+      {% for review in reviews %}
+      <figure class="review-card">
+        {% if review.rating %}{% stars review.rating %}{% endif %}
+        <blockquote>{{ review.text }}</blockquote>
+        <figcaption>{{ review.name }} · {{ review.get_source_display }}{% if review.source_url %} · <a href="{{ review.source_url }}" target="_blank" rel="noopener">Оригинал</a>{% endif %}</figcaption>
+      </figure>
+      {% endfor %}
+    </div>
+  </div>
+</section>

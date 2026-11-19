@@ -70,6 +70,8 @@ def _http(url, payload=None, headers=None, auth=None, timeout=15):
 
 def receipt_lines(order):
     """[(название, количество, цена за штуку в копейках, сумма в копейках)]. Скидка раскладывается по букетам."""
+    if order.kind == Order.Kind.CERTIFICATE:
+        return [('Подарочный сертификат', 1, order.total * 100, order.total * 100)]
     items = list(order.items.all())
     gross = sum(i.line_total for i in items) or 1
     amounts, left = [], order.discount
@@ -120,7 +122,8 @@ def _tbank_start(order, return_url):
         contact = {'Email': order.email} if order.email else {'Phone': order.phone}
         body['Receipt'] = {**contact, 'Taxation': settings.PAYMENT_TAXATION, 'Items': [
             {'Name': name, 'Price': price, 'Quantity': qty, 'Amount': amount, 'Tax': settings.PAYMENT_VAT,
-             'PaymentMethod': 'full_prepayment', 'PaymentObject': 'commodity'}
+             'PaymentMethod': 'advance' if order.kind == Order.Kind.CERTIFICATE else 'full_prepayment',
+             'PaymentObject': 'commodity'}
             for name, qty, price, amount in receipt_lines(order)]}
     result = _tbank_call('Init', body)
     if not result.get('Success') or not result.get('PaymentURL'):
@@ -175,7 +178,8 @@ def _yookassa_start(order, return_url):
         contact = {'email': order.email} if order.email else {'phone': order.phone.lstrip('+')}
         body['receipt'] = {'customer': contact, 'tax_system_code': system, 'items': [
             {'description': name, 'quantity': f'{qty:.2f}', 'amount': {'value': _rub(price), 'currency': 'RUB'},
-             'vat_code': vat, 'payment_mode': 'full_prepayment', 'payment_subject': 'commodity'}
+             'vat_code': vat, 'payment_mode': 'advance' if order.kind == Order.Kind.CERTIFICATE else 'full_prepayment',
+             'payment_subject': 'payment' if order.kind == Order.Kind.CERTIFICATE else 'commodity'}
             for name, qty, price, amount in receipt_lines(order)]}
     result = _http(YOOKASSA_URL + 'payments', body, headers={'Idempotence-Key': uuid.uuid4().hex}, auth=_yookassa_auth())
     url = (result.get('confirmation') or {}).get('confirmation_url')

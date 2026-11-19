@@ -47,6 +47,7 @@ class CheckoutForm(forms.Form):
     card_text = forms.CharField(label='Текст открытки', max_length=500, required=False, widget=forms.Textarea(attrs={'rows': 3}))
     comment = forms.CharField(label='Пожелания к заказу', max_length=500, required=False, widget=forms.Textarea(attrs={'rows': 2}))
     promo = forms.CharField(label='Промокод', max_length=30, required=False)
+    certificate_code = forms.CharField(label='Код подарочного сертификата (необязательно)', max_length=20, required=False)
 
     payment_method = forms.ChoiceField(label='Оплата', choices=Order.Pay.choices, widget=forms.RadioSelect)
     consent_pd = forms.BooleanField(error_messages={'required': 'Нужно согласие на обработку персональных данных'})
@@ -71,6 +72,8 @@ class CheckoutForm(forms.Form):
                 self.initial[f'addon_{addon.pk}_note'] = cart.addons[str(addon.pk)]
         self.fields['payment_method'].choices = [(o['value'], o['label']) for o in payment_options(False, self.site)] + \
                                                 [(o['value'], o['label']) for o in payment_options(True, self.site)]
+        if self.data.get('certificate_code') or self.initial.get('certificate_code'):
+            self.fields['payment_method'].choices.append((Order.Pay.CERTIFICATE, 'Подарочным сертификатом'))
         for name, attrs in {
             'name': {'autocomplete': 'name', 'placeholder': 'Как к вам обращаться'},
             'phone': {'autocomplete': 'tel', 'inputmode': 'tel', 'placeholder': '+7 900 000-00-00'},
@@ -141,6 +144,8 @@ class CheckoutForm(forms.Form):
                     self.add_error('time_slot', 'Выберите время из списка')
                 data['option'] = option
             allowed = {o['value'] for o in payment_options(is_prepay_required(day, site), site)}
+            if data.get('certificate_code'):
+                allowed.add(Order.Pay.CERTIFICATE)
             if data.get('payment_method') not in allowed:
                 self.add_error('payment_method', 'Выберите способ оплаты из списка')
 
@@ -175,6 +180,8 @@ class LeadForm(forms.Form):
             Lead.Kind.OFFICE: 'Как часто нужны цветы, сколько человек, адрес офиса…',
             Lead.Kind.SUBSCRIPTION: 'Какие цветы любите, куда и в какой день недели привозить…',
             Lead.Kind.BOUQUET: 'Цветовая гамма, упаковка и другие пожелания',
+            Lead.Kind.BALLOONS: 'Сколько шаров, какие цвета и к какой дате…',
+            Lead.Kind.SOUVENIRS: 'Что хотите добавить к букету, для кого и на какой бюджет…',
         }.get(kind, 'Ваш вопрос')
         self.fields['message'].widget.attrs['placeholder'] = placeholder
         if kind == Lead.Kind.OFFICE:

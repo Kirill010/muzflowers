@@ -132,6 +132,13 @@ class PricingTests(ShopTestCase):
         q = build_quote(self.lines((self.rose, 1)), [], method='pickup')
         self.assertEqual((q.subtotal, q.delivery, q.total), (1990, 0, 1990))
 
+    def test_pickup_discount_is_real_and_does_not_discount_addons(self):
+        self.update_site(pickup_discount_percent=10)
+        q = build_quote(self.lines((self.rose, 1)), [(self.music, 'Песня')], method='pickup')
+        self.assertEqual((q.pickup_discount, q.total_discount, q.total), (199, 199, 2091))
+        delivery = build_quote(self.lines((self.rose, 1)), [], method='delivery')
+        self.assertEqual((delivery.pickup_discount, delivery.total), (0, 2290))
+
     def test_small_delivery_order_pays_delivery(self):
         q = build_quote(self.lines((self.rose, 1)), [], method='delivery')
         self.assertEqual((q.delivery, q.total), (300, 2290))

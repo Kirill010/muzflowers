@@ -35,6 +35,12 @@ class CheckoutTests(ShopTestCase):
         self.assertEqual(order.items.get().name, 'Классика')
         self.assertEqual(self.client.session['mz_cart']['items'], {})  # корзина очищена
 
+    def test_pickup_discount_is_saved_in_the_order(self):
+        self.update_site(pickup_discount_percent=10)
+        self.place_order()
+        order = Order.objects.get()
+        self.assertEqual((order.subtotal, order.discount, order.total), (1990, 199, 1791))
+
     def test_delivery_for_tomorrow_requires_prepayment_and_keeps_recipient(self):
         self.place_order(receive_method='delivery', address='Москва, ул. Пушкина, 1', address_details='подъезд 2',
                          date=TOMORROW.isoformat(), time_slot='11:00-13:00', payment_method='transfer',

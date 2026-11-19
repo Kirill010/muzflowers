@@ -99,6 +99,8 @@
           <summary><span>{% icon 'gift' %} Открытка и пожелания</span><small>По желанию</small>{% icon 'chevron' 'checkout-extra__arrow' %}</summary>
           <div class="checkout-extra__body">
           {% include 'includes/_field.html' with field=form.card_text hide_required=True %}
+          {% include 'includes/_field.html' with field=form.promo hide_required=True %}
+          {% include 'includes/_field.html' with field=form.certificate_code hide_required=True %}
           {% for addon, check, note in form.addon_rows %}
           <div class="addon{% if check.value %} is-on{% endif %}" data-addon>
             <label class="addon__btn">

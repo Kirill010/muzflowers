@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% load shop_tags %}
+{% block title %}Подарочный сертификат — {{ site.shop_name }}{% endblock %}
+{% block description %}Электронный подарочный сертификат MuzFlowers на букеты в Выхино.{% endblock %}
+{% block content %}
+<section class="section section--tint">
+  <div class="wrap wrap--narrow">
+    <header class="section__head">
+      <p class="eyebrow">Подарок с возможностью выбора</p>
+      <h1 class="display">Подарочный <em>сертификат</em></h1>
+      <p class="lead">Получатель сам выберет букет на сайте или в Telegram-боте. Сертификатом можно оплатить заказ полностью или частично.</p>
+    </header>
+    <form class="panel" method="post">{% csrf_token %}
+      {{ form.operation_id }}
+      {% for error in form.non_field_errors %}<p class="problems">{{ error }}</p>{% endfor %}
+      <fieldset class="variants">
+        <legend class="field__label">Выберите сумму</legend>
+        {% for radio in form.amount %}<label class="variant">{{ radio.tag }}<span><b>{{ radio.choice_label }}</b></span></label>{% endfor %}
+      </fieldset>
+      {% include 'includes/_field.html' with field=form.custom_amount hide_required=True %}
+      {% include 'includes/_field.html' with field=form.name %}
+      {% include 'includes/_field.html' with field=form.phone %}
+      {% include 'includes/_field.html' with field=form.email hide_required=True %}
+      <div class="consents">
+        <label class="check"><input type="checkbox" name="consent_pd" required> <span>Согласен на <a href="{% url 'shop:consent' %}" target="_blank" rel="noopener">обработку персональных данных</a></span></label>
+        {% for error in form.consent_pd.errors %}<p class="field__error">{{ error }}</p>{% endfor %}
+        <label class="check"><input type="checkbox" name="consent_offer" required> <span>Принимаю условия <a href="{% url 'shop:offer' %}" target="_blank" rel="noopener">публичной оферты</a></span></label>
+        {% for error in form.consent_offer.errors %}<p class="field__error">{{ error }}</p>{% endfor %}
+      </div>
+      <button class="btn btn--primary btn--lg btn--block" type="submit"{% if not online_payment %} disabled{% endif %}>Перейти к оплате {% icon 'arrow' %}</button>
+      {% if not online_payment %}<p class="notice">{% icon 'info' %} <span>Онлайн-оплата пока не подключена. Позвоните <a href="{{ site.phone_href }}">{{ site.phone }}</a> — оформим сертификат вручную.</span></p>{% endif %}
+    </form>
+  </div>
+</section>
+{% endblock %}

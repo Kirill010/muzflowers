@@ -33,6 +33,25 @@ jobs:
           DJANGO_ALLOWED_HOSTS: example.com
         run: python manage.py check --deploy --fail-level WARNING
 
+  bot:
+    name: Telegram-бот Python ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        python: ["3.11", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: bot/requirements.txt
+      - run: pip install -r bot/requirements.txt
+      - name: Тесты и сценарии через имитацию Telegram
+        working-directory: bot
+        run: python -m unittest discover -s tests -t .
+
   windows-launcher:
     runs-on: windows-latest
     timeout-minutes: 8
@@ -62,7 +81,7 @@ jobs:
               }
             }
             if (-not $healthy) { throw 'Сервер не ответил на проверку здоровья' }
-            foreach ($path in @('/', '/catalog/?budget=premium', '/bouquet/', '/admin/login/', '/static/shop/img/flowers/rose.webp')) {
+            foreach ($path in @('/', '/catalog/?budget=premium', '/bouquet/', '/balloons/', '/souvenirs/', '/admin/login/', '/static/shop/img/flowers/rose.svg')) {
               $response = Invoke-WebRequest -Uri "http://127.0.0.1:8000$path" -TimeoutSec 5
               if ($response.StatusCode -ne 200) { throw "Не открылась страница $path" }
             }

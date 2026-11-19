@@ -12,11 +12,18 @@
         <a class="design-catalog__build" href="{% url 'shop:bouquet_builder' %}">Собери сам {% icon 'arrow' %}</a>
         <a href="{% url 'shop:catalog' %}?sale=1#catalog-results">Акции</a>
       </div>
-      {% if categories %}
       <div class="design-catalog__links">
-        {% for c in categories %}<a href="{{ c.get_absolute_url }}">{{ c.name }}</a>{% endfor %}
+        {% for c in categories %}{% if c.slug == 'season' %}<a href="{{ c.get_absolute_url }}">Сезонные цветы</a>{% endif %}{% endfor %}
+        <a href="{% url 'shop:bouquet_builder' %}">Композиции</a>
+        {% for c in categories %}{% if c.slug == 'roses' %}<a href="{{ c.get_absolute_url }}">Розы</a>{% endif %}{% endfor %}
+        <a href="{% url 'shop:catalog' %}{% if catalog_heading %}#catalog-results{% endif %}">Цветы</a>
+        <a href="{% url 'shop:balloons' %}">Шары</a>
+        <a href="{% url 'shop:souvenirs' %}">Сувениры</a>
       </div>
-      {% endif %}
     </nav>
+    <div class="design-catalog__offers">
+      {% if site.delivery_enabled %}<p>Доставим от 1 часа по Москве{% if not site.delivery_cost %} — доставка бесплатная{% elif site.free_delivery_from %} · бесплатно от {{ site.free_delivery_from|rub }}{% else %} · {{ site.delivery_cost|rub }}{% endif %}</p>{% endif %}
+      {% if site.pickup_discount_percent %}<p><b>Скидка {{ site.pickup_discount_percent }}% при самовывозе</b></p>{% endif %}
+    </div>
   </div>
 </section>

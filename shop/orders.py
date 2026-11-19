@@ -7,7 +7,7 @@ from django.utils import timezone
 
 from . import notifications, payments, slots
 from .legal import record_acceptance
-from .models import Order, OrderAddon, OrderItem, PromoCode, SiteSettings
+from .models import GiftCertificate, GiftCertificateLedger, Order, OrderAddon, OrderItem, PromoCode, SiteSettings
 
 log = logging.getLogger('shop')
 
@@ -65,11 +65,23 @@ def create_order(*, quote, data, user=None, source='', origin='', request=None):
         if not claimed:
             raise OrderError('Этот промокод уже использован.')
 
+    if quote.certificate_error:
+        raise OrderError(quote.certificate_error)
+    certificate = None
+    if quote.certificate:
+        certificate = GiftCertificate.objects.select_for_update().get(pk=quote.certificate.pk)
+        problem = certificate.problem()
+        if problem or quote.certificate_amount <= 0 or quote.certificate_amount > certificate.balance:
+            raise OrderError(problem or 'Баланс сертификата изменился. Проверьте заказ ещё раз.')
+
     option = data['option']
-    prepay = is_prepay_required(day, site)
-    pay_method = data['payment_method']
+    fully_by_certificate = quote.total == 0 and quote.certificate_amount > 0
+    if data['payment_method'] == Order.Pay.CERTIFICATE and not fully_by_certificate:
+        raise OrderError('Сертификат не покрывает весь заказ. Выберите способ доплаты.')
+    prepay = False if fully_by_certificate else is_prepay_required(day, site)
+    pay_method = Order.Pay.CERTIFICATE if fully_by_certificate else data['payment_method']
     order = Order.objects.create(
-        user=user, name=data['name'], phone=data['phone'], email=data.get('email', ''),
+        user=user, telegram_user_id=data.get('telegram_user_id'), name=data['name'], phone=data['phone'], email=data.get('email', ''),
         receive_method=method, shop=data.get('shop') if method == Order.Method.PICKUP else None,
         address=data.get('address', '') if method == Order.Method.DELIVERY else '',
         address_details=data.get('address_details', '') if method == Order.Method.DELIVERY else '',
@@ -78,12 +90,21 @@ def create_order(*, quote, data, user=None, source='', origin='', request=None):
         date=day, time_from=option['time_from'], time_to=option['time_to'], asap=option['asap'],
         card_text=data.get('card_text', ''), comment=data.get('comment', ''),
         promo_code=promo.code if promo else '',
-        subtotal=quote.subtotal, discount=quote.discount, addons_total=quote.addons_total,
+        subtotal=quote.subtotal, discount=quote.total_discount, addons_total=quote.addons_total,
         delivery_cost=quote.delivery, total=quote.total,
+        certificate=certificate, certificate_amount=quote.certificate_amount,
         payment_method=pay_method, prepay_required=prepay,
-        payment_status=Order.PayStatus.UNPAID if pay_method == Order.Pay.ON_RECEIPT else Order.PayStatus.PENDING,
+        payment_status=Order.PayStatus.PAID if fully_by_certificate else
+        Order.PayStatus.UNPAID if pay_method == Order.Pay.ON_RECEIPT else Order.PayStatus.PENDING,
+        paid_at=timezone.now() if fully_by_certificate else None,
         source=source[:40], marketing_consent=data.get('marketing_consent', False),
     )
+    if certificate:
+        certificate.balance -= quote.certificate_amount
+        certificate.status = GiftCertificate.Status.USED if certificate.balance == 0 else GiftCertificate.Status.ACTIVE
+        certificate.save(update_fields=['balance', 'status', 'updated'])
+        GiftCertificateLedger.objects.create(certificate=certificate, order=order, delta=-quote.certificate_amount,
+                                             note='Оплата заказа')
     OrderItem.objects.bulk_create(
         OrderItem(order=order, product=line.product, variant=line.variant, name=line.product.name,
                   variant_name=line.variant_name, price=line.unit_price, qty=line.qty)

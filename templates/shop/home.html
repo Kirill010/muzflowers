@@ -99,6 +99,8 @@
 </section>
 {% endif %}
 
+{% if reviews %}{% include 'includes/_reviews.html' %}{% endif %}
+
 <div class="wrap design-home-info">
   {% include 'shop/_design_faq.html' with items=faq %}
   {% include 'shop/_design_process.html' %}
@@ -115,6 +117,9 @@
       <ul class="facts">
         <li>{% icon 'clock' %} {{ site.hours_display }}</li>
         <li>{% icon 'phone' %} <a href="{{ site.phone_href }}">{{ site.phone }}</a></li>
+        {% if site.email %}<li>{% icon 'mail' %} <a href="mailto:{{ site.email }}">{{ site.email }}</a></li>{% endif %}
+        {% if site.telegram_url %}<li>{% icon 'send' %} <a href="{{ site.telegram_url }}" target="_blank" rel="noopener">Telegram</a></li>{% endif %}
+        {% if site.max_url %}<li>{% icon 'chat' %} <a href="{{ site.max_url }}" target="_blank" rel="noopener">MAX</a></li>{% endif %}
       </ul>
       <div class="buttons">
         <a class="btn btn--primary" href="{{ site.phone_href }}">{% icon 'phone' %} Позвонить</a>

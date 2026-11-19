@@ -1,8 +1,10 @@
 import secrets
 from datetime import date, time
 from decimal import Decimal
+from urllib.parse import urlparse
 
 from django.core.cache import cache
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.conf import settings
 from django.db import models
@@ -36,8 +38,10 @@ class SiteSettings(models.Model):
 
     shop_name = models.CharField('Название магазина', max_length=60, default='MuzFlowers')
     phone = models.CharField('Телефон', max_length=30, default='+7 (995) 152-21-31')
-    email = models.EmailField('Почта магазина', blank=True, help_text='Показывается на сайте и в письмах клиентам')
+    email = models.EmailField('Почта магазина', blank=True, default='muzflowers@ya.ru', help_text='Показывается на сайте и в письмах клиентам')
     telegram = models.CharField('Telegram-канал (без @)', max_length=40, blank=True, default='muzflowers')
+    max_url = models.URLField('MAX: ссылка на контакт или канал', blank=True, default='https://web.max.ru/-73754300368320',
+                              help_text='Полная ссылка, начинается с https://. Пусто — ссылку не показываем')
     yandex_maps_url = models.URLField('Карточка в Яндекс Картах (ссылка)', blank=True,
                                       default='https://yandex.ru/maps/?text=%D0%9C%D0%BE%D1%81%D0%BA%D0%B2%D0%B0%2C%20%D1%83%D0%BB.%20%D0%92%D0%B5%D1%88%D0%BD%D1%8F%D0%BA%D0%BE%D0%B2%D1%81%D0%BA%D0%B0%D1%8F%2C%2039%D0%93')
     yandex_rating = models.DecimalField('Рейтинг в Яндекс Картах', max_digits=2, decimal_places=1, null=True, blank=True,
@@ -61,7 +65,9 @@ class SiteSettings(models.Model):
                                           default='Доставляем по Москве. За МКАД и в другие города — по договорённости.')
     pickup_lead_minutes = models.PositiveSmallIntegerField('Самовывоз: за сколько минут готовим', default=20,
                                                            help_text='Ближайшее время выдачи = сейчас + столько минут')
-    delivery_lead_minutes = models.PositiveSmallIntegerField('Доставка: минимум минут до приезда', default=120)
+    pickup_discount_percent = models.PositiveSmallIntegerField('Скидка при самовывозе, %', default=10,
+                                                                validators=[MaxValueValidator(100)], help_text='0 — без скидки. Считается от букетов после промокода')
+    delivery_lead_minutes = models.PositiveSmallIntegerField('Доставка: минимум минут до приезда', default=60)
     delivery_window_hours = models.PositiveSmallIntegerField('Доставка: длина окна, часов', default=2,
                                                              validators=[MinValueValidator(1), MaxValueValidator(6)])
     max_days_ahead = models.PositiveSmallIntegerField('На сколько дней вперёд можно заказать', default=60)
@@ -448,7 +454,112 @@ def _new_token():
     return secrets.token_urlsafe(12)
 
 
+def _new_certificate_code():
+    alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+    raw = ''.join(secrets.choice(alphabet) for _ in range(12))
+    return f'{raw[:4]}-{raw[4:8]}-{raw[8:]}'
+
+
+class GiftCertificate(models.Model):
+    class Status(models.TextChoices):
+        ACTIVE = 'active', 'Действует'
+        USED = 'used', 'Использован'
+        CANCELED = 'canceled', 'Отменён'
+
+    code = models.CharField('Код', max_length=16, unique=True, default=_new_certificate_code, editable=False)
+    amount = models.PositiveIntegerField('Номинал, ₽', validators=[MinValueValidator(1)])
+    balance = models.PositiveIntegerField('Остаток, ₽')
+    buyer_telegram_id = models.PositiveBigIntegerField('Telegram покупателя', null=True, blank=True, db_index=True)
+    purchase_order = models.OneToOneField('Order', null=True, blank=True, on_delete=models.SET_NULL,
+                                         related_name='gift_certificate', verbose_name='Заказ на покупку')
+    status = models.CharField('Статус', max_length=10, choices=Status.choices, default=Status.ACTIVE)
+    expires_at = models.DateField('Действует до')
+    created = models.DateTimeField('Создан', auto_now_add=True)
+    updated = models.DateTimeField('Изменён', auto_now=True)
+
+    class Meta:
+        ordering = ['-created']
+        verbose_name = 'Подарочный сертификат'
+        verbose_name_plural = 'Подарочные сертификаты'
+
+    def __str__(self):
+        return f'{self.code} · {self.balance} ₽'
+
+    def problem(self, today=None):
+        today = today or timezone.localdate()
+        if self.status != self.Status.ACTIVE:
+            return 'Сертификат уже использован или отменён'
+        if self.expires_at < today:
+            return 'Срок действия сертификата закончился'
+        if self.balance <= 0:
+            return 'На сертификате закончился баланс'
+        return ''
+
+    @classmethod
+    def issue_for_order(cls, order):
+        from datetime import timedelta
+        if order.kind != Order.Kind.CERTIFICATE:
+            return None
+        existing = cls.objects.filter(purchase_order=order).first()
+        if existing:
+            return existing
+        certificate = cls.objects.create(amount=order.total, balance=order.total, buyer_telegram_id=order.telegram_user_id,
+                                         purchase_order=order, expires_at=timezone.localdate() + timedelta(days=365))
+        GiftCertificateLedger.objects.create(certificate=certificate, order=order, delta=order.total, note='Продажа сертификата')
+        return certificate
+
+    def release_for_order(self, order):
+        from django.db import transaction
+        from django.db.models import Sum
+        with transaction.atomic():
+            locked = GiftCertificate.objects.select_for_update().get(pk=self.pk)
+            rows = GiftCertificateLedger.objects.select_for_update().filter(certificate=locked, order=order)
+            spent = -(rows.filter(delta__lt=0).aggregate(total=Sum('delta'))['total'] or 0)
+            if spent <= 0:
+                return 0
+            already = rows.filter(note='Возврат при отмене заказа').aggregate(total=Sum('delta'))['total'] or 0
+            amount = min(spent - already, max(0, locked.amount - locked.balance))
+            if amount > 0:
+                locked.balance += amount
+                locked.status = GiftCertificate.Status.ACTIVE
+                locked.save(update_fields=['balance', 'status', 'updated'])
+                GiftCertificateLedger.objects.create(certificate=locked, order=order, delta=amount, note='Возврат при отмене заказа')
+            return amount
+
+
+class GiftCertificateLedger(models.Model):
+    certificate = models.ForeignKey(GiftCertificate, on_delete=models.PROTECT, related_name='ledger', verbose_name='Сертификат')
+    order = models.ForeignKey('Order', null=True, blank=True, on_delete=models.SET_NULL, related_name='certificate_events',
+                              verbose_name='Заказ')
+    delta = models.IntegerField('Изменение баланса, ₽')
+    note = models.CharField('Операция', max_length=160)
+    created = models.DateTimeField('Дата', auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created']
+        verbose_name = 'Операция по сертификату'
+        verbose_name_plural = 'Журнал сертификатов'
+
+
+class BotOperation(models.Model):
+    action = models.CharField('Операция', max_length=40)
+    key = models.CharField('Ключ идемпотентности', max_length=100)
+    telegram_user_id = models.PositiveBigIntegerField('Telegram пользователя', db_index=True)
+    response = models.JSONField('Ответ', default=dict)
+    status_code = models.PositiveSmallIntegerField('HTTP-статус', default=200)
+    created = models.DateTimeField('Создана', auto_now_add=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=['action', 'key'], name='unique_bot_operation')]
+        verbose_name = 'Операция бота'
+        verbose_name_plural = 'Операции бота'
+
+
 class Order(models.Model):
+    class Kind(models.TextChoices):
+        PRODUCTS = 'products', 'Букеты'
+        CERTIFICATE = 'certificate', 'Подарочный сертификат'
+
     class Status(models.TextChoices):
         NEW = 'new', 'Новый'
         CONFIRMED = 'confirmed', 'Подтверждён'
@@ -465,6 +576,7 @@ class Order(models.Model):
         ONLINE = 'online', 'Онлайн (картой или СБП)'
         TRANSFER = 'transfer', 'Переводом'
         ON_RECEIPT = 'on_receipt', 'При получении'
+        CERTIFICATE = 'certificate', 'Подарочный сертификат'
 
     class PayStatus(models.TextChoices):
         UNPAID = 'unpaid', 'Не оплачен'
@@ -472,8 +584,10 @@ class Order(models.Model):
         PAID = 'paid', 'Оплачен'
         REFUNDED = 'refunded', 'Возврат'
 
+    kind = models.CharField('Тип заказа', max_length=12, choices=Kind.choices, default=Kind.PRODUCTS)
     token = models.CharField('Секретная ссылка', max_length=24, unique=True, default=_new_token, editable=False)
     user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL, related_name='orders', verbose_name='Покупатель (аккаунт)')
+    telegram_user_id = models.PositiveBigIntegerField('Telegram покупателя', null=True, blank=True, db_index=True)
 
     name = models.CharField('Имя клиента', max_length=100)
     phone = models.CharField('Телефон клиента', max_length=20)
@@ -502,6 +616,9 @@ class Order(models.Model):
     addons_total = models.PositiveIntegerField('Дополнения, ₽', default=0)
     delivery_cost = models.PositiveIntegerField('Доставка, ₽', default=0)
     total = models.PositiveIntegerField('Итого, ₽')
+    certificate = models.ForeignKey(GiftCertificate, null=True, blank=True, on_delete=models.SET_NULL,
+                                    related_name='orders_used', verbose_name='Сертификат для оплаты')
+    certificate_amount = models.PositiveIntegerField('Оплачено сертификатом, ₽', default=0)
 
     payment_method = models.CharField('Способ оплаты', max_length=12, choices=Pay.choices, default=Pay.ON_RECEIPT)
     payment_status = models.CharField('Оплата', max_length=10, choices=PayStatus.choices, default=PayStatus.UNPAID)
@@ -512,6 +629,9 @@ class Order(models.Model):
     pay_url = models.URLField(max_length=500, blank=True, editable=False)
 
     status = models.CharField('Статус', max_length=12, choices=Status.choices, default=Status.NEW)
+    delivery_photo = models.ImageField('Фото букета перед выдачей или доставкой', upload_to='order-photos/', blank=True,
+                                       validators=[validate_image_size],
+                                       help_text='Только букет: без людей, адреса, документов и посторонних данных. Клиент увидит фото по ссылке на заказ')
     source = models.CharField('Откуда пришёл клиент', max_length=40, blank=True)
     marketing_consent = models.BooleanField('Согласен получать акции и новости', default=False)
     created = models.DateTimeField('Создан', auto_now_add=True)
@@ -526,6 +646,11 @@ class Order(models.Model):
     def __str__(self):
         return f'Заказ №{self.pk} — {self.name}'
 
+    def save(self, *args, **kwargs):
+        if self.delivery_photo and not self.delivery_photo._committed:
+            self.delivery_photo = process_upload(self.delivery_photo)
+        super().save(*args, **kwargs)
+
     def get_absolute_url(self):
         return reverse('shop:order_status', args=[self.token])
 
@@ -535,17 +660,24 @@ class Order(models.Model):
 
     def set_status(self, status):
         """Меняет статус. Заказ «при получении» в момент выдачи считается оплаченным."""
-        self.status = status
-        fields = ['status', 'updated']
-        if status == self.Status.DONE and self.payment_status == self.PayStatus.UNPAID and self.payment_method == self.Pay.ON_RECEIPT:
-            self.payment_status, self.paid_at = self.PayStatus.PAID, timezone.now()
-            fields += ['payment_status', 'paid_at']
-        self.save(update_fields=fields)
+        from django.db import transaction
+        with transaction.atomic():
+            if status == self.Status.CANCELED and self.status != self.Status.CANCELED and self.certificate:
+                self.certificate.release_for_order(self)
+            self.status = status
+            fields = ['status', 'updated']
+            if status == self.Status.DONE and self.payment_status == self.PayStatus.UNPAID and self.payment_method == self.Pay.ON_RECEIPT:
+                self.payment_status, self.paid_at = self.PayStatus.PAID, timezone.now()
+                fields += ['payment_status', 'paid_at']
+            self.save(update_fields=fields)
 
     def mark_paid(self):
-        if self.payment_status != self.PayStatus.PAID:
-            self.payment_status, self.paid_at = self.PayStatus.PAID, timezone.now()
-            self.save(update_fields=['payment_status', 'paid_at', 'updated'])
+        from django.db import transaction
+        with transaction.atomic():
+            if self.payment_status != self.PayStatus.PAID:
+                self.payment_status, self.paid_at = self.PayStatus.PAID, timezone.now()
+                self.save(update_fields=['payment_status', 'paid_at', 'updated'])
+                GiftCertificate.issue_for_order(self)
 
     @property
     def is_paid(self):
@@ -650,6 +782,9 @@ class Review(models.Model):
     text = models.TextField('Отзыв', max_length=600)
     rating = models.PositiveSmallIntegerField('Оценка', null=True, blank=True, validators=[MinValueValidator(1), MaxValueValidator(5)])
     source = models.CharField('Где оставили', max_length=8, choices=Source.choices, default=Source.YANDEX)
+    source_url = models.URLField('Ссылка на оригинальный отзыв', blank=True)
+    permission_given = models.BooleanField('Отзыв проверен и разрешён к публикации', default=False,
+                                           help_text='Ставьте только после проверки настоящего отзыва и права на его публикацию')
     is_published = models.BooleanField('Показывать на сайте', default=True)
     created = models.DateTimeField('Добавлен', default=timezone.now)
 
@@ -657,6 +792,20 @@ class Review(models.Model):
         ordering = ['-created']
         verbose_name = 'Отзыв'
         verbose_name_plural = 'Отзывы'
+
+    def clean(self):
+        errors = {}
+        if self.is_published and not self.permission_given:
+            errors['permission_given'] = 'Перед публикацией проверьте отзыв и подтвердите разрешение.'
+        if self.source_url and urlparse(self.source_url).scheme not in ('http', 'https'):
+            errors['source_url'] = 'Допустима только ссылка http или https.'
+        if self.is_published and self.source == self.Source.YANDEX:
+            parsed = urlparse(self.source_url)
+            host = (parsed.hostname or '').lower()
+            if parsed.scheme != 'https' or not (host == 'yandex.ru' or host.endswith('.yandex.ru')) or '/maps/org/' not in parsed.path:
+                errors['source_url'] = 'Добавьте полную ссылку на отзыв в карточке организации на Яндекс Картах.'
+        if errors:
+            raise ValidationError(errors)
 
     def __str__(self):
         return f'{self.name}: {self.text[:30]}'
@@ -669,6 +818,8 @@ class Lead(models.Model):
         SUBSCRIPTION = 'subscription', 'Подписка на цветы'
         QUESTION = 'question', 'Вопрос'
         BOUQUET = 'bouquet', 'Свой букет'
+        BALLOONS = 'balloons', 'Шары'
+        SOUVENIRS = 'souvenirs', 'Сувениры'
 
     class Status(models.TextChoices):
         NEW = 'new', 'Новая'

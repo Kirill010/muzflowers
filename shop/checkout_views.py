@@ -62,7 +62,8 @@ def _summary_html(request, cart, method, site, addon_ids=None, promo=None):
         chosen = {a.pk: a for a in Addon.objects.filter(pk__in=addon_ids, is_active=True)}
         notes = {str(k): v for k, v in cart.addons.items()}
         rows = [(chosen[i], notes.get(str(i), '')) for i in addon_ids if i in chosen]
-    quote = build_quote(lines, rows, cart.promo if promo is None else promo, method=method, site=site)
+    quote = build_quote(lines, rows, cart.promo if promo is None else promo, method=method, site=site,
+                        certificate_code=request.POST.get('certificate_code', '') if request.method == 'POST' else '')
     return quote, render_to_string('shop/_checkout_summary.html', {'quote': quote, 'site': site}, request=request)
 
 
@@ -82,7 +83,8 @@ def checkout(request):
         elif form.is_valid():
             data = form.cleaned_data
             lines, _ = cart.resolve()
-            final = build_quote(lines, data['addons'], data.get('promo') or cart.promo, method=data['receive_method'], site=site)
+            final = build_quote(lines, data['addons'], data.get('promo') or cart.promo, method=data['receive_method'], site=site,
+                                certificate_code=data.get('certificate_code', ''))
             try:
                 order = create_order(quote=final, data=data, source=request.session.get('mz_src', ''),
                                      user=request.user if request.user.is_authenticated else None, origin=origin_of(request), request=request)
@@ -108,12 +110,15 @@ def checkout(request):
 
     prepay = is_prepay_required(day, site)
     summary_quote, _ = _summary_html(request, cart, method, site)
+    payment_choices = payment_options(prepay, site)
+    if request.POST.get('certificate_code'):
+        payment_choices.append({'value': Order.Pay.CERTIFICATE, 'label': 'Подарочным сертификатом', 'hint': 'Если сертификат покрывает весь заказ'})
     context = {
         'form': form, 'site': site, 'quote': summary_quote, 'method': method, 'day': day,
         'slot_options': slots.time_options(day, method, site), 'slot_value': slot_value, 'day_problem': slots.day_problem(day, method, site),
         'min_day': timezone.localdate().isoformat(), 'max_day': (timezone.localdate() + timedelta(days=site.max_days_ahead)).isoformat(),
         'blocked_days': json.dumps(slots.unavailable_dates(site), ensure_ascii=False),
-        'prepay': prepay, 'payments': payment_options(prepay, site), 'selected_payment': request.POST.get('payment_method', ''),
+        'prepay': prepay, 'payments': payment_choices, 'selected_payment': request.POST.get('payment_method', ''),
         'shop_count': len(form.pickup_shops),
     }
     return render(request, 'shop/checkout.html', context)

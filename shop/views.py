@@ -18,7 +18,7 @@ from . import bouquet, notifications, seo
 from .faq import presentation_questions
 from .legal import record_acceptance
 from .forms import BouquetForm, LeadForm
-from .models import FAQ, Addon, Category, Lead, Product, Shop, SiteSettings
+from .models import FAQ, Addon, Category, Lead, Product, Review, Shop, SiteSettings
 from .thumbs import thumb_url
 from .throttle import throttled
 from .utils import plural_ru, rub
@@ -63,6 +63,7 @@ def home(request):
     context = {
         'ready': ready,
         'featured': [p for p in products if p not in ready][:8],
+        'reviews': Review.objects.filter(is_published=True, permission_given=True).exclude(source=Review.Source.YANDEX, source_url='')[:6],
         'occasions': OCCASION_FILTERS.items(),
         'price_tiers': PRICE_TIERS,
         'categories': Category.objects.filter(is_active=True),
@@ -183,7 +184,7 @@ def art(request, kind, count, a, b):
 def stem_art(request, kind):
     if kind not in bouquet.FLOWERS:
         raise Http404
-    return redirect(bouquet.flower_photo_url(kind))
+    return redirect(bouquet.flower_art_url(kind))
 
 
 # ───────────── страницы ─────────────
@@ -291,6 +292,24 @@ def offices(request):
 
 def subscription(request):
     return _lead_page(request, Lead.Kind.SUBSCRIPTION, 'shop/subscription.html')
+
+
+def balloons(request):
+    return _lead_page(request, Lead.Kind.BALLOONS, 'shop/gifts.html',
+                      title='Шары к букету и празднику', heading='Шары к особенному дню',
+                      intro='Добавьте воздушные шары к букету или выберите отдельное украшение к празднику.',
+                      description='Шары к букету, дню рождения и празднику в Выхино. Подбор цветов, количества и стоимости с флористом MuzFlowers.',
+                      benefits=['Цвета и настроение подберём под ваш букет', 'Подойдут для дня рождения, открытия или сюрприза', 'Количество, наличие и стоимость согласуем до заказа'],
+                      submit_label='Узнать варианты шаров')
+
+
+def souvenirs(request):
+    return _lead_page(request, Lead.Kind.SOUVENIRS, 'shop/gifts.html',
+                      title='Сувениры и маленькие подарки к цветам', heading='Маленький подарок. Больше внимания.',
+                      intro='Добавьте к букету сувенир, который подчеркнёт повод и будет напоминать о вашем жесте.',
+                      description='Сувениры и небольшие подарки к букету в Выхино. Флорист MuzFlowers предложит доступные варианты под повод и бюджет.',
+                      benefits=['Предложим варианты под повод и получателя', 'Можно обсудить подарок вместе с букетом', 'Наличие, состав и цену подтвердим до оплаты'],
+                      submit_label='Узнать варианты сувениров')
 
 
 def favicon(request):

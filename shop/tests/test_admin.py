@@ -7,6 +7,7 @@ from datetime import timedelta
 from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
+from django.core import mail
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
 from django.urls import reverse
@@ -219,6 +220,42 @@ class ModelAdminTests(AdminTestCase):
                 self.assertEqual(self.client.get(url).status_code, 200)
         self.assertContains(self.client.get(reverse('admin:shop_order_change', args=[self.order.pk])), 'Бланк заказа')
 
+    def test_uploaded_delivery_photo_reaches_private_order_page_and_email(self):
+        media = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, media, True)
+        buf = io.BytesIO()
+        Image.new('RGB', (3000, 2000), (200, 80, 120)).save(buf, 'JPEG')
+        upload = SimpleUploadedFile('bouquet.jpg', buf.getvalue(), content_type='image/jpeg')
+        item = self.order.items.get()
+        addon = self.order.addons.get()
+        form = {
+            'status': Order.Status.NEW, 'payment_status': Order.PayStatus.UNPAID, 'payment_method': Order.Pay.ON_RECEIPT,
+            'staff_note': '', 'name': 'Анна', 'phone': '+79175494941', 'email': 'anna@example.com',
+            'address': '', 'address_details': '', 'recipient_name': '', 'recipient_phone': '',
+            'date': TODAY.isoformat(), 'asap': 'on', 'time_from': '', 'time_to': '', 'card_text': 'Люблю', 'comment': 'Позвоните',
+            'delivery_photo': upload,
+            'items-TOTAL_FORMS': '1', 'items-INITIAL_FORMS': '1', 'items-MIN_NUM_FORMS': '0', 'items-MAX_NUM_FORMS': '1000',
+            'items-0-id': str(item.pk), 'items-0-order': str(self.order.pk), 'items-0-name': 'Классика',
+            'items-0-variant_name': '', 'items-0-price': '1990', 'items-0-qty': '1',
+            'addons-TOTAL_FORMS': '1', 'addons-INITIAL_FORMS': '1', 'addons-MIN_NUM_FORMS': '0', 'addons-MAX_NUM_FORMS': '1000',
+            'addons-0-id': str(addon.pk), 'addons-0-order': str(self.order.pk), 'addons-0-name': 'Музыкальная открытка',
+            'addons-0-price': '300', 'addons-0-note': 'Земфира — Хочешь?',
+        }
+        with override_settings(MEDIA_ROOT=media), self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(reverse('admin:shop_order_change', args=[self.order.pk]), form)
+            self.assertEqual(response.status_code, 302, getattr(response, 'context', None) and response.context['adminform'].form.errors)
+            self.order.refresh_from_db()
+            self.assertTrue(self.order.delivery_photo.name.startswith('order-photos/'))
+            with Image.open(self.order.delivery_photo.path) as image:
+                self.assertEqual(max(image.size), 2400)
+            page = self.client.get(self.order.get_absolute_url())
+            self.assertContains(page, 'Фото вашего букета')
+            self.assertContains(page, '/media/thumbs/')
+            self.assertEqual(page['X-Robots-Tag'], 'noindex, nofollow')
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['anna@example.com'])
+        self.assertIn('фото букета', mail.outbox[0].subject)
+
     def test_site_settings_changelist_goes_straight_to_the_form(self):
         r = self.client.get(reverse('admin:shop_sitesettings_changelist'))
         self.assertRedirects(r, reverse('admin:shop_sitesettings_change', args=[1]), fetch_redirect_response=False)
@@ -229,6 +266,7 @@ class ModelAdminTests(AdminTestCase):
                                                               'pause_message', 'delivery_area_text', 'payment_details', 'announcement',
                                                               'legal_name', 'inn', 'ogrnip', 'legal_address', 'metrika_id')}
         form.update(phone='+7 (999) 111-22-33', delivery_cost=450, free_delivery_from=5000, min_order=0, pickup_lead_minutes=20,
+                    pickup_discount_percent=10,
                     delivery_lead_minutes=120, delivery_window_hours=2, max_days_ahead=60, daily_order_limit=0, open_time='09:00:00',
                     close_time='20:00:00', delivery_enabled='on', prepay_future_orders='on', allow_pay_on_receipt='on',
                     yandex_rating='4.6', yandex_votes='26')

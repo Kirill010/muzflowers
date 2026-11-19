@@ -40,7 +40,7 @@ if errorlevel 1 goto err
 "%VPY%" -c "import sys; sys.exit(sys.version_info < (3, 12))"
 if errorlevel 1 goto bad_venv
 echo [2/4] Проверяю нужные программы (нужен интернет, если что-то не установлено)...
-"%VPY%" -m pip install -q --disable-pip-version-check --no-input -r requirements.txt
+"%VPY%" -m pip install -q --disable-pip-version-check --no-input -r requirements.txt -r bot/requirements.txt
 if errorlevel 1 goto err
 
 rem Создаём настройки только при первом запуске.

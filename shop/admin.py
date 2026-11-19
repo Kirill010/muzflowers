@@ -2,6 +2,7 @@ import csv
 from datetime import timedelta
 
 from django.contrib import admin, messages
+from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import redirect
 from django.template.loader import render_to_string
@@ -12,8 +13,8 @@ from django.utils.safestring import mark_safe
 
 from . import bouquet
 from .admin_site import awaiting_prepayment
-from .models import (FAQ, Addon, Category, Lead, LegalAcceptance, Order, OrderAddon, OrderItem, Product, ProductImage, PromoCode, Review, Shop,
-                     SiteSettings, SpecialDay, Variant)
+from .models import (FAQ, Addon, BotOperation, Category, GiftCertificate, GiftCertificateLedger, Lead, LegalAcceptance, Order, OrderAddon,
+                     OrderItem, Product, ProductImage, PromoCode, Review, Shop, SiteSettings, SpecialDay, Variant)
 from .utils import rub
 
 STATUS_COLORS = {
@@ -131,6 +132,44 @@ class PromoCodeAdmin(admin.ModelAdmin):
         return f'{obj.value}%' if obj.kind == PromoCode.Kind.PERCENT else rub(obj.value)
 
 
+class CertificateLedgerInline(admin.TabularInline):
+    model = GiftCertificateLedger
+    extra = 0
+    can_delete = False
+    readonly_fields = ('order', 'delta', 'note', 'created')
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(GiftCertificate)
+class GiftCertificateAdmin(admin.ModelAdmin):
+    list_display = ('code', 'amount', 'balance', 'status', 'expires_at', 'buyer_telegram_id', 'purchase_order', 'created')
+    list_filter = ('status', 'expires_at')
+    search_fields = ('code', 'buyer_telegram_id', 'purchase_order__id')
+    readonly_fields = ('code', 'created', 'updated')
+    inlines = [CertificateLedgerInline]
+
+
+@admin.register(BotOperation)
+class BotOperationAdmin(admin.ModelAdmin):
+    list_display = ('action', 'key', 'telegram_user_id', 'status_code', 'created')
+    list_filter = ('action', 'status_code')
+    readonly_fields = ('action', 'key', 'telegram_user_id', 'response', 'status_code', 'created')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(SpecialDay)
 class SpecialDayAdmin(admin.ModelAdmin):
     list_display = ('date', 'is_closed', 'limit', 'note')
@@ -147,8 +186,9 @@ class ShopAdmin(admin.ModelAdmin):
 
 @admin.register(Review)
 class ReviewAdmin(admin.ModelAdmin):
-    list_display = ('name', 'short_text', 'rating', 'source', 'is_published', 'created')
+    list_display = ('name', 'short_text', 'rating', 'source', 'permission_given', 'is_published', 'created')
     list_editable = ('is_published',)
+    list_filter = ('source', 'permission_given', 'is_published')
 
     @admin.display(description='Отзыв')
     def short_text(self, obj):
@@ -211,12 +251,12 @@ class LeadAdmin(admin.ModelAdmin):
 @admin.register(SiteSettings)
 class SiteSettingsAdmin(admin.ModelAdmin):
     fieldsets = (
-        ('Контакты', {'fields': ('shop_name', 'phone', 'email', 'telegram', 'yandex_maps_url', ('yandex_rating', 'yandex_votes'))}),
+        ('Контакты', {'fields': ('shop_name', 'phone', 'email', 'telegram', 'max_url', 'yandex_maps_url', ('yandex_rating', 'yandex_votes'))}),
         ('Часы работы', {'fields': (('open_time', 'close_time'), 'hours_text')}),
         ('Принимаем ли заказы', {'fields': ('orders_paused', 'pause_message', 'announcement')}),
         ('Доставка', {'fields': ('delivery_enabled', 'delivery_cost', 'free_delivery_from', 'min_order', 'delivery_area_text',
                                  'delivery_lead_minutes', 'delivery_window_hours')}),
-        ('Самовывоз и даты', {'fields': ('pickup_lead_minutes', 'max_days_ahead', 'daily_order_limit')}),
+        ('Самовывоз и даты', {'fields': ('pickup_lead_minutes', 'pickup_discount_percent', 'max_days_ahead', 'daily_order_limit')}),
         ('Оплата', {'fields': ('prepay_future_orders', 'allow_pay_on_receipt', 'payment_details')}),
         ('Реквизиты продавца', {'fields': ('legal_name', 'inn', 'ogrnip', 'registration_authority', 'legal_address')}),
         ('Статистика', {'fields': ('metrika_id',)}),
@@ -292,17 +332,30 @@ class OrderAdmin(admin.ModelAdmin):
     save_on_top = True
     list_per_page = 40
     actions = ['mark_confirmed', 'mark_ready', 'mark_delivering', 'mark_done', 'mark_paid', 'mark_canceled', 'print_selected', 'export_csv']
-    readonly_fields = ('print_links', 'user', 'receive_method', 'shop', 'promo_code', 'subtotal', 'discount', 'addons_total',
-                       'delivery_cost', 'total', 'prepay_required', 'paid_at', 'source', 'marketing_consent', 'created', 'updated')
+    readonly_fields = ('print_links', 'kind', 'user', 'telegram_user_id', 'receive_method', 'shop', 'promo_code', 'subtotal', 'discount', 'addons_total',
+                       'delivery_cost', 'total', 'certificate', 'certificate_amount', 'prepay_required', 'paid_at', 'source',
+                       'marketing_consent', 'created', 'updated')
     fieldsets = (
-        ('Заказ', {'fields': ('print_links', 'status', ('payment_status', 'payment_method'), 'staff_note')}),
-        ('Клиент', {'fields': ('name', 'phone', 'email', 'user', 'marketing_consent', 'source')}),
+        ('Заказ', {'fields': ('print_links', 'kind', 'status', ('payment_status', 'payment_method'), 'staff_note')}),
+        ('Клиент', {'fields': ('name', 'phone', 'email', 'user', 'telegram_user_id', 'marketing_consent', 'source')}),
         ('Получение', {'fields': ('receive_method', 'shop', 'address', 'address_details', 'recipient_name', 'recipient_phone',
                                   'surprise', 'date', 'asap', ('time_from', 'time_to'))}),
         ('Открытка и пожелания', {'fields': ('card_text', 'comment')}),
-        ('Деньги', {'fields': ('subtotal', 'discount', 'addons_total', 'delivery_cost', 'total', 'promo_code', 'prepay_required', 'paid_at')}),
+        ('Фото перед выдачей или доставкой', {'fields': ('delivery_photo',),
+            'description': 'Загрузите только что сделанное фото собранного букета. Оно появится на странице заказа; при указанной почте клиент получит ссылку.'}),
+        ('Деньги', {'fields': ('subtotal', 'discount', 'addons_total', 'delivery_cost', 'certificate', 'certificate_amount',
+                              'total', 'promo_code', 'prepay_required', 'paid_at')}),
         ('Служебное', {'classes': ('collapse',), 'fields': ('created', 'updated')}),
     )
+
+    def save_model(self, request, obj, form, change):
+        photo_added = 'delivery_photo' in form.changed_data
+        super().save_model(request, obj, form, change)
+        if photo_added and obj.delivery_photo:
+            from . import notifications
+            origin = request.build_absolute_uri('/').rstrip('/')
+            transaction.on_commit(lambda: notifications.dispatch_order_photo(obj.pk, origin))
+            self.message_user(request, 'Фото сохранено. Клиент видит его по ссылке на заказ.', messages.SUCCESS)
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related('shop').prefetch_related('items', 'addons')

@@ -1,6 +1,7 @@
 import json
 import xml.etree.ElementTree as ET
 
+from django.core.exceptions import ValidationError
 from django.test import override_settings
 from django.urls import reverse
 
@@ -15,11 +16,12 @@ class PageTests(ShopTestCase):
         FAQ.objects.create(question='Как быстро?', answer='За 15 минут', order=1)
 
     def test_all_public_pages_open(self):
-        names = ['home', 'catalog', 'bouquet_builder', 'music', 'offices', 'subscription', 'delivery', 'care', 'about', 'contacts', 'faq', 'privacy', 'offer',
+        names = ['home', 'catalog', 'bouquet_builder', 'balloons', 'souvenirs', 'music', 'certificates', 'offices', 'subscription', 'delivery', 'care', 'about', 'contacts', 'faq', 'privacy', 'offer',
                  'legal', 'consumer', 'consent', 'marketing_consent', 'cookies', 'cart']
         for name in names:
             with self.subTest(page=name):
                 self.assertEqual(self.client.get(reverse(f'shop:{name}')).status_code, 200)
+        self.assertEqual(self.client.get('/wishlist/').status_code, 404)
 
     def test_category_and_product_pages(self):
         self.assertContains(self.client.get(self.cat.get_absolute_url()), 'Классика')
@@ -79,6 +81,24 @@ class PageTests(ShopTestCase):
         self.assertContains(self.client.get(self.rose.get_absolute_url()), 'Иллюстрация, не фото готового букета')
         self.assertContains(self.client.get(reverse('shop:catalog')), 'Самовывоз — бесплатно')
 
+    def test_presentation_links_and_brand_artwork(self):
+        self.update_site(pickup_discount_percent=10)
+        Category.objects.create(name='Сезонные', slug='season')
+        self.cat.slug = 'roses'
+        self.cat.save()
+        r = self.client.get(reverse('shop:home'))
+        for label in ('Букеты', 'Собери сам', 'Акции', 'Сезонные цветы', 'Композиции', 'Розы', 'Цветы', 'Шары', 'Сувениры'):
+            self.assertContains(r, label)
+        self.assertContains(r, 'logo-sage.png')
+        self.assertContains(r, 'data-record-toggle')
+        self.assertContains(r, 'Скидка 10% при самовывозе')
+        self.assertNotContains(r, 'по наличию')
+        self.assertContains(r, 'href="/balloons/"')
+        self.assertContains(r, 'href="/souvenirs/"')
+        self.assertNotContains(r, 'title="Уточнить наличие шаров по телефону"')
+        self.assertContains(r, 'favicon-32.png')
+        self.assertNotContains(r, 'rel="icon" href="/static/shop/img/favicon.svg"')
+
     def test_product_page_has_offer_and_breadcrumbs(self):
         r = self.client.get(self.rose.get_absolute_url())
         kinds = [json.loads(b)['@type'] for b in r.context['jsonld']]
@@ -96,17 +116,48 @@ class PageTests(ShopTestCase):
             self.assertNotContains(page, 'Школа Бизнеса')
             self.assertNotContains(page, 'Великой Школе Бизнеса')
 
-    def test_existing_reviews_and_social_channel_stay_off_the_storefront(self):
-        self.update_site(telegram='muzflowers', yandex_rating='4.8', yandex_votes=24,
+    def test_contacts_include_saved_messengers_without_fake_reviews(self):
+        self.update_site(telegram='muzflowers', max_url='https://max.ru/muzflowers', yandex_rating='4.8', yandex_votes=24,
                          yandex_maps_url='https://yandex.ru/maps/')
         Review.objects.create(name='Покупатель', text='Текст сохранённого отзыва', rating=5)
         for name in ('home', 'about', 'contacts', 'care', 'faq', 'delivery'):
             with self.subTest(page=name):
                 response = self.client.get(reverse(f'shop:{name}'))
-                self.assertNotContains(response, 't.me/muzflowers')
                 self.assertNotContains(response, 'Текст сохранённого отзыва')
                 self.assertNotContains(response, 'Читать и оставить отзыв')
                 self.assertNotContains(response, 'aggregateRating')
+        contacts = self.client.get(reverse('shop:contacts'))
+        self.assertContains(contacts, 'https://t.me/muzflowers')
+        self.assertContains(contacts, 'https://max.ru/muzflowers')
+        self.assertContains(contacts, 'mailto:muzflowers@ya.ru')
+        self.assertContains(contacts, '>Telegram</a>')
+        self.assertContains(contacts, '>MAX</a>')
+        self.assertContains(contacts, '#i-chat')
+        self.assertNotContains(contacts, 'Telegram —')
+        self.assertNotContains(contacts, 'Написать в MAX')
+        self.assertNotContains(contacts, '<b>MAX</b>')
+
+    def test_only_checked_reviews_are_shown(self):
+        Review.objects.create(name='Не опубликовано', text='Непроверенный текст', permission_given=False)
+        verified = Review.objects.create(name='Анна', text='Проверенный отзыв покупателя', rating=5, permission_given=True,
+                                         source_url='https://yandex.ru/maps/org/muzflowers/123/reviews/456/')
+        response = self.client.get(reverse('shop:home'))
+        self.assertContains(response, verified.text)
+        self.assertContains(response, verified.source_url)
+        self.assertContains(response, 'Оригинал')
+        self.assertNotContains(response, 'Непроверенный текст')
+        self.assertNotContains(response, 'aggregateRating')
+
+    def test_review_requires_permission_and_verifiable_yandex_source(self):
+        with self.assertRaises(ValidationError):
+            Review(name='Анна', text='Отзыв', is_published=True, permission_given=False).full_clean()
+        for url in ('', 'https://example.com/review/1', 'https://yandex.ru/maps/?text=shop',
+                    'https://yandex.ru.evil.example/maps/org/shop/1/'):
+            with self.subTest(url=url):
+                with self.assertRaises(ValidationError):
+                    Review(name='Анна', text='Отзыв', permission_given=True, source_url=url).full_clean()
+        Review(name='Анна', text='Отзыв', permission_given=True,
+               source_url='https://yandex.ru/maps/org/shop/1/reviews/2/').full_clean()
 
     def test_faq_page_has_faq_markup(self):
         r = self.client.get(reverse('shop:faq'))
@@ -133,7 +184,7 @@ class PageTests(ShopTestCase):
         for name in ('offer', 'privacy', 'consent', 'marketing_consent', 'cookies', 'legal'):
             with self.subTest(page=name):
                 r = self.client.get(reverse(f'shop:{name}'))
-                expected = 'Редакция комплекта 1.0' if name == 'legal' else 'Редакция 1.0'
+                expected = 'Редакция комплекта 1.1' if name == 'legal' else 'Редакция 1.1'
                 self.assertContains(r, expected)
                 self.assertNotContains(r, 'RestHelper')
                 self.assertNotContains(r, 'iiko')
@@ -216,7 +267,9 @@ class CatalogTests(ShopTestCase):
         self.assertContains(r, 'noindex')  # вторые страницы поисковикам не нужны
 
     def test_empty_search_has_message(self):
-        self.assertContains(self.client.get(reverse('shop:catalog'), {'q': 'нетакого'}), 'Ничего не нашли')
+        response = self.client.get(reverse('shop:catalog'), {'q': 'нетакого'})
+        self.assertContains(response, 'Ничего не нашли')
+        self.assertContains(response, 'href="/bouquet/"')
 
     def test_suggest(self):
         data = self.client.get(reverse('shop:suggest'), {'q': 'клас'}).json()
@@ -315,6 +368,16 @@ class LeadTests(ShopTestCase):
     def test_subscription_request_is_saved(self):
         self.post('subscription')
         self.assertEqual(Lead.objects.get().kind, 'subscription')
+
+    def test_gift_pages_save_the_right_kind_of_request(self):
+        for route, kind, text in (('balloons', Lead.Kind.BALLOONS, 'Нужны розовые шары'),
+                                  ('souvenirs', Lead.Kind.SOUVENIRS, 'Нужен сувенир к букету')):
+            with self.subTest(page=route):
+                response = self.post(route, message=text)
+                self.assertRedirects(response, reverse(f'shop:{route}'))
+                lead = Lead.objects.get(kind=kind)
+                self.assertEqual((lead.message, lead.status), (text, Lead.Status.NEW))
+                self.assertContains(self.client.get(reverse(f'shop:{route}')), 'name="message"')
 
     def test_success_message_is_shown_after_redirect(self):
         r = self.client.post(reverse('shop:offices'), {'name': 'О', 'phone': '9001112233', 'consent': 'on'}, follow=True)
