@@ -17,6 +17,7 @@ from .config import ConfigError, Settings
 from .db import Database
 from .integrated_handlers import IntegratedContext, router
 from .integrated_store import IntegratedStore
+from .instance import SingleInstance
 from .middlewares import Throttle, UserMiddleware
 from .shop_api import ShopApiError, ShopClient
 
@@ -28,6 +29,8 @@ COMMANDS = [BotCommand(command='catalog', description='Каталог'), BotComm
 async def reminders_loop(ctx: IntegratedContext, bot: Bot) -> None:
     while True:
         await asyncio.sleep(60)
+        if not ctx.settings.admin_ids:
+            continue
         try:
             result = await ctx.client.post('staff/orders', {'telegram_user_id': ctx.settings.admin_ids[0] if ctx.settings.admin_ids else 0})
             now = datetime.now(timezone.utc)
@@ -40,6 +43,11 @@ async def reminders_loop(ctx: IntegratedContext, bot: Bot) -> None:
                 if level and ctx.nudged.get(key) != level:
                     ctx.nudged[key] = level
                     await notify.to_staff(bot, ctx, f"⏰ Заказ №{order['id']} ждёт подтверждения уже {int(age.total_seconds() // 60)} мин.")
+        except ShopApiError as exc:
+            if exc.status == 403:
+                log.warning('Напоминания сотрудникам остановлены: добавьте Telegram ID в BOT_ADMIN_IDS сайта.')
+                return
+            log.warning('Не удалось проверить ожидающие заказы: %s', exc)
         except Exception as exc:
             log.warning('Не удалось проверить ожидающие заказы: %s', exc)
 
@@ -54,6 +62,8 @@ def local_api_candidates(configured_url: str) -> list[str]:
 
 
 async def run_integrated(settings: Settings) -> None:
+    guard = SingleInstance(settings.data_dir / 'bot-instance.lock')
+    guard.acquire()
     db = Database(settings.db_path)
     client = ShopClient(settings)
     store = IntegratedStore(db)
@@ -114,3 +124,4 @@ async def run_integrated(settings: Settings) -> None:
         await client.close()
         await bot.session.close()
         db.close()
+        guard.release()
