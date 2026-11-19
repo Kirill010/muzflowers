@@ -18,7 +18,7 @@ from .db import Database
 from .integrated_handlers import IntegratedContext, router
 from .integrated_store import IntegratedStore
 from .middlewares import Throttle, UserMiddleware
-from .shop_api import ShopClient
+from .shop_api import ShopApiError, ShopClient
 
 log = logging.getLogger('flowerbot')
 COMMANDS = [BotCommand(command='catalog', description='Каталог'), BotCommand(command='cart', description='Корзина'),
@@ -58,6 +58,11 @@ async def run_integrated(settings: Settings) -> None:
             await ctx.bootstrap()
         except TelegramUnauthorizedError:
             raise ConfigError('Telegram не принял BOT_TOKEN. Отзовите старый и вставьте новый ключ.') from None
+        except ShopApiError as exc:
+            if exc.status == 403:
+                raise ConfigError('Сайт отклонил подпись API. Проверьте, что BOT_API_SECRET сайта и SHOP_API_SECRET бота совпадают. '
+                                  'Для локального запуска оставьте оба значения пустыми и используйте DJANGO_DEBUG=1.') from exc
+            raise ConfigError(f'Не удалось связаться с API сайта: {exc}') from exc
         except (TelegramNetworkError, asyncio.TimeoutError, OSError) as exc:
             raise ConnectionProblem(f'Нет связи: {exc}') from exc
         ctx.bot_username = me.username or ''

@@ -65,6 +65,11 @@ class IntegratedSettingsTests(unittest.TestCase):
             make_settings(SHOP_API_URL='https://shop.example/api/bot/v1', SHOP_API_SECRET=SECRET,
                           YOOKASSA_SHOP_ID='123456', YOOKASSA_SECRET_KEY='test_' + 'A' * 30)
 
+    def test_local_url_uses_safe_development_fallback(self):
+        settings = make_settings(SHOP_API_URL='http://127.0.0.1:8001/api/bot/v1', SHOP_API_SECRET='')
+        self.assertTrue(settings.integrated)
+        self.assertEqual(settings.shop_api_secret, 'dev-only-insecure-bot-api-key-0123456789abcdef0123456789')
+
     def test_integrated_mode(self):
         settings = make_settings(SHOP_API_URL='https://shop.example/api/bot/v1', SHOP_API_SECRET=SECRET)
         self.assertTrue(settings.integrated)

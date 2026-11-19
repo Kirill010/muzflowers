@@ -180,7 +180,7 @@ ORDER_WEBHOOK_URL = os.environ.get('ORDER_WEBHOOK_URL', '')  # любой сер
 ORDER_NOTIFY_EMAILS = _list('ORDER_NOTIFY_EMAILS')  # почта владельца/сотрудников для писем о новых заказах
 
 # Служебное API Telegram-бота. Секрет задаётся только на сервере, не в коде и не в Telegram.
-BOT_API_SECRET = os.environ.get('BOT_API_SECRET', '')
+BOT_API_SECRET = os.environ.get('BOT_API_SECRET') or ('dev-only-insecure-bot-api-key-0123456789abcdef0123456789' if (DEBUG or TESTING) else '')
 BOT_ADMIN_IDS = [int(value) for value in _list('BOT_ADMIN_IDS') if value.isdigit()]
 
 # --- онлайн-оплата (необязательно): none | tbank | yookassa ---

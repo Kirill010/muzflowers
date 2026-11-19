@@ -398,6 +398,8 @@ def load_settings(root: Path = ROOT, environ: Mapping[str, str] | None = None) -
 
     shop_api_url = get("SHOP_API_URL").rstrip("/")
     shop_api_secret = get("SHOP_API_SECRET")
+    if shop_api_url and not shop_api_secret and ("127.0.0.1" in shop_api_url or "localhost" in shop_api_url):
+        shop_api_secret = 'dev-only-insecure-bot-api-key-0123456789abcdef0123456789'
     if bool(shop_api_url) != bool(shop_api_secret):
         raise ConfigError("Для режима общего магазина нужны оба значения: SHOP_API_URL и SHOP_API_SECRET.")
     if shop_api_url and not shop_api_url.startswith("https://") and "127.0.0.1" not in shop_api_url and "localhost" not in shop_api_url:
