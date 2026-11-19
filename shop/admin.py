@@ -218,7 +218,7 @@ class SiteSettingsAdmin(admin.ModelAdmin):
                                  'delivery_lead_minutes', 'delivery_window_hours')}),
         ('Самовывоз и даты', {'fields': ('pickup_lead_minutes', 'max_days_ahead', 'daily_order_limit')}),
         ('Оплата', {'fields': ('prepay_future_orders', 'allow_pay_on_receipt', 'payment_details')}),
-        ('Реквизиты продавца (по закону нужны интернет-магазину)', {'fields': ('legal_name', 'inn', 'ogrnip', 'legal_address')}),
+        ('Реквизиты продавца', {'fields': ('legal_name', 'inn', 'ogrnip', 'registration_authority', 'legal_address')}),
         ('Статистика', {'fields': ('metrika_id',)}),
     )
 

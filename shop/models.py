@@ -81,6 +81,8 @@ class SiteSettings(models.Model):
     inn = models.CharField('ИНН', max_length=12, blank=True)
     ogrnip = models.CharField('ОГРНИП / ОГРН', max_length=15, blank=True)
     legal_address = models.CharField('Юридический адрес', max_length=200, blank=True)
+    registration_authority = models.CharField('Регистрирующий орган (для ИП)', max_length=250, blank=True,
+                                              help_text='Название органа из сведений о регистрации в ЕГРИП')
 
     metrika_id = models.CharField('Номер счётчика Яндекс Метрики', max_length=12, blank=True,
                                   help_text='Только цифры. Пусто — статистику не собираем')

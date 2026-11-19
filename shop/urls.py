@@ -40,6 +40,7 @@ urlpatterns = [
     path('privacy/', views.privacy, name='privacy'),
     path('offer/', views.offer, name='offer'),
     path('legal/', views.legal, name='legal'),
+    path('consumer/', views.consumer, name='consumer'),
     path('consent/', views.consent, name='consent'),
     path('marketing-consent/', views.marketing_consent, name='marketing_consent'),
     path('cookies/', views.cookies, name='cookies'),

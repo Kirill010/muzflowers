@@ -232,6 +232,18 @@ def legal(request):
     return _page(request, 'shop/legal.html')
 
 
+def consumer(request):
+    site = SiteSettings.load()
+    location = Shop.objects.filter(is_active=True, is_pickup=True).first()
+    is_entrepreneur = len(site.ogrnip) == 15
+    seller_details = site.registration_authority if is_entrepreneur else site.legal_address
+    print_ready = bool(site.legal_name and site.inn and site.ogrnip.isdecimal()
+                       and len(site.ogrnip) in (13, 15) and seller_details
+                       and location and location.address)
+    return _page(request, 'shop/consumer.html', location=location, is_entrepreneur=is_entrepreneur,
+                 print_ready=print_ready)
+
+
 def consent(request):
     return _page(request, 'shop/consent.html')
 

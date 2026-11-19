@@ -16,7 +16,7 @@ class PageTests(ShopTestCase):
 
     def test_all_public_pages_open(self):
         names = ['home', 'catalog', 'bouquet_builder', 'music', 'offices', 'subscription', 'delivery', 'care', 'about', 'contacts', 'faq', 'privacy', 'offer',
-                 'legal', 'consent', 'marketing_consent', 'cookies', 'cart']
+                 'legal', 'consumer', 'consent', 'marketing_consent', 'cookies', 'cart']
         for name in names:
             with self.subTest(page=name):
                 self.assertEqual(self.client.get(reverse(f'shop:{name}')).status_code, 200)
@@ -27,6 +27,20 @@ class PageTests(ShopTestCase):
         self.assertContains(r, 'Классика')
         self.assertContains(r, 'В корзину')
         self.assertContains(r, 'Музыкальная открытка')
+
+    def test_consumer_corner_uses_seller_and_store_details(self):
+        url = reverse('shop:consumer')
+        self.assertContains(self.client.get(url), 'Макет. Перед размещением')
+        self.update_site(legal_name='ИП Тестовый продавец', inn='123456789012', ogrnip='123456789012345',
+                         registration_authority='Регистрирующий орган', payment_details='Реквизиты перевода из заказа')
+        self.shop.hours_text = 'Ежедневно 10:00–20:00'
+        self.shop.save(update_fields=['hours_text'])
+        response = self.client.get(url)
+        for detail in ('ИП Тестовый продавец', '123456789012345', 'Регистрирующий орган',
+                       self.shop.address, self.shop.hours_text):
+            self.assertContains(response, detail)
+        self.assertNotContains(response, 'Макет. Перед размещением')
+        self.assertNotContains(response, 'Реквизиты перевода из заказа')
 
     def test_hidden_product_and_category_are_404(self):
         self.rose.is_active = False

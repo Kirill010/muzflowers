@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Уголок потребителя — {{ site.shop_name }}{% endblock %}
+{% block description %}Сведения о продавце, режим работы и порядок подачи претензии в магазине {{ site.shop_name }}.{% endblock %}
+{% block body_class %}page-consumer{% endblock %}
+{% block head %}<link rel="stylesheet" href="{% static 'shop/css/consumer.css' %}">{% endblock %}
+{% block content %}
+<article class="wrap consumer">
+  <header class="consumer__heading">
+    <div>
+      <p class="consumer__brand">{{ site.shop_name }} · Цветочный магазин</p>
+      <h1>Уголок потребителя</h1>
+    </div>
+    <button type="button" class="btn btn--primary consumer__print" data-consumer-print>Распечатать A4</button>
+  </header>
+
+  {% if not print_ready %}<p class="consumer__notice">Макет. Перед размещением заполните сведения о продавце и магазине.</p>{% endif %}
+
+  <div class="consumer__details">
+    <section class="consumer__panel">
+      <h2>Магазин</h2>
+      <dl>
+        <dt>Адрес</dt><dd>{{ location.address|default:"Уточняется" }}</dd>
+        <dt>Режим работы</dt><dd>{{ location.hours_text|default:site.hours_display }}</dd>
+        <dt>Телефон</dt><dd><a href="{{ location.phone_href|default:site.phone_href }}">{{ location.phone|default:site.phone }}</a></dd>
+        {% if site.email %}<dt>Электронная почта</dt><dd><a href="mailto:{{ site.email }}">{{ site.email }}</a></dd>{% endif %}
+      </dl>
+    </section>
+    <section class="consumer__panel">
+      <h2>Сведения о продавце</h2>
+      <dl>
+        <dt>Продавец</dt><dd>{{ site.legal_name|default:"Уточняется" }}</dd>
+        <dt>ИНН</dt><dd>{{ site.inn|default:"Уточняется" }}</dd>
+        <dt>{% if is_entrepreneur %}ОГРНИП{% else %}ОГРН / ОГРНИП{% endif %}</dt><dd>{{ site.ogrnip|default:"Уточняется" }}</dd>
+        {% if is_entrepreneur or not site.ogrnip %}
+        <dt>Регистрирующий орган ИП</dt><dd>{{ site.registration_authority|default:"Уточняется" }}</dd>
+        {% endif %}
+        {% if site.legal_address or not is_entrepreneur %}
+        <dt>Юридический адрес</dt><dd>{{ site.legal_address|default:"Уточняется" }}</dd>
+        {% endif %}
+      </dl>
+    </section>
+  </div>
+
+  <section class="consumer__section">
+    <h2>Если у букета есть недостатки</h2>
+    <p>Вы вправе предъявить продавцу требование, предусмотренное статьёй 18 Закона РФ «О защите прав потребителей», например о замене товара, снижении цены или возврате денег. Отсутствие чека само по себе не основание для отказа в рассмотрении требования.</p>
+    <p>Обмен цветов надлежащего качества, купленных в магазине, по статье 25 не предусмотрен. Для покупок через сайт применяется порядок, установленный статьёй 26.1.</p>
+  </section>
+
+  <section class="consumer__section">
+    <h2>Как подать претензию</h2>
+    <p>Передайте письменное обращение сотруднику магазина{% if site.email %} или отправьте его на указанную выше электронную почту{% endif %}. Укажите дату покупки, суть претензии, ваше требование и почтовый или электронный адрес для ответа. Если есть чек или фото, приложите копии.</p>
+  </section>
+
+  <section class="consumer__section">
+    <h2>Роспотребнадзор</h2>
+    <p>Единый консультационный центр: <a href="tel:+78005554943">8 800 555-49-43</a><br>
+      Электронная приёмная: <a href="https://petition.rospotrebnadzor.ru/petition/">petition.rospotrebnadzor.ru</a></p>
+  </section>
+
+  <footer class="consumer__sources">
+    <a href="https://zpp.rospotrebnadzor.ru/npa/federal/192115">Закон РФ от 07.02.1992 № 2300-1</a>
+    <a href="https://zpp.rospotrebnadzor.ru/news/federal/594014">Правила продажи · постановление Правительства РФ от 30.05.2026 № 657</a>
+  </footer>
+</article>
+{% endblock %}
+{% block scripts %}<script src="{% static 'shop/js/consumer.js' %}" defer></script>{% endblock %}
