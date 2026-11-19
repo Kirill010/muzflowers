@@ -179,6 +179,10 @@ TELEGRAM_CHAT_ID = os.environ.get('TELEGRAM_CHAT_ID', '')  # можно неск
 ORDER_WEBHOOK_URL = os.environ.get('ORDER_WEBHOOK_URL', '')  # любой сервис, который принимает JSON
 ORDER_NOTIFY_EMAILS = _list('ORDER_NOTIFY_EMAILS')  # почта владельца/сотрудников для писем о новых заказах
 
+# Служебное API Telegram-бота. Секрет задаётся только на сервере, не в коде и не в Telegram.
+BOT_API_SECRET = os.environ.get('BOT_API_SECRET', '')
+BOT_ADMIN_IDS = [int(value) for value in _list('BOT_ADMIN_IDS') if value.isdigit()]
+
 # --- онлайн-оплата (необязательно): none | tbank | yookassa ---
 PAYMENT_PROVIDER = os.environ.get('PAYMENT_PROVIDER', 'none').strip().lower()
 PAYMENT_TBANK_TERMINAL = os.environ.get('PAYMENT_TBANK_TERMINAL', '')

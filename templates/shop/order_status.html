@@ -60,6 +60,19 @@
     </div>
     {% endif %}
 
+    {% if order.kind == 'certificate' %}
+    <div class="panel panel--plain order-photo">
+      <h2 class="panel__title">{% icon 'gift' %} Подарочный сертификат</h2>
+      {% if order.gift_certificate %}
+      <p>Передайте этот код получателю. Его можно использовать на сайте или в Telegram-боте.</p>
+      <p class="display display--sm">{{ order.gift_certificate.code }}</p>
+      <p>Остаток: <b>{{ order.gift_certificate.balance|rub }}</b> · Действует до {{ order.gift_certificate.expires_at|date:'d.m.Y' }}</p>
+      {% else %}
+      <p>Сертификат появится здесь после подтверждения оплаты. Обновите страницу через несколько секунд.</p>
+      {% endif %}
+    </div>
+    {% endif %}
+
     <div class="panel panel--plain">
       <h2 class="panel__title">Детали</h2>
       <dl class="details">
@@ -77,7 +90,8 @@
       <dl class="totals">
         {% if order.discount %}<div class="totals__discount"><dt>Скидка {{ order.promo_code }}</dt><dd>−{{ order.discount|rub }}</dd></div>{% endif %}
         {% if order.delivery_cost %}<div><dt>Доставка</dt><dd>{{ order.delivery_cost|rub }}</dd></div>{% endif %}
-        <div class="totals__sum"><dt>Итого</dt><dd>{{ order.total|rub }}</dd></div>
+        {% if order.certificate_amount %}<div class="totals__discount"><dt>Подарочный сертификат</dt><dd>−{{ order.certificate_amount|rub }}</dd></div>{% endif %}
+        <div class="totals__sum"><dt>К оплате</dt><dd>{{ order.total|rub }}</dd></div>
       </dl>
     </div>
 

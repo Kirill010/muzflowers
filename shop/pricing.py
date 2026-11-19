@@ -2,7 +2,8 @@
 корзина, оформление и заказ берут цифры отсюда — данным из браузера не доверяем."""
 from dataclasses import dataclass, field
 
-from .models import Order, PromoCode, SiteSettings
+from .certificates import normalize_certificate_code
+from .models import GiftCertificate, Order, PromoCode, SiteSettings
 
 
 @dataclass
@@ -43,6 +44,9 @@ class Quote:
     total: int = 0
     promo: object = None
     promo_error: str = ''
+    certificate: object = None
+    certificate_amount: int = 0
+    certificate_error: str = ''
     free_from: int = 0
     free_left: int = 0
     pickup_discount: int = 0
@@ -71,7 +75,7 @@ def find_promo(code):
     return PromoCode.objects.filter(code__iexact=code).first() if code else None
 
 
-def build_quote(lines, addon_rows, promo_code='', method='', site=None, today=None):
+def build_quote(lines, addon_rows, promo_code='', method='', site=None, today=None, certificate_code=''):
     site = site or SiteSettings.load()
     subtotal = sum(line.total for line in lines)
 
@@ -93,6 +97,17 @@ def build_quote(lines, addon_rows, promo_code='', method='', site=None, today=No
     delivery = 0
     if method == Order.Method.DELIVERY:
         delivery = 0 if (free_from and after_discount >= free_from) else site.delivery_cost
+    before_certificate = after_discount - pickup_discount + addons_total + delivery
+
+    certificate, certificate_error = None, ''
+    normalized = normalize_certificate_code(certificate_code)
+    if certificate_code:
+        certificate = GiftCertificate.objects.filter(code=normalized).first() if normalized else None
+        if certificate is None:
+            certificate_error = 'Сертификат с таким кодом не найден'
+        else:
+            certificate_error = certificate.problem(today)
+    certificate_amount = min(certificate.balance, before_certificate) if certificate and not certificate_error else 0
 
     problems = [f'«{line.product.name}»: {line.problem}' for line in lines if line.problem]
     if lines and site.min_order and subtotal < site.min_order:
@@ -102,8 +117,10 @@ def build_quote(lines, addon_rows, promo_code='', method='', site=None, today=No
 
     return Quote(
         lines=lines, addon_rows=addon_rows, subtotal=subtotal, discount=discount, addons_total=addons_total,
-        delivery=delivery, total=after_discount - pickup_discount + addons_total + delivery,
+        delivery=delivery, total=before_certificate - certificate_amount,
         pickup_discount=pickup_discount, promo=promo, promo_error=promo_error,
+        certificate=certificate if not certificate_error else None, certificate_amount=certificate_amount,
+        certificate_error=certificate_error,
         free_from=free_from, free_left=max(0, free_from - after_discount) if free_from else 0,
         method=method, problems=problems,
     )

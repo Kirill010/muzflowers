@@ -18,9 +18,11 @@
   {% if quote.pickup_discount %}<div class="totals__discount"><dt>Скидка за самовывоз ({{ site.pickup_discount_percent }}%)</dt><dd>−{{ quote.pickup_discount|rub }}</dd></div>{% endif %}
   {% if quote.addons_total %}<div><dt>Дополнения</dt><dd>{{ quote.addons_total|rub }}</dd></div>{% endif %}
   <div><dt>{% if quote.method == 'delivery' %}Доставка{% else %}Самовывоз{% endif %}</dt><dd>{% if quote.delivery %}{{ quote.delivery|rub }}{% else %}бесплатно{% endif %}</dd></div>
-  <div class="totals__sum"><dt>Итого</dt><dd data-total>{{ quote.total|rub }}</dd></div>
+  {% if quote.certificate_amount %}<div class="totals__discount"><dt>Подарочный сертификат</dt><dd>−{{ quote.certificate_amount|rub }}</dd></div>{% endif %}
+  <div class="totals__sum"><dt>К оплате</dt><dd data-total>{{ quote.total|rub }}</dd></div>
 </dl>
 {% if quote.method == 'delivery' and quote.free_left and quote.free_from %}
 <p class="summary__hint">{% icon 'truck' %} Добавьте ещё на {{ quote.free_left|rub }} — и доставка будет бесплатной.</p>
 {% endif %}
+{% if quote.certificate_error %}<p class="problems">{{ quote.certificate_error }}</p>{% endif %}
 {% if quote.problems %}<ul class="problems">{% for problem in quote.problems %}<li>{{ problem }}</li>{% endfor %}</ul>{% endif %}

@@ -16,7 +16,7 @@ class PageTests(ShopTestCase):
         FAQ.objects.create(question='Как быстро?', answer='За 15 минут', order=1)
 
     def test_all_public_pages_open(self):
-        names = ['home', 'catalog', 'bouquet_builder', 'balloons', 'souvenirs', 'music', 'offices', 'subscription', 'delivery', 'care', 'about', 'contacts', 'faq', 'privacy', 'offer',
+        names = ['home', 'catalog', 'bouquet_builder', 'balloons', 'souvenirs', 'music', 'certificates', 'offices', 'subscription', 'delivery', 'care', 'about', 'contacts', 'faq', 'privacy', 'offer',
                  'legal', 'consent', 'marketing_consent', 'cookies', 'cart']
         for name in names:
             with self.subTest(page=name):
@@ -170,7 +170,7 @@ class PageTests(ShopTestCase):
         for name in ('offer', 'privacy', 'consent', 'marketing_consent', 'cookies', 'legal'):
             with self.subTest(page=name):
                 r = self.client.get(reverse(f'shop:{name}'))
-                expected = 'Редакция комплекта 1.0' if name == 'legal' else 'Редакция 1.0'
+                expected = 'Редакция комплекта 1.1' if name == 'legal' else 'Редакция 1.1'
                 self.assertContains(r, expected)
                 self.assertNotContains(r, 'RestHelper')
                 self.assertNotContains(r, 'iiko')

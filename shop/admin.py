@@ -13,8 +13,8 @@ from django.utils.safestring import mark_safe
 
 from . import bouquet
 from .admin_site import awaiting_prepayment
-from .models import (FAQ, Addon, Category, Lead, LegalAcceptance, Order, OrderAddon, OrderItem, Product, ProductImage, PromoCode, Review, Shop,
-                     SiteSettings, SpecialDay, Variant)
+from .models import (FAQ, Addon, BotOperation, Category, GiftCertificate, GiftCertificateLedger, Lead, LegalAcceptance, Order, OrderAddon,
+                     OrderItem, Product, ProductImage, PromoCode, Review, Shop, SiteSettings, SpecialDay, Variant)
 from .utils import rub
 
 STATUS_COLORS = {
@@ -130,6 +130,44 @@ class PromoCodeAdmin(admin.ModelAdmin):
     @admin.display(description='Скидка')
     def value_display(self, obj):
         return f'{obj.value}%' if obj.kind == PromoCode.Kind.PERCENT else rub(obj.value)
+
+
+class CertificateLedgerInline(admin.TabularInline):
+    model = GiftCertificateLedger
+    extra = 0
+    can_delete = False
+    readonly_fields = ('order', 'delta', 'note', 'created')
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(GiftCertificate)
+class GiftCertificateAdmin(admin.ModelAdmin):
+    list_display = ('code', 'amount', 'balance', 'status', 'expires_at', 'buyer_telegram_id', 'purchase_order', 'created')
+    list_filter = ('status', 'expires_at')
+    search_fields = ('code', 'buyer_telegram_id', 'purchase_order__id')
+    readonly_fields = ('code', 'created', 'updated')
+    inlines = [CertificateLedgerInline]
+
+
+@admin.register(BotOperation)
+class BotOperationAdmin(admin.ModelAdmin):
+    list_display = ('action', 'key', 'telegram_user_id', 'status_code', 'created')
+    list_filter = ('action', 'status_code')
+    readonly_fields = ('action', 'key', 'telegram_user_id', 'response', 'status_code', 'created')
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(SpecialDay)
@@ -294,17 +332,19 @@ class OrderAdmin(admin.ModelAdmin):
     save_on_top = True
     list_per_page = 40
     actions = ['mark_confirmed', 'mark_ready', 'mark_delivering', 'mark_done', 'mark_paid', 'mark_canceled', 'print_selected', 'export_csv']
-    readonly_fields = ('print_links', 'user', 'receive_method', 'shop', 'promo_code', 'subtotal', 'discount', 'addons_total',
-                       'delivery_cost', 'total', 'prepay_required', 'paid_at', 'source', 'marketing_consent', 'created', 'updated')
+    readonly_fields = ('print_links', 'kind', 'user', 'telegram_user_id', 'receive_method', 'shop', 'promo_code', 'subtotal', 'discount', 'addons_total',
+                       'delivery_cost', 'total', 'certificate', 'certificate_amount', 'prepay_required', 'paid_at', 'source',
+                       'marketing_consent', 'created', 'updated')
     fieldsets = (
-        ('Заказ', {'fields': ('print_links', 'status', ('payment_status', 'payment_method'), 'staff_note')}),
-        ('Клиент', {'fields': ('name', 'phone', 'email', 'user', 'marketing_consent', 'source')}),
+        ('Заказ', {'fields': ('print_links', 'kind', 'status', ('payment_status', 'payment_method'), 'staff_note')}),
+        ('Клиент', {'fields': ('name', 'phone', 'email', 'user', 'telegram_user_id', 'marketing_consent', 'source')}),
         ('Получение', {'fields': ('receive_method', 'shop', 'address', 'address_details', 'recipient_name', 'recipient_phone',
                                   'surprise', 'date', 'asap', ('time_from', 'time_to'))}),
         ('Открытка и пожелания', {'fields': ('card_text', 'comment')}),
         ('Фото перед выдачей или доставкой', {'fields': ('delivery_photo',),
             'description': 'Загрузите только что сделанное фото собранного букета. Оно появится на странице заказа; при указанной почте клиент получит ссылку.'}),
-        ('Деньги', {'fields': ('subtotal', 'discount', 'addons_total', 'delivery_cost', 'total', 'promo_code', 'prepay_required', 'paid_at')}),
+        ('Деньги', {'fields': ('subtotal', 'discount', 'addons_total', 'delivery_cost', 'certificate', 'certificate_amount',
+                              'total', 'promo_code', 'prepay_required', 'paid_at')}),
         ('Служебное', {'classes': ('collapse',), 'fields': ('created', 'updated')}),
     )
 
