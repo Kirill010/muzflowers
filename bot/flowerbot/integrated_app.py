@@ -44,6 +44,15 @@ async def reminders_loop(ctx: IntegratedContext, bot: Bot) -> None:
             log.warning('Не удалось проверить ожидающие заказы: %s', exc)
 
 
+def local_api_candidates(configured_url: str) -> list[str]:
+    urls = [configured_url]
+    if '127.0.0.1' in configured_url or 'localhost' in configured_url:
+        alternate = 'http://127.0.0.1:8001/api/bot/v1' if ':8000/' in configured_url else 'http://127.0.0.1:8000/api/bot/v1'
+        if alternate not in urls:
+            urls.append(alternate)
+    return urls
+
+
 async def run_integrated(settings: Settings) -> None:
     db = Database(settings.db_path)
     client = ShopClient(settings)
@@ -55,16 +64,23 @@ async def run_integrated(settings: Settings) -> None:
     try:
         try:
             me = await bot.get_me()
-            await ctx.bootstrap()
         except TelegramUnauthorizedError:
             raise ConfigError('Telegram не принял BOT_TOKEN. Отзовите старый и вставьте новый ключ.') from None
-        except ShopApiError as exc:
-            if exc.status == 403:
-                raise ConfigError('Сайт отклонил подпись API. Проверьте, что BOT_API_SECRET сайта и SHOP_API_SECRET бота совпадают. '
-                                  'Для локального запуска оставьте оба значения пустыми и используйте DJANGO_DEBUG=1.') from exc
-            raise ConfigError(f'Не удалось связаться с API сайта: {exc}') from exc
         except (TelegramNetworkError, asyncio.TimeoutError, OSError) as exc:
-            raise ConnectionProblem(f'Нет связи: {exc}') from exc
+            raise ConnectionProblem(f'Нет связи с Telegram: {exc}') from exc
+        for api_url in local_api_candidates(settings.shop_api_url):
+            client.base_url = api_url
+            try:
+                await ctx.bootstrap()
+                break
+            except ShopApiError as exc:
+                if exc.status == 403:
+                    raise ConfigError('Сайт отклонил подпись API. Проверьте, что BOT_API_SECRET сайта и SHOP_API_SECRET бота совпадают. '
+                                      'Для локального запуска оставьте оба значения пустыми и используйте DJANGO_DEBUG=1.') from exc
+                if exc.status:
+                    raise ConfigError(f'Не удалось связаться с API сайта: {exc}') from exc
+        else:
+            raise ConnectionProblem('Не удалось подключиться к сайту. Сначала запустите start.bat в корне проекта.')
         ctx.bot_username = me.username or ''
         await bot.delete_webhook(drop_pending_updates=False)
         await bot.set_my_commands(COMMANDS)

@@ -8,6 +8,7 @@ from aiohttp import web
 from aiohttp.test_utils import TestServer
 
 from flowerbot.config import ConfigError
+from flowerbot.integrated_app import local_api_candidates
 from flowerbot.shop_api import ShopApiError, ShopClient
 
 from .helpers import VALID_TOKEN, make_settings
@@ -69,6 +70,18 @@ class IntegratedSettingsTests(unittest.TestCase):
         settings = make_settings(SHOP_API_URL='http://127.0.0.1:8001/api/bot/v1', SHOP_API_SECRET='')
         self.assertTrue(settings.integrated)
         self.assertEqual(settings.shop_api_secret, 'dev-only-insecure-bot-api-key-0123456789abcdef0123456789')
+
+    def test_missing_api_settings_use_local_defaults(self):
+        settings = make_settings(SHOP_API_URL='', SHOP_API_SECRET='')
+        self.assertEqual(settings.shop_api_url, 'http://127.0.0.1:8000/api/bot/v1')
+        self.assertEqual(settings.shop_api_secret, 'dev-only-insecure-bot-api-key-0123456789abcdef0123456789')
+        self.assertTrue(settings.integrated)
+
+    def test_local_bootstrap_tries_both_standard_ports(self):
+        self.assertEqual(local_api_candidates('http://127.0.0.1:8000/api/bot/v1')[-1],
+                         'http://127.0.0.1:8001/api/bot/v1')
+        self.assertEqual(local_api_candidates('http://127.0.0.1:8001/api/bot/v1')[-1],
+                         'http://127.0.0.1:8000/api/bot/v1')
 
     def test_integrated_mode(self):
         settings = make_settings(SHOP_API_URL='https://shop.example/api/bot/v1', SHOP_API_SECRET=SECRET)
