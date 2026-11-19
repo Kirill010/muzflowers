@@ -1,48 +1,52 @@
 @echo off
+setlocal
 chcp 65001 >nul
-cd /d "%~dp0"
+cd /d "%~dp0" || exit /b 1
 title MuzFlowers - Telegram-бот
 
 echo.
 echo  ==================================================
 echo   MuzFlowers: запускаю Telegram-бота
-echo   (в первый раз это займёт 2-3 минуты - ничего не закрывайте)
+echo   (при первом запуске скачаются зависимости)
 echo  ==================================================
 echo.
 
-rem Временные файлы держим в папке проекта, а не на диске C
-if not exist ".tmp" mkdir ".tmp"
-set "TEMP=%~dp0.tmp"
-set "TMP=%~dp0.tmp"
-set "PIP_CACHE_DIR=%~dp0.tmp\pip"
+rem Общее окружение сайта и бота находится в корне проекта.
+set "ROOT=%~dp0..\"
+set "VPY=%~dp0..\.venv\Scripts\python.exe"
+set "PYTHONPATH=%~dp0"
 set "PYTHONUTF8=1"
+if not exist "%ROOT%.tmp" mkdir "%ROOT%.tmp"
+if errorlevel 1 goto err
+set "TEMP=%ROOT%.tmp"
+set "TMP=%ROOT%.tmp"
+set "PIP_CACHE_DIR=%ROOT%.tmp\pip"
 
-rem Ищем Python (нужен 3.11 или новее)
+if exist "%VPY%" goto dependencies
+
+rem Ищем Python 3.12 или новее только для создания общего окружения.
 set "PY="
-py -3 --version >nul 2>nul && set "PY=py -3"
-if not defined PY python --version >nul 2>nul && set "PY=python"
+py -3 -c "import sys; sys.exit(sys.version_info < (3, 12))" >nul 2>nul && set "PY=py -3"
+if not defined PY (
+  python -c "import sys; sys.exit(sys.version_info < (3, 12))" >nul 2>nul && set "PY=python"
+)
 if not defined PY goto no_python
-%PY% -c "import sys; sys.exit(0 if sys.version_info >= (3, 11) else 1)" >nul 2>nul
-if errorlevel 1 goto old_python
 
-rem Рабочая папка с программами: если её нет или она сломалась (например, папку переносили) - создаём заново
-if exist ".venv\Scripts\python.exe" (
-  ".venv\Scripts\python.exe" -c "import sys" >nul 2>nul || rmdir /s /q ".venv"
-)
-if not exist ".venv\Scripts\python.exe" (
-  echo [1/3] Готовлю рабочую папку для программ...
-  %PY% -m venv .venv
-  if errorlevel 1 goto err
-)
-set "VPY=%~dp0.venv\Scripts\python.exe"
-
-echo [2/3] Проверяю нужные программы (нужен интернет, если что-то не установлено)...
-"%VPY%" -m pip install -q --disable-pip-version-check --no-input -r requirements.txt
+echo [1/3] Создаю общее окружение Python...
+%PY% -m venv "%ROOT%.venv"
 if errorlevel 1 goto err
 
-rem Секретный файл с ключом бота: в первый раз создаём из образца
+:dependencies
+"%VPY%" -c "import sys; sys.exit(sys.version_info < (3, 12))"
+if errorlevel 1 goto bad_venv
+echo [2/3] Проверяю нужные программы (нужен интернет, если что-то не установлено)...
+"%VPY%" -m pip install -q --disable-pip-version-check --no-input -r "%ROOT%requirements.txt" -r requirements.txt
+if errorlevel 1 goto err
+
+rem У бота свой .env: он не заменяет и не копирует секреты сайта.
 if not exist ".env" (
   copy ".env.example" ".env" >nul
+  if errorlevel 1 goto err
   echo.
   echo  ==================================================
   echo   Нужно один раз вписать ключ бота.
@@ -53,10 +57,11 @@ if not exist ".env" (
   echo.
   start "" notepad ".env"
   pause
-  goto :eof
+  exit /b 0
 )
 
 echo [3/3] Запускаю бота. Окно не закрывайте, пока бот должен работать.
+echo       Сначала запустите start.bat в корне проекта и дождитесь сайта на порту 8000.
 echo       Остановить бота: закройте это окно или нажмите Ctrl + C.
 echo.
 set "WAIT=15"
@@ -64,12 +69,11 @@ set "WAIT=15"
 :run
 "%VPY%" -m flowerbot
 set "CODE=%errorlevel%"
-if "%CODE%"=="0" goto :eof
+if "%CODE%"=="0" exit /b 0
 if "%CODE%"=="2" goto settings
 if "%CODE%"=="3" goto no_connection
 
-rem Любая другая остановка - сбой. Запускаем заново. Пауза растёт: 15, 30, 60 и так до 300 секунд,
-rem чтобы упрямая ошибка не превратилась в бесконечные частые перезапуски.
+rem При сбое увеличиваем паузу, чтобы не перегружать сайт и Telegram повторными запусками.
 echo.
 echo  Бот остановился из-за ошибки - её текст выше. Запускаю заново через %WAIT% сек.
 echo  Остановить: закройте это окно.
@@ -80,38 +84,39 @@ if %WAIT% gtr 300 set "WAIT=300"
 goto run
 
 :no_connection
-echo  Нет связи с Telegram. Пробую снова через 15 секунд. Остановить: закройте это окно.
+echo  Нет связи с Telegram или сайтом. Проверьте, что сайт запущен и интернет работает.
+echo  Пробую снова через 15 секунд. Остановить: закройте это окно.
 ping -n 16 127.0.0.1 >nul
 goto run
 
 :settings
-echo  Исправьте то, что написано выше (файлы .env, shop.toml или catalog.toml),
-echo  сохраните их и запустите start.bat ещё раз.
+echo.
+echo  Исправьте то, что написано выше, сохраните настройки и запустите bot\start.bat ещё раз.
+echo  Не запускайте вторую копию бота, если первая уже работает.
 echo.
 pause
-goto :eof
+exit /b 2
 
 :no_python
 echo.
-echo  Не найден Python. Установите его с https://www.python.org/downloads/
+echo  Не найден Python 3.12 или новее. Установите его с https://www.python.org/downloads/
 echo  (на первом экране установщика поставьте галочку "Add Python to PATH")
 echo  и запустите start.bat ещё раз.
 echo.
 pause
-goto :eof
+exit /b 1
 
-:old_python
-echo.
-echo  Нужен Python 3.11 или новее. Установите свежую версию с https://www.python.org/downloads/
-echo  (на первом экране установщика поставьте галочку "Add Python to PATH")
-echo  и запустите start.bat ещё раз.
-echo.
+:bad_venv
+echo  Общее окружение .venv не запускается или использует старый Python.
+echo  Закройте сайт и бота, переименуйте только папку .venv в корне проекта
+echo  и запустите start.bat с Python 3.12 или новее.
 pause
-goto :eof
+exit /b 1
 
 :err
 echo.
-echo  Что-то пошло не так (текст ошибки - выше). Проверьте интернет и запустите start.bat ещё раз.
-echo  Если не помогло - пришлите фото этого окна.
+echo  Запуск прервался. Причина указана выше. Проверьте интернет и запустите start.bat ещё раз.
+echo  Если не помогло - пришлите фото этого окна разработчику.
 echo.
 pause
+exit /b 1

@@ -73,6 +73,9 @@ class SettingsTests(unittest.TestCase):
         self.assertIn(b"\r\n", data)
         self.assertNotIn(b"\n", data.replace(b"\r\n", b""), "в start.bat остались одиночные LF")
         self.assertNotIn(b"\xef\xbb\xbf", data[:3], "BOM в начале файла ломает первую строку")
+        self.assertIn(rb'..\.venv\Scripts\python.exe', data, "бот использует общее окружение в корне")
+        self.assertIn(rb'set "PYTHONPATH=%~dp0"', data)
+        self.assertNotIn(b'%PY% -m venv .venv', data, "бот не должен создавать второе окружение")
 
     def test_no_secrets_in_repo_files(self):
         """В .env.example и коде не должно быть настоящих ключей (защита от повторения истории с утечкой)."""

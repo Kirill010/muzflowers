@@ -17,7 +17,7 @@ if ! .venv/bin/python -c 'import sys; sys.exit(sys.version_info < (3, 12))'; the
   exit 1
 fi
 echo "[2/4] Проверяю нужные программы..."
-.venv/bin/python -m pip install -q --disable-pip-version-check --no-input -r requirements.txt
+.venv/bin/python -m pip install -q --disable-pip-version-check --no-input -r requirements.txt -r bot/requirements.txt
 [ -f .env ] || cp .env.example .env
 
 echo "[3/4] Готовлю базу данных..."
