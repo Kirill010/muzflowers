@@ -33,6 +33,25 @@ jobs:
           DJANGO_ALLOWED_HOSTS: example.com
         run: python manage.py check --deploy --fail-level WARNING
 
+  bot:
+    name: Telegram-бот Python ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      matrix:
+        python: ["3.11", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: bot/requirements.txt
+      - run: pip install -r bot/requirements.txt
+      - name: Тесты и сценарии через имитацию Telegram
+        working-directory: bot
+        run: python -m unittest discover -s tests -t .
+
   windows-launcher:
     runs-on: windows-latest
     timeout-minutes: 8
